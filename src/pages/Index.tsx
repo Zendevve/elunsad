@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -38,7 +38,7 @@ const navigation = [
   { name: 'Applications', href: '/applications', icon: FileText },
   { name: 'Documents', href: '/documents', icon: Files },
   { name: 'Analytics', href: '/analytics', icon: PieChart },
-  { name: 'Map View', href: '/map-view', icon: Map }, // Updated to match MapView component route
+  { name: 'Map View', href: '/map', icon: Map },
   { name: 'Notifications', href: '/notifications', icon: Bell },
   { name: 'Administration', href: '/admin', icon: Settings },
 ];
@@ -117,13 +117,6 @@ const recentActivity = [
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const navigate = useNavigate();
-
-  const handleNavClick = (href: string) => {
-    navigate(href);
-    console.log('Navigating to:', href); // Add logging for debugging
-  };
-
   const currentDate = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -150,14 +143,14 @@ const Index = () => {
         </div>
         <nav className="mt-5 px-2 space-y-1">
           {navigation.map((item) => (
-            <button
+            <Link
               key={item.name}
-              onClick={() => handleNavClick(item.href)}
-              className="flex items-center w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100"
+              to={item.href}
+              className="flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100"
             >
               <item.icon className="mr-3 h-5 w-5" />
               {item.name}
-            </button>
+            </Link>
           ))}
         </nav>
       </div>
