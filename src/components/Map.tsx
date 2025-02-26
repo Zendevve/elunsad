@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import L, { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Fix Leaflet default marker icon issue
@@ -47,10 +47,13 @@ const Map = ({ permits }: MapProps) => {
     });
   };
 
+  const center: LatLngExpression = [14.5995, 120.9842];
+
   return (
     <MapContainer
-      defaultCenter={[14.5995, 120.9842]}
-      defaultZoom={13}
+      center={center}
+      zoom={13}
+      scrollWheelZoom={false}
       style={{ height: '100%', width: '100%' }}
     >
       <TileLayer
@@ -60,7 +63,7 @@ const Map = ({ permits }: MapProps) => {
       {permits.map((permit) => (
         <Marker
           key={permit.id}
-          position={[permit.lat, permit.lng]}
+          position={[permit.lat, permit.lng] as LatLngExpression}
           icon={getMarkerIcon(permit.status)}
         >
           <Popup>

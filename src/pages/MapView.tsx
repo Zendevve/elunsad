@@ -1,7 +1,5 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import dynamic from 'next/dynamic';
 import {
   Card,
   CardContent,
@@ -26,9 +24,7 @@ import {
   HelpCircle,
   ChevronRight,
 } from "lucide-react";
-
-// Dynamically import the Map component to avoid SSR issues with Leaflet
-const Map = dynamic(() => import("../components/Map"), { ssr: false });
+import Map from "../components/Map";
 
 // Sample permit location data
 const permits = [
