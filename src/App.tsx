@@ -8,10 +8,10 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Applications from "./pages/Applications";
+import Documents from "./pages/Documents";
+import Analytics from "./pages/Analytics";
 
-// Placeholder components for our routes
-const Documents = () => <div className="p-6">Documents Page</div>;
-const Analytics = () => <div className="p-6">Analytics Page</div>;
+// Placeholder components for routes that haven't been implemented yet
 const MapView = () => <div className="p-6">Map View Page</div>;
 const Notifications = () => <div className="p-6">Notifications Page</div>;
 const Administration = () => <div className="p-6">Administration Page</div>;
