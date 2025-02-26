@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -117,6 +116,12 @@ const recentActivity = [
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const navigate = useNavigate();
+
+  const handleNavClick = (href: string) => {
+    navigate(href);
+  };
+
   const currentDate = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -143,14 +148,14 @@ const Index = () => {
         </div>
         <nav className="mt-5 px-2 space-y-1">
           {navigation.map((item) => (
-            <Link
+            <button
               key={item.name}
-              to={item.href}
-              className="flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100"
+              onClick={() => handleNavClick(item.href)}
+              className="flex items-center w-full px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100"
             >
               <item.icon className="mr-3 h-5 w-5" />
               {item.name}
-            </Link>
+            </button>
           ))}
         </nav>
       </div>
