@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -37,7 +38,7 @@ const navigation = [
   { name: 'Applications', href: '/applications', icon: FileText },
   { name: 'Documents', href: '/documents', icon: Files },
   { name: 'Analytics', href: '/analytics', icon: PieChart },
-  { name: 'Map View', href: '/map', icon: Map },
+  { name: 'Map View', href: '/map-view', icon: Map }, // Updated to match MapView component route
   { name: 'Notifications', href: '/notifications', icon: Bell },
   { name: 'Administration', href: '/admin', icon: Settings },
 ];
@@ -120,6 +121,7 @@ const Index = () => {
 
   const handleNavClick = (href: string) => {
     navigate(href);
+    console.log('Navigating to:', href); // Add logging for debugging
   };
 
   const currentDate = new Date().toLocaleDateString('en-US', { 
