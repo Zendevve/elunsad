@@ -225,7 +225,7 @@ const Applications = () => {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Legal</h3>
-              <ul className="mt-2 space-y-2">
+              <ul className="mt-4 space-y-2">
                 <li>
                   <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
                     Privacy Policy
