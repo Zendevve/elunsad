@@ -3,13 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Applications from "./pages/Applications";
 
 // Placeholder components for our routes
-const Applications = () => <div className="p-6">Applications Page</div>;
 const Documents = () => <div className="p-6">Documents Page</div>;
 const Analytics = () => <div className="p-6">Analytics Page</div>;
 const MapView = () => <div className="p-6">Map View Page</div>;
