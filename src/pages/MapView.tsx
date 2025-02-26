@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import L, { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   Card,
@@ -69,6 +70,8 @@ const MapView = () => {
       iconAnchor: [6, 6],
     });
   };
+
+  const mapCenter: LatLngExpression = [14.5995, 120.9842];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -217,18 +220,18 @@ const MapView = () => {
               <CardContent className="p-0">
                 <div className="h-[calc(100vh-24rem)] w-full rounded-lg overflow-hidden">
                   <MapContainer
-                    center={[14.5995, 120.9842]}
+                    center={mapCenter}
                     zoom={13}
-                    className="h-full w-full"
+                    scrollWheelZoom={false}
+                    style={{ height: '100%', width: '100%' }}
                   >
                     <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                     {permits.map((permit) => (
                       <Marker
                         key={permit.id}
-                        position={[permit.lat, permit.lng]}
+                        position={[permit.lat, permit.lng] as LatLngExpression}
                         icon={getMarkerIcon(permit.status)}
                       >
                         <Popup>
