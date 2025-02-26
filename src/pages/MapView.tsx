@@ -1,8 +1,8 @@
-
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   Card,
   CardContent,
@@ -29,6 +29,14 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+// Fix Leaflet default marker icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
 // Sample permit location data
 const permits = [
   { id: 1, lat: 14.5995, lng: 120.9842, status: "approved", type: "business" },
@@ -37,55 +45,30 @@ const permits = [
 ];
 
 const MapView = () => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
   const [selectedPermitType, setSelectedPermitType] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
 
-  useEffect(() => {
-    if (!mapContainer.current) return;
+  const getMarkerIcon = (status: string) => {
+    const color = 
+      status === "approved" ? "#22c55e" :
+      status === "pending" ? "#eab308" : "#ef4444";
 
-    // Initialize map
-    mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN"; // Replace with your Mapbox token
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [120.9842, 14.5995], // Manila coordinates
-      zoom: 13,
+    return L.divIcon({
+      className: 'custom-div-icon',
+      html: `
+        <div style="
+          background-color: ${color};
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 0 4px rgba(0,0,0,0.4);
+        "></div>
+      `,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6],
     });
-
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      "top-right"
-    );
-
-    // Add markers for permits
-    permits.forEach((permit) => {
-      const markerColor = 
-        permit.status === "approved" ? "#22c55e" :
-        permit.status === "pending" ? "#eab308" : "#ef4444";
-
-      const marker = new mapboxgl.Marker({ color: markerColor })
-        .setLngLat([permit.lng, permit.lat])
-        .setPopup(
-          new mapboxgl.Popup().setHTML(`
-            <div class="p-2">
-              <h3 class="font-bold">Permit #${permit.id}</h3>
-              <p class="text-sm">Type: ${permit.type}</p>
-              <p class="text-sm">Status: ${permit.status}</p>
-            </div>
-          `)
-        )
-        .addTo(map.current);
-    });
-
-    return () => {
-      map.current?.remove();
-    };
-  }, []);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -232,10 +215,33 @@ const MapView = () => {
           <div className="lg:col-span-3">
             <Card>
               <CardContent className="p-0">
-                <div 
-                  ref={mapContainer} 
-                  className="h-[calc(100vh-24rem)] w-full rounded-lg"
-                />
+                <div className="h-[calc(100vh-24rem)] w-full rounded-lg overflow-hidden">
+                  <MapContainer
+                    center={[14.5995, 120.9842]}
+                    zoom={13}
+                    className="h-full w-full"
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {permits.map((permit) => (
+                      <Marker
+                        key={permit.id}
+                        position={[permit.lat, permit.lng]}
+                        icon={getMarkerIcon(permit.status)}
+                      >
+                        <Popup>
+                          <div className="p-2">
+                            <h3 className="font-bold">Permit #{permit.id}</h3>
+                            <p className="text-sm">Type: {permit.type}</p>
+                            <p className="text-sm">Status: {permit.status}</p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </MapContainer>
+                </div>
               </CardContent>
             </Card>
           </div>
