@@ -1,157 +1,123 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Files, 
-  PieChart, 
-  Map, 
-  Bell, 
-  Settings, 
-  User,
-  Menu,
-  AlertTriangle,
-  Plus,
-  Upload,
-  ArrowRight,
-  CalendarClock,
-  CheckCircle2,
-  XCircle,
-  TrendingUp,
-  Filter
-} from "lucide-react";
+import { LayoutDashboard, FileText, Files, PieChart, Map, Bell, Settings, User, Menu, AlertTriangle, Plus, Upload, ArrowRight, CalendarClock, CheckCircle2, XCircle, TrendingUp, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Applications', href: '/applications', icon: FileText },
-  { name: 'Documents', href: '/documents', icon: Files },
-  { name: 'Analytics', href: '/analytics', icon: PieChart },
-  { name: 'Map View', href: '/map', icon: Map }, // Updated to match the route in App.tsx
-  { name: 'Notifications', href: '/notifications', icon: Bell },
-  { name: 'Administration', href: '/admin', icon: Settings },
-];
-
-const quickActions = [
-  { 
-    name: 'New Application', 
-    description: 'Start a new permit application',
-    href: '/applications/new', 
-    icon: Plus, 
-    color: 'bg-blue-500' 
-  },
-  { 
-    name: 'Submit Renewal', 
-    description: 'Renew an existing permit',
-    href: '/applications/renewal', 
-    icon: CalendarClock, 
-    color: 'bg-green-500' 
-  },
-  { 
-    name: 'Upload Documents', 
-    description: 'Submit required documentation',
-    href: '/documents/upload', 
-    icon: Upload, 
-    color: 'bg-purple-500' 
-  },
-];
-
-const statistics = [
-  { 
-    title: 'Pending Applications',
-    value: 12,
-    change: '+2 from last week',
-    icon: AlertTriangle,
-    color: 'text-yellow-500'
-  },
-  { 
-    title: 'Approved This Month',
-    value: 28,
-    change: '+5 from last month',
-    icon: CheckCircle2,
-    color: 'text-green-500'
-  },
-  { 
-    title: 'Expiring Soon',
-    value: 3,
-    change: 'Due within 30 days',
-    icon: CalendarClock,
-    color: 'text-blue-500'
-  }
-];
-
-const recentActivity = [
-  { 
-    id: 1, 
-    message: 'New permit application submitted by John Doe',
-    time: '5 minutes ago',
-    type: 'success',
-    icon: CheckCircle2 
-  },
-  { 
-    id: 2, 
-    message: 'Document review pending for Business License #BL-2024-001',
-    time: '1 hour ago',
-    type: 'warning',
-    icon: AlertTriangle 
-  },
-  { 
-    id: 3, 
-    message: 'Permit renewal rejected for Restaurant License #RL-2024-003',
-    time: '2 hours ago',
-    type: 'error',
-    icon: XCircle 
-  },
-];
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+const navigation = [{
+  name: 'Dashboard',
+  href: '/',
+  icon: LayoutDashboard
+}, {
+  name: 'Applications',
+  href: '/applications',
+  icon: FileText
+}, {
+  name: 'Documents',
+  href: '/documents',
+  icon: Files
+}, {
+  name: 'Analytics',
+  href: '/analytics',
+  icon: PieChart
+}, {
+  name: 'Map View',
+  href: '/map',
+  icon: Map
+},
+// Updated to match the route in App.tsx
+{
+  name: 'Notifications',
+  href: '/notifications',
+  icon: Bell
+}, {
+  name: 'Administration',
+  href: '/admin',
+  icon: Settings
+}];
+const quickActions = [{
+  name: 'New Application',
+  description: 'Start a new permit application',
+  href: '/applications/new',
+  icon: Plus,
+  color: 'bg-blue-500'
+}, {
+  name: 'Submit Renewal',
+  description: 'Renew an existing permit',
+  href: '/applications/renewal',
+  icon: CalendarClock,
+  color: 'bg-green-500'
+}, {
+  name: 'Upload Documents',
+  description: 'Submit required documentation',
+  href: '/documents/upload',
+  icon: Upload,
+  color: 'bg-purple-500'
+}];
+const statistics = [{
+  title: 'Pending Applications',
+  value: 12,
+  change: '+2 from last week',
+  icon: AlertTriangle,
+  color: 'text-yellow-500'
+}, {
+  title: 'Approved This Month',
+  value: 28,
+  change: '+5 from last month',
+  icon: CheckCircle2,
+  color: 'text-green-500'
+}, {
+  title: 'Expiring Soon',
+  value: 3,
+  change: 'Due within 30 days',
+  icon: CalendarClock,
+  color: 'text-blue-500'
+}];
+const recentActivity = [{
+  id: 1,
+  message: 'New permit application submitted by John Doe',
+  time: '5 minutes ago',
+  type: 'success',
+  icon: CheckCircle2
+}, {
+  id: 2,
+  message: 'Document review pending for Business License #BL-2024-001',
+  time: '1 hour ago',
+  type: 'warning',
+  icon: AlertTriangle
+}, {
+  id: 3,
+  message: 'Permit renewal rejected for Restaurant License #RL-2024-003',
+  time: '2 hours ago',
+  type: 'error',
+  icon: XCircle
+}];
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const currentDate = new Date().toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
-
-  return (
-    <div className="min-h-screen bg-gray-100">
+  return <div className="min-h-screen bg-gray-100">
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-3">
             <img src="/placeholder.svg" alt="Logo" className="h-8 w-8" />
-            <h1 className="text-xl font-bold">Business Permits</h1>
+            <h1 className="text-xl font-bold">eLUNSAD</h1>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsSidebarOpen(false)}
-          >
+          <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>
             <Menu className="h-6 w-6" />
           </Button>
         </div>
         <nav className="mt-5 px-2 space-y-1">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className="flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100"
-            >
+          {navigation.map(item => <Link key={item.name} to={item.href} className="flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100">
               <item.icon className="mr-3 h-5 w-5" />
               {item.name}
-            </Link>
-          ))}
+            </Link>)}
         </nav>
       </div>
 
@@ -159,12 +125,7 @@ const Index = () => {
       <div className={`${isSidebarOpen ? 'ml-64' : 'ml-0'} transition-margin duration-300 ease-in-out`}>
         <header className="bg-white shadow-sm">
           <div className="flex items-center justify-between px-4 py-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsSidebarOpen(true)}
-              className={isSidebarOpen ? 'invisible' : 'visible'}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)} className={isSidebarOpen ? 'invisible' : 'visible'}>
               <Menu className="h-6 w-6" />
             </Button>
 
@@ -220,8 +181,7 @@ const Index = () => {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {statistics.map((stat) => (
-                <Card key={stat.title}>
+              {statistics.map(stat => <Card key={stat.title}>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-gray-700">
                       {stat.title}
@@ -232,14 +192,12 @@ const Index = () => {
                     <div className="text-2xl font-bold">{stat.value}</div>
                     <p className="text-xs text-gray-600">{stat.change}</p>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {quickActions.map((action) => (
-                <Link key={action.name} to={action.href}>
+              {quickActions.map(action => <Link key={action.name} to={action.href}>
                   <Card className="hover:bg-gray-50 transition-colors cursor-pointer h-full">
                     <CardContent className="flex items-center p-6">
                       <div className={`${action.color} p-3 rounded-lg text-white mr-4`}>
@@ -251,8 +209,7 @@ const Index = () => {
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
-              ))}
+                </Link>)}
             </div>
 
             {/* Analytics & Map Preview */}
@@ -309,19 +266,13 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-4">
-                      <activity.icon className={`h-5 w-5 mt-0.5 ${
-                        activity.type === 'success' ? 'text-green-500' :
-                        activity.type === 'warning' ? 'text-yellow-500' :
-                        'text-red-500'
-                      }`} />
+                  {recentActivity.map(activity => <div key={activity.id} className="flex items-start space-x-4">
+                      <activity.icon className={`h-5 w-5 mt-0.5 ${activity.type === 'success' ? 'text-green-500' : activity.type === 'warning' ? 'text-yellow-500' : 'text-red-500'}`} />
                       <div>
                         <p className="text-sm font-medium">{activity.message}</p>
                         <p className="text-xs text-gray-500">{activity.time}</p>
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </CardContent>
             </Card>
@@ -366,8 +317,6 @@ const Index = () => {
           </div>
         </footer>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
