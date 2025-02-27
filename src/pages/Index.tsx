@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -38,7 +38,7 @@ const navigation = [
   { name: 'Applications', href: '/applications', icon: FileText },
   { name: 'Documents', href: '/documents', icon: Files },
   { name: 'Analytics', href: '/analytics', icon: PieChart },
-  { name: 'Map View', href: '/map', icon: Map },
+  { name: 'Map View', href: '/map', icon: Map }, // Updated to match the route in App.tsx
   { name: 'Notifications', href: '/notifications', icon: Bell },
   { name: 'Administration', href: '/admin', icon: Settings },
 ];
