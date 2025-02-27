@@ -11,9 +11,9 @@ import Applications from "./pages/Applications";
 import Documents from "./pages/Documents";
 import Analytics from "./pages/Analytics";
 import MapView from "./pages/MapView";
+import Notifications from "./pages/Notifications";
 
 // Placeholder components for routes that haven't been implemented yet
-const Notifications = () => <div className="p-6">Notifications Page</div>;
 const Administration = () => <div className="p-6">Administration Page</div>;
 const Profile = () => <div className="p-6">Profile Page</div>;
 const Settings = () => <div className="p-6">Settings Page</div>;
