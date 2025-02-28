@@ -13,9 +13,9 @@ import Analytics from "./pages/Analytics";
 import MapView from "./pages/MapView";
 import Notifications from "./pages/Notifications";
 import Administration from "./pages/Administration";
+import Profile from "./pages/Profile";
 
 // Placeholder components for routes that haven't been implemented yet
-const Profile = () => <div className="p-6">Profile Page</div>;
 const Settings = () => <div className="p-6">Settings Page</div>;
 
 const queryClient = new QueryClient();
