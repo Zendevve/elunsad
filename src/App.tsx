@@ -14,6 +14,7 @@ import MapView from "./pages/MapView";
 import Notifications from "./pages/Notifications";
 import Administration from "./pages/Administration";
 import Profile from "./pages/Profile";
+import Layout from "./components/Layout";
 
 // Placeholder components for routes that haven't been implemented yet
 const Settings = () => <div className="p-6">Settings Page</div>;
@@ -28,15 +29,20 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/applications/*" element={<Applications />} />
-          <Route path="/documents/*" element={<Documents />} />
-          <Route path="/analytics/*" element={<Analytics />} />
-          <Route path="/map" element={<MapView />} />
-          <Route path="/notifications/*" element={<Notifications />} />
-          <Route path="/admin/*" element={<Administration />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
+          
+          {/* Apply Layout to all routes except login and 404 */}
+          <Route element={<Layout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/applications/*" element={<Applications />} />
+            <Route path="/documents/*" element={<Documents />} />
+            <Route path="/analytics/*" element={<Analytics />} />
+            <Route path="/map" element={<MapView />} />
+            <Route path="/notifications/*" element={<Notifications />} />
+            <Route path="/admin/*" element={<Administration />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
