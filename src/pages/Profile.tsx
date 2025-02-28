@@ -53,21 +53,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Sample user data
-const userData = {
-  id: "12345",
-  firstName: "John",
-  lastName: "Smith",
-  email: "john.smith@example.com",
-  phoneNumber: "+1 (555) 123-4567",
-  address: "123 Main Street, Anytown, CA 12345",
-  role: "Business Owner",
-  company: "Metro Restaurant",
-  accountCreated: "January 15, 2023",
-  lastLogin: "Today, 9:32 AM",
-  imageUrl: "/placeholder.svg",
-};
-
 // Sample permit history data
 const permitHistory = [
   {
@@ -127,15 +112,35 @@ const recentActivity = [
   },
 ];
 
+// Define the user data type to include all needed properties
+interface UserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  company: string;
+  role: string;
+  id: string;
+  accountCreated: string;
+  lastLogin: string;
+  imageUrl: string;
+}
+
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [userData, setUserData] = useState({
+  const [userData, setUserData] = useState<UserData>({
     firstName: "John",
     lastName: "Smith",
     email: "john.smith@example.com",
     phoneNumber: "+1 (555) 123-4567",
     address: "123 Main Street, Anytown, CA 12345",
     company: "Metro Restaurant",
+    role: "Business Owner",
+    id: "12345",
+    accountCreated: "January 15, 2023",
+    lastLogin: "Today, 9:32 AM",
+    imageUrl: "/placeholder.svg",
   });
   
   // Function to get status badge color
@@ -254,7 +259,7 @@ const Profile = () => {
                   <Bell className="mr-2 h-4 w-4" />
                   Notification Settings
                 </Button>
-                <Button variant="outline" className="w-full justify-start" variant="destructive">
+                <Button variant="destructive" className="w-full justify-start">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign Out
                 </Button>
