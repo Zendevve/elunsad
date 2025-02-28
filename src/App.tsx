@@ -14,9 +14,11 @@ import MapView from "./pages/MapView";
 import Notifications from "./pages/Notifications";
 import Administration from "./pages/Administration";
 import Profile from "./pages/Profile";
+import ProtectedLayout from "./components/ProtectedLayout";
 
 // Placeholder components for routes that haven't been implemented yet
 const Settings = () => <div className="p-6">Settings Page</div>;
+const Register = () => <div className="p-6">Registration Page</div>;
 
 const queryClient = new QueryClient();
 
@@ -27,16 +29,24 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Public routes - no navbar */}
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/applications/*" element={<Applications />} />
-          <Route path="/documents/*" element={<Documents />} />
-          <Route path="/analytics/*" element={<Analytics />} />
-          <Route path="/map" element={<MapView />} />
-          <Route path="/notifications/*" element={<Notifications />} />
-          <Route path="/admin/*" element={<Administration />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Protected routes - with navbar */}
+          <Route element={<ProtectedLayout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/applications/*" element={<Applications />} />
+            <Route path="/documents/*" element={<Documents />} />
+            <Route path="/analytics/*" element={<Analytics />} />
+            <Route path="/map" element={<MapView />} />
+            <Route path="/notifications/*" element={<Notifications />} />
+            <Route path="/admin/*" element={<Administration />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+          
+          {/* 404 route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
