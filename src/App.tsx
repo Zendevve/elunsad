@@ -14,6 +14,7 @@ import MapView from "./pages/MapView";
 import Notifications from "./pages/Notifications";
 import Administration from "./pages/Administration";
 import Profile from "./pages/Profile";
+import Dashboard from "./pages/Dashboard";
 import Layout from "./components/Layout";
 
 // Placeholder components for routes that haven't been implemented yet
@@ -33,6 +34,7 @@ const App = () => (
           {/* Apply Layout to all routes except login and 404 */}
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/applications/*" element={<Applications />} />
             <Route path="/documents/*" element={<Documents />} />
             <Route path="/analytics/*" element={<Analytics />} />
