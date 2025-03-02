@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Rocket, BarChart2, CheckCircle, Database, TrendingUp, MapPin, Bell, Upload, ArrowRight, Quote, Mail, Globe } from "lucide-react";
@@ -21,7 +22,7 @@ const Index = () => {
               <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
             </nav>
             <div>
-              <Link to="/login">
+              <Link to="/signin">
                 <Button>Sign In / Register</Button>
               </Link>
             </div>
