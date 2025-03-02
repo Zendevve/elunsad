@@ -1,37 +1,17 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
-import { 
-  Rocket, 
-  BarChart2, 
-  CheckCircle, 
-  Database, 
-  TrendingUp, 
-  MapPin, 
-  Bell, 
-  Upload, 
-  ArrowRight, 
-  Quote, 
-  Mail, 
-  Globe
-} from "lucide-react";
+import { Rocket, BarChart2, CheckCircle, Database, TrendingUp, MapPin, Bell, Upload, ArrowRight, Quote, Mail, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
 const Index = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       {/* Header & Navigation */}
       <header className="bg-white shadow-sm py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <img 
-                src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" 
-                alt="eLUNSAD Logo" 
-                className="h-10 w-10" 
-              />
+              <img src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" alt="eLUNSAD Logo" className="h-10 w-10" />
               <h1 className="text-xl font-bold">eLUNSAD</h1>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
@@ -75,11 +55,7 @@ const Index = () => {
             </div>
             <div className="md:w-1/2">
               <div className="bg-white shadow-xl rounded-lg p-6 md:p-8">
-                <img 
-                  src="/placeholder.svg" 
-                  alt="Business Permit Management" 
-                  className="w-full h-64 object-cover rounded"
-                />
+                <img alt="Business Permit Management" className="w-full h-64 object-cover rounded" src="/lovable-uploads/c2fa4958-ca21-4f46-8eff-378b42e6bc34.jpg" />
               </div>
             </div>
           </div>
@@ -377,34 +353,19 @@ const Index = () => {
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     Full Name
                   </label>
-                  <input
-                    type="text"
-                    id="name"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Your name"
-                  />
+                  <input type="text" id="name" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Your name" />
                 </div>
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email Address
                   </label>
-                  <input
-                    type="email"
-                    id="email"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Your email"
-                  />
+                  <input type="email" id="email" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Your email" />
                 </div>
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
                     Message
                   </label>
-                  <textarea
-                    id="message"
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="How can we help you?"
-                  ></textarea>
+                  <textarea id="message" rows={4} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="How can we help you?"></textarea>
                 </div>
                 <Button className="w-full">Send Message</Button>
               </form>
@@ -419,11 +380,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <img 
-                  src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" 
-                  alt="eLUNSAD Logo" 
-                  className="h-8 w-8 bg-white rounded p-1" 
-                />
+                <img src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" alt="eLUNSAD Logo" className="h-8 w-8 bg-white rounded p-1" />
                 <h3 className="text-lg font-bold">eLUNSAD</h3>
               </div>
               <p className="text-gray-400">
@@ -475,8 +432,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
