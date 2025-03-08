@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { 
-  Eye, EyeOff, Mail, Lock, User, Phone, UserPlus, Facebook, 
-  Check, Info, HelpCircle
+  Eye, EyeOff, Mail, Lock, User, UserPlus, Facebook, 
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,6 +99,28 @@ const Register = () => {
         throw new Error("You must agree to the terms and conditions");
       }
       
+      // First check if username already exists
+      const { data: existingUsername } = await supabase
+        .from('register_account')
+        .select('username')
+        .eq('username', data.username)
+        .single();
+        
+      if (existingUsername) {
+        throw new Error("Username already exists. Please choose a different username.");
+      }
+      
+      // Check if email already exists
+      const { data: existingEmail } = await supabase
+        .from('register_account')
+        .select('email')
+        .eq('email', data.email)
+        .single();
+        
+      if (existingEmail) {
+        throw new Error("Email already in use. Please use a different email address.");
+      }
+      
       // Insert data into the register_account table
       const { error } = await supabase
         .from('register_account')
@@ -114,7 +135,8 @@ const Register = () => {
         });
       
       if (error) {
-        throw error;
+        console.error("Registration error:", error);
+        throw new Error("Registration failed. Please try again.");
       }
       
       toast({
@@ -131,6 +153,7 @@ const Register = () => {
         title: "Registration failed",
         description: error instanceof Error ? error.message : "An error occurred during registration.",
       });
+      console.error("Registration error details:", error);
     } finally {
       setIsLoading(false);
     }
