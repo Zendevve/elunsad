@@ -46,26 +46,28 @@ const SignIn = () => {
       console.log(`Attempting to sign in with ${field}: ${data.identifier}`);
       
       // Query the register_account table to find the user
-      const { data: userData, error } = await supabase
+      // Using .eq correctly without .single() to avoid errors when no rows found
+      const { data: users, error } = await supabase
         .from('register_account')
         .select('*')
-        .eq(field, data.identifier.trim())
-        .single();
+        .eq(field, data.identifier.trim());
       
       if (error) {
         console.error("Error fetching user data:", error);
-        throw new Error("Invalid credentials");
+        throw new Error("Authentication failed. Please try again.");
       }
       
-      if (!userData) {
+      if (!users || users.length === 0) {
         console.error("No user found with the provided credentials");
-        throw new Error("Invalid credentials");
+        throw new Error("Invalid username/email or password");
       }
+      
+      const userData = users[0];
       
       // Verify the password
       if (userData.password !== data.password) {
         console.error("Password doesn't match");
-        throw new Error("Invalid credentials");
+        throw new Error("Invalid username/email or password");
       }
       
       console.log("Sign in successful for user:", userData.firstname);
