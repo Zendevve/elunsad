@@ -43,19 +43,24 @@ const SignIn = () => {
       // First, check if the identifier is an email or username
       const isEmail = data.identifier.includes('@');
       
-      let query = supabase
+      // Use maybeSingle() instead of single() to avoid errors when no record is found
+      const { data: userData, error } = await supabase
         .from('register_account')
-        .select('*');
-      
-      if (isEmail) {
-        query = query.eq('email', data.identifier);
-      } else {
-        query = query.eq('username', data.identifier);
-      }
-      
-      const { data: userData, error } = await query.single();
+        .select('*')
+        .or(isEmail ? `email.eq.${data.identifier}` : `username.eq.${data.identifier}`)
+        .maybeSingle();
       
       if (error) {
+        console.error("Database query error:", error);
+        toast({
+          variant: "destructive",
+          title: "Sign in failed",
+          description: "An error occurred while signing in. Please try again.",
+        });
+        return;
+      }
+      
+      if (!userData) {
         toast({
           variant: "destructive",
           title: "Sign in failed",
@@ -64,7 +69,7 @@ const SignIn = () => {
         return;
       }
       
-      // Verify password (in a real app, we would use proper hashing)
+      // Verify password
       if (userData.password !== data.password) {
         toast({
           variant: "destructive",
@@ -92,12 +97,12 @@ const SignIn = () => {
       navigate("/dashboard");
       
     } catch (error) {
+      console.error("Sign in error:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "An error occurred during sign in.",
       });
-      console.error("Sign in error:", error);
     } finally {
       setIsLoading(false);
     }
