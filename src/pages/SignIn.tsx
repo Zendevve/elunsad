@@ -1,8 +1,8 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, User, LogIn, Facebook, AlignJustify } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, LogIn, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SignInFormData {
   identifier: string;
@@ -25,6 +26,7 @@ const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const form = useForm<SignInFormData>({
     defaultValues: {
@@ -37,22 +39,60 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      // In a real app, this would be replaced with actual authentication
-      console.log("Sign in attempted with:", data);
+      // Check if the identifier is an email or username
+      const isEmail = data.identifier.includes('@');
+      const field = isEmail ? 'email' : 'username';
+      
+      console.log(`Attempting to sign in with ${field}: ${data.identifier}`);
+      
+      // Query the register_account table to find the user
+      const { data: userData, error } = await supabase
+        .from('register_account')
+        .select('*')
+        .eq(field, data.identifier.trim())
+        .single();
+      
+      if (error) {
+        console.error("Error fetching user data:", error);
+        throw new Error("Invalid credentials");
+      }
+      
+      if (!userData) {
+        console.error("No user found with the provided credentials");
+        throw new Error("Invalid credentials");
+      }
+      
+      // Verify the password
+      if (userData.password !== data.password) {
+        console.error("Password doesn't match");
+        throw new Error("Invalid credentials");
+      }
+      
+      console.log("Sign in successful for user:", userData.firstname);
+      
+      // Store user info in session storage (only non-sensitive info)
+      sessionStorage.setItem('user', JSON.stringify({
+        id: userData.id,
+        firstname: userData.firstname,
+        lastname: userData.lastname,
+        username: userData.username,
+        email: userData.email
+      }));
       
       toast({
-        title: "Sign in attempt received",
-        description: "This is a placeholder for actual authentication.",
+        title: "Sign In Successful",
+        description: `Welcome back, ${userData.firstname}!`,
       });
       
-      // Simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Redirect to dashboard or home page
+      navigate('/dashboard');
       
     } catch (error) {
+      console.error("Sign in error:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "An error occurred during sign in.",
+        title: "Sign In Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     } finally {
       setIsLoading(false);
