@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { 
   Eye, EyeOff, Mail, Lock, User, Phone, UserPlus, Facebook, 
-  Check, Info, HelpCircle
+  Briefcase, FileText, Check, Info, HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,17 +20,15 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface RegisterFormData {
-  firstname: string;
-  middlename?: string;
-  lastname: string;
-  extension_name?: string;
-  username: string;
+  fullName: string;
   email: string;
+  phone: string;
   password: string;
   confirmPassword: string;
+  businessName?: string;
+  registrationNumber?: string;
   agreeToTerms: boolean;
 }
 
@@ -46,18 +44,16 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<"weak" | "medium" | "strong" | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const form = useForm<RegisterFormData>({
     defaultValues: {
-      firstname: "",
-      middlename: "",
-      lastname: "",
-      extension_name: "",
-      username: "",
+      fullName: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
+      businessName: "",
+      registrationNumber: "",
       agreeToTerms: false,
     },
   });
@@ -100,35 +96,21 @@ const Register = () => {
         throw new Error("You must agree to the terms and conditions");
       }
       
-      // Insert data into the register_account table
-      const { error } = await supabase
-        .from('register_account')
-        .insert({
-          firstname: data.firstname,
-          middlename: data.middlename || null,
-          lastname: data.lastname,
-          extension_name: data.extension_name || null,
-          username: data.username,
-          password: data.password, // Note: In production, you'd want to hash this password
-          email: data.email
-        });
-      
-      if (error) {
-        throw error;
-      }
+      // In a real app, this would be replaced with actual registration
+      console.log("Registration attempted with:", data);
       
       toast({
-        title: "Registration successful",
-        description: "Your account has been created. You can now sign in.",
+        title: "Registration attempt received",
+        description: "This is a placeholder for actual registration.",
       });
       
-      // Redirect to sign in page
-      navigate('/signin');
+      // Simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Registration failed",
+        title: "Error",
         description: error instanceof Error ? error.message : "An error occurred during registration.",
       });
     } finally {
@@ -186,104 +168,12 @@ const Register = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Personal Details</h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="firstname"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>First Name</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                  <User className="h-5 w-5" />
-                                </span>
-                                <Input
-                                  {...field}
-                                  type="text"
-                                  placeholder="First Name"
-                                  className="pl-10"
-                                  disabled={isLoading}
-                                  required
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="middlename"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Middle Name (Optional)</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="text"
-                                placeholder="Middle Name"
-                                disabled={isLoading}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="lastname"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Last Name</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                  <User className="h-5 w-5" />
-                                </span>
-                                <Input
-                                  {...field}
-                                  type="text"
-                                  placeholder="Last Name"
-                                  className="pl-10"
-                                  disabled={isLoading}
-                                  required
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="extension_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Extension Name (Optional)</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="text"
-                                placeholder="Jr., Sr., III, etc."
-                                disabled={isLoading}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
                     <FormField
                       control={form.control}
-                      name="username"
+                      name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Username</FormLabel>
+                          <FormLabel>Full Name</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -292,10 +182,9 @@ const Register = () => {
                               <Input
                                 {...field}
                                 type="text"
-                                placeholder="Choose a username"
+                                placeholder="Enter your full name"
                                 className="pl-10"
                                 disabled={isLoading}
-                                required
                               />
                             </div>
                           </FormControl>
@@ -321,7 +210,31 @@ const Register = () => {
                                 placeholder="Enter your email address"
                                 className="pl-10"
                                 disabled={isLoading}
-                                required
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                <Phone className="h-5 w-5" />
+                              </span>
+                              <Input
+                                {...field}
+                                type="tel"
+                                placeholder="Enter your phone number"
+                                className="pl-10"
+                                disabled={isLoading}
                               />
                             </div>
                           </FormControl>
@@ -352,7 +265,6 @@ const Register = () => {
                                 placeholder="Create a password"
                                 className="pl-10 pr-10"
                                 disabled={isLoading}
-                                required
                                 onChange={(e) => {
                                   field.onChange(e);
                                   checkPasswordStrength(e.target.value);
@@ -407,7 +319,6 @@ const Register = () => {
                                 placeholder="Confirm your password"
                                 className="pl-10 pr-10"
                                 disabled={isLoading}
-                                required
                               />
                               <button
                                 type="button"
@@ -416,6 +327,61 @@ const Register = () => {
                               >
                                 {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                               </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Business Information Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Business Information (Optional)</h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="businessName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Name</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                <Briefcase className="h-5 w-5" />
+                              </span>
+                              <Input
+                                {...field}
+                                type="text"
+                                placeholder="Enter business name (optional)"
+                                className="pl-10"
+                                disabled={isLoading}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="registrationNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Registration Number</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                <FileText className="h-5 w-5" />
+                              </span>
+                              <Input
+                                {...field}
+                                type="text"
+                                placeholder="Enter registration number (optional)"
+                                className="pl-10"
+                                disabled={isLoading}
+                              />
                             </div>
                           </FormControl>
                           <FormMessage />
