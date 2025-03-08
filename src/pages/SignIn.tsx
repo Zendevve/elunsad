@@ -1,8 +1,10 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, User, LogIn, Facebook, AlignJustify } from "lucide-react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Mail, Lock, User, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,18 +17,24 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-interface SignInFormData {
-  identifier: string;
-  password: string;
-}
+// Define validation schema
+const signInSchema = z.object({
+  identifier: z.string().min(1, "Username or email is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type SignInFormData = z.infer<typeof signInSchema>;
 
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const form = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema),
     defaultValues: {
       identifier: "",
       password: "",
@@ -37,29 +45,49 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      // In a real app, this would be replaced with actual authentication
-      console.log("Sign in attempted with:", data);
+      // Check if identifier is username or email
+      const { data: userData, error: userError } = await supabase
+        .from('register_account')
+        .select('*')
+        .or(`username.eq.${data.identifier},email.eq.${data.identifier}`)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error("Invalid credentials. User not found.");
+      }
+
+      // Verify password (in a real app, this would use hashing)
+      if (userData.password !== data.password) {
+        throw new Error("Invalid credentials. Password is incorrect.");
+      }
+
+      // Store user data in session storage
+      sessionStorage.setItem('user', JSON.stringify({
+        id: userData.id,
+        firstname: userData.firstname,
+        lastname: userData.lastname,
+        username: userData.username,
+        email: userData.email,
+      }));
       
       toast({
-        title: "Sign in attempt received",
-        description: "This is a placeholder for actual authentication.",
+        title: "Sign in successful",
+        description: `Welcome back, ${userData.firstname}!`,
       });
       
-      // Simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Redirect to dashboard
+      navigate('/dashboard');
       
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "An error occurred during sign in.",
+        title: "Sign in failed",
+        description: error instanceof Error ? error.message : "An error occurred during sign in.",
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -112,7 +140,7 @@ const SignIn = () => {
                     name="identifier"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email or Username</FormLabel>
+                        <FormLabel>Username or Email</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -121,7 +149,7 @@ const SignIn = () => {
                             <Input
                               {...field}
                               type="text"
-                              placeholder="Enter your email or username"
+                              placeholder="Enter your username or email"
                               className="pl-10"
                               disabled={isLoading}
                             />
@@ -161,7 +189,7 @@ const SignIn = () => {
                             <button
                               type="button"
                               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
-                              onClick={togglePasswordVisibility}
+                              onClick={() => setShowPassword(!showPassword)}
                             >
                               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
@@ -182,33 +210,6 @@ const SignIn = () => {
                   </Button>
                 </form>
               </Form>
-
-              <div className="mt-6">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">Or continue with</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="flex items-center justify-center gap-2 w-full">
-                    <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
-                      <path
-                        d="M12.545, 10.239v3.821h5.445c-0.712, 2.315-2.647, 3.972-5.445, 3.972-3.332, 0-6.033-2.701-6.033-6.032s2.701-6.032, 6.033-6.032c1.498, 0, 2.866, 0.549, 3.921, 1.453l2.814-2.814C17.503, 2.988, 15.139, 2, 12.545, 2 7.021, 2, 2.543, 6.477, 2.543, 12s4.478, 10, 10.002, 10c8.396, 0, 10.249-7.85, 9.426-11.748l-9.426, 0.013z"
-                        fill="#4285F4"
-                      />
-                    </svg>
-                    Google
-                  </Button>
-                  <Button variant="outline" className="flex items-center justify-center gap-2 w-full">
-                    <Facebook className="h-5 w-5 text-blue-600" />
-                    Facebook
-                  </Button>
-                </div>
-              </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <p className="text-sm text-center text-gray-600">
@@ -225,41 +226,6 @@ const SignIn = () => {
       {/* Footer */}
       <footer className="bg-white border-t">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Support</h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Help Center</a>
-                </li>
-                <li>
-                  <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Contact Us</a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Legal</h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Privacy Policy</a>
-                </li>
-                <li>
-                  <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Terms of Service</a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Contact</h3>
-              <ul className="mt-4 space-y-4">
-                <li className="text-sm text-gray-600">
-                  <p>Business Permit Licensing Office</p>
-                  <p>123 Main Street, Suite 101</p>
-                  <p>City, State 12345</p>
-                  <p>support@elunsad.gov</p>
-                </li>
-              </ul>
-            </div>
-          </div>
           <div className="mt-8 border-t border-gray-200 pt-8">
             <p className="text-sm text-gray-400 text-center">
               &copy; {new Date().getFullYear()} eLUNSAD. All rights reserved.
