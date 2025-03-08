@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -44,21 +43,14 @@ const SignIn = () => {
       // First, check if the identifier is an email or username
       const isEmail = data.identifier.includes('@');
       
-      // Log the query we're about to make for debugging
       console.log(`Querying with ${isEmail ? 'email' : 'username'}: ${data.identifier}`);
       
-      // Construct the query - using simpler approach
-      let query = supabase
+      // Execute the query
+      const { data: userData, error } = await supabase
         .from('register_account')
-        .select('*');
-        
-      if (isEmail) {
-        query = query.eq('email', data.identifier);
-      } else {
-        query = query.eq('username', data.identifier);
-      }
-      
-      const { data: userData, error } = await query.maybeSingle();
+        .select('*')
+        .eq(isEmail ? 'email' : 'username', data.identifier)
+        .single();
       
       console.log("Query result:", userData, "Error:", error);
       
@@ -72,17 +64,7 @@ const SignIn = () => {
         return;
       }
       
-      if (!userData) {
-        console.log("No user found with the provided credentials");
-        toast({
-          variant: "destructive",
-          title: "Sign in failed",
-          description: "Invalid email/username or password.",
-        });
-        return;
-      }
-      
-      // Verify password - log it for debugging (without showing the actual values)
+      // Verify password
       console.log("Password check:", 
         "Input length:", data.password.length, 
         "Stored length:", userData.password.length,
@@ -120,8 +102,8 @@ const SignIn = () => {
       console.error("Sign in error:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "An error occurred during sign in.",
+        title: "Sign in failed",
+        description: "Invalid email/username or password.",
       });
     } finally {
       setIsLoading(false);
