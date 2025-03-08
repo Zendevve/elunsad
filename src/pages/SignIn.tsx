@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -39,15 +38,14 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      // Attempt to sign in by checking the register_account table
       // First, check if the identifier is an email or username
       const isEmail = data.identifier.includes('@');
       
-      // Use maybeSingle() instead of single() to avoid errors when no record is found
+      // Construct the query properly
       const { data: userData, error } = await supabase
         .from('register_account')
         .select('*')
-        .or(isEmail ? `email.eq.${data.identifier}` : `username.eq.${data.identifier}`)
+        .or(isEmail ? `email.eq."${data.identifier}"` : `username.eq."${data.identifier}"`)
         .maybeSingle();
       
       if (error) {
