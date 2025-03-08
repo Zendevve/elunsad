@@ -16,11 +16,16 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-interface SignInFormData {
-  identifier: string;
-  password: string;
-}
+// Create a validation schema for the form
+const signInSchema = z.object({
+  identifier: z.string().min(1, "Email or username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type SignInFormData = z.infer<typeof signInSchema>;
 
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +34,7 @@ const SignIn = () => {
   const navigate = useNavigate();
 
   const form = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema),
     defaultValues: {
       identifier: "",
       password: "",
@@ -46,7 +52,6 @@ const SignIn = () => {
       console.log(`Attempting to sign in with ${field}: ${data.identifier}`);
       
       // Query the register_account table to find the user
-      // Using .eq correctly without .single() to avoid errors when no rows found
       const { data: users, error } = await supabase
         .from('register_account')
         .select('*')
