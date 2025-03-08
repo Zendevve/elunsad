@@ -1,7 +1,8 @@
+
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, LogIn, Facebook } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, LogIn, Facebook, AlignJustify } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface SignInFormData {
   identifier: string;
@@ -25,7 +25,6 @@ const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const form = useForm<SignInFormData>({
     defaultValues: {
@@ -38,72 +37,22 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      console.log("Attempting to sign in with:", data.identifier);
-      
-      // First, check if the identifier is an email or username
-      const isEmail = data.identifier.includes('@');
-      
-      console.log(`Querying with ${isEmail ? 'email' : 'username'}: ${data.identifier}`);
-      
-      // Execute the query
-      const { data: userData, error } = await supabase
-        .from('register_account')
-        .select('*')
-        .eq(isEmail ? 'email' : 'username', data.identifier)
-        .single();
-      
-      console.log("Query result:", userData, "Error:", error);
-      
-      if (error) {
-        console.error("Database query error:", error);
-        toast({
-          variant: "destructive",
-          title: "Sign in failed",
-          description: "An error occurred while signing in. Please try again.",
-        });
-        return;
-      }
-      
-      // Verify password
-      console.log("Password check:", 
-        "Input length:", data.password.length, 
-        "Stored length:", userData.password.length,
-        "Match:", userData.password === data.password
-      );
-      
-      if (userData.password !== data.password) {
-        console.log("Password doesn't match");
-        toast({
-          variant: "destructive",
-          title: "Sign in failed",
-          description: "Invalid email/username or password.",
-        });
-        return;
-      }
-      
-      // Store user data in localStorage (as a basic session mechanism)
-      localStorage.setItem('user', JSON.stringify({
-        id: userData.id,
-        username: userData.username,
-        email: userData.email,
-        firstname: userData.firstname,
-        lastname: userData.lastname
-      }));
+      // In a real app, this would be replaced with actual authentication
+      console.log("Sign in attempted with:", data);
       
       toast({
-        title: "Sign in successful",
-        description: `Welcome back, ${userData.firstname}!`,
+        title: "Sign in attempt received",
+        description: "This is a placeholder for actual authentication.",
       });
       
-      // Navigate to dashboard after successful login
-      navigate("/dashboard");
+      // Simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
     } catch (error) {
-      console.error("Sign in error:", error);
       toast({
         variant: "destructive",
-        title: "Sign in failed",
-        description: "Invalid email/username or password.",
+        title: "Error",
+        description: "An error occurred during sign in.",
       });
     } finally {
       setIsLoading(false);
