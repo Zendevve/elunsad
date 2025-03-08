@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -38,15 +39,28 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
+      console.log("Attempting to sign in with:", data.identifier);
+      
       // First, check if the identifier is an email or username
       const isEmail = data.identifier.includes('@');
       
-      // Construct the query properly
-      const { data: userData, error } = await supabase
+      // Log the query we're about to make for debugging
+      console.log(`Querying with ${isEmail ? 'email' : 'username'}: ${data.identifier}`);
+      
+      // Construct the query - using simpler approach
+      let query = supabase
         .from('register_account')
-        .select('*')
-        .or(isEmail ? `email.eq."${data.identifier}"` : `username.eq."${data.identifier}"`)
-        .maybeSingle();
+        .select('*');
+        
+      if (isEmail) {
+        query = query.eq('email', data.identifier);
+      } else {
+        query = query.eq('username', data.identifier);
+      }
+      
+      const { data: userData, error } = await query.maybeSingle();
+      
+      console.log("Query result:", userData, "Error:", error);
       
       if (error) {
         console.error("Database query error:", error);
@@ -59,6 +73,7 @@ const SignIn = () => {
       }
       
       if (!userData) {
+        console.log("No user found with the provided credentials");
         toast({
           variant: "destructive",
           title: "Sign in failed",
@@ -67,8 +82,15 @@ const SignIn = () => {
         return;
       }
       
-      // Verify password
+      // Verify password - log it for debugging (without showing the actual values)
+      console.log("Password check:", 
+        "Input length:", data.password.length, 
+        "Stored length:", userData.password.length,
+        "Match:", userData.password === data.password
+      );
+      
       if (userData.password !== data.password) {
+        console.log("Password doesn't match");
         toast({
           variant: "destructive",
           title: "Sign in failed",
