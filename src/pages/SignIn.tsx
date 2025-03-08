@@ -1,8 +1,8 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, User, LogIn, Facebook, AlignJustify } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, LogIn, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SignInFormData {
   identifier: string;
@@ -25,6 +26,7 @@ const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const form = useForm<SignInFormData>({
     defaultValues: {
@@ -37,16 +39,57 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      // In a real app, this would be replaced with actual authentication
-      console.log("Sign in attempted with:", data);
+      // Attempt to sign in by checking the register_account table
+      // First, check if the identifier is an email or username
+      const isEmail = data.identifier.includes('@');
+      
+      let query = supabase
+        .from('register_account')
+        .select('*');
+      
+      if (isEmail) {
+        query = query.eq('email', data.identifier);
+      } else {
+        query = query.eq('username', data.identifier);
+      }
+      
+      const { data: userData, error } = await query.single();
+      
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Sign in failed",
+          description: "Invalid email/username or password.",
+        });
+        return;
+      }
+      
+      // Verify password (in a real app, we would use proper hashing)
+      if (userData.password !== data.password) {
+        toast({
+          variant: "destructive",
+          title: "Sign in failed",
+          description: "Invalid email/username or password.",
+        });
+        return;
+      }
+      
+      // Store user data in localStorage (as a basic session mechanism)
+      localStorage.setItem('user', JSON.stringify({
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        firstname: userData.firstname,
+        lastname: userData.lastname
+      }));
       
       toast({
-        title: "Sign in attempt received",
-        description: "This is a placeholder for actual authentication.",
+        title: "Sign in successful",
+        description: `Welcome back, ${userData.firstname}!`,
       });
       
-      // Simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Navigate to dashboard after successful login
+      navigate("/dashboard");
       
     } catch (error) {
       toast({
@@ -54,6 +97,7 @@ const SignIn = () => {
         title: "Error",
         description: "An error occurred during sign in.",
       });
+      console.error("Sign in error:", error);
     } finally {
       setIsLoading(false);
     }
