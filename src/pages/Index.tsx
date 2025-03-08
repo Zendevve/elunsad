@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Rocket, BarChart2, CheckCircle, Database, TrendingUp, MapPin, Bell, Upload, ArrowRight, Quote, Mail, Globe } from "lucide-react";
@@ -35,9 +34,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="md:w-1/2 mb-10 md:mb-0">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
-                Streamline Your Business Permit Process
-              </h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">Level Up Your Business Permit Process</h1>
               <p className="text-xl text-gray-600 mb-8">
                 Easily manage applications, renewals, and document submissions from anywhere.
               </p>
