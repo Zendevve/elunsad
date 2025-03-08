@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { 
   Eye, EyeOff, Mail, Lock, User, Phone, UserPlus, Facebook, 
-  Briefcase, FileText, HelpCircle
+  Briefcase, FileText, Check, Info, HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,51 +20,17 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 
-// Form validation schema
-const registerSchema = z.object({
-  firstname: z.string().min(1, "First name is required"),
-  middlename: z.string().optional(),
-  lastname: z.string().min(1, "Last name is required"),
-  extension_name: z.string().optional(),
-  username: z.string()
-    .min(3, "Username must be at least 3 characters")
-    .max(30, "Username cannot exceed 30 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().optional(),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .refine(
-      (value) => /[A-Z]/.test(value), 
-      "Password must contain at least one uppercase letter"
-    )
-    .refine(
-      (value) => /[a-z]/.test(value), 
-      "Password must contain at least one lowercase letter"
-    )
-    .refine(
-      (value) => /[0-9]/.test(value), 
-      "Password must contain at least one number"
-    )
-    .refine(
-      (value) => /[^A-Za-z0-9]/.test(value), 
-      "Password must contain at least one special character"
-    ),
-  confirmPassword: z.string().min(8, "Please confirm your password"),
-  businessName: z.string().optional(),
-  registrationNumber: z.string().optional(),
-  agreeToTerms: z.boolean().refine(value => value === true, {
-    message: "You must agree to the terms and conditions",
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+interface RegisterFormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  businessName?: string;
+  registrationNumber?: string;
+  agreeToTerms: boolean;
+}
 
 const passwordStrengthColors = {
   weak: "bg-red-500",
@@ -78,16 +44,10 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<"weak" | "medium" | "strong" | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
     defaultValues: {
-      firstname: "",
-      middlename: "",
-      lastname: "",
-      extension_name: "",
-      username: "",
+      fullName: "",
       email: "",
       phone: "",
       password: "",
@@ -128,79 +88,30 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      // Check if username already exists
-      const { data: usernameExists, error: usernameError } = await supabase
-        .from('register_account')
-        .select('username')
-        .eq('username', data.username)
-        .maybeSingle();
-
-      if (usernameError && usernameError.code !== 'PGRST116') {
-        throw new Error("Error checking username availability");
-      }
-
-      if (usernameExists) {
-        form.setError("username", { 
-          type: "manual", 
-          message: "Username already taken" 
-        });
-        throw new Error("Username already taken");
-      }
-
-      // Check if email already exists
-      const { data: emailExists, error: emailError } = await supabase
-        .from('register_account')
-        .select('email')
-        .eq('email', data.email)
-        .maybeSingle();
-
-      if (emailError && emailError.code !== 'PGRST116') {
-        throw new Error("Error checking email availability");
-      }
-
-      if (emailExists) {
-        form.setError("email", { 
-          type: "manual", 
-          message: "Email already registered" 
-        });
-        throw new Error("Email already registered");
-      }
-
-      // Insert new user into register_account table
-      const { error: insertError } = await supabase
-        .from('register_account')
-        .insert({
-          firstname: data.firstname,
-          middlename: data.middlename || null,
-          lastname: data.lastname,
-          extension_name: data.extension_name || null,
-          username: data.username,
-          email: data.email,
-          password: data.password, // Note: In a production app, this should be hashed!
-        });
-
-      if (insertError) {
-        console.error("Registration error:", insertError);
-        throw new Error("Registration failed: " + insertError.message);
+      if (data.password !== data.confirmPassword) {
+        throw new Error("Passwords do not match");
       }
       
-      // Registration successful
+      if (!data.agreeToTerms) {
+        throw new Error("You must agree to the terms and conditions");
+      }
+      
+      // In a real app, this would be replaced with actual registration
+      console.log("Registration attempted with:", data);
+      
       toast({
-        title: "Registration Successful",
-        description: "Your account has been created successfully. You can now sign in.",
-        variant: "default",
+        title: "Registration attempt received",
+        description: "This is a placeholder for actual registration.",
       });
       
-      // Redirect to signin page
-      navigate('/signin');
+      // Simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
     } catch (error) {
-      console.error("Registration error:", error);
-      
       toast({
         variant: "destructive",
-        title: "Registration Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred during registration.",
       });
     } finally {
       setIsLoading(false);
@@ -257,116 +168,37 @@ const Register = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Personal Details</h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="firstname"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                  <User className="h-5 w-5" />
-                                </span>
-                                <Input
-                                  {...field}
-                                  type="text"
-                                  placeholder="First Name"
-                                  className="pl-10"
-                                  disabled={isLoading}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="middlename"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Middle Name</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                  <User className="h-5 w-5" />
-                                </span>
-                                <Input
-                                  {...field}
-                                  type="text"
-                                  placeholder="Middle Name"
-                                  className="pl-10"
-                                  disabled={isLoading}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="lastname"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                  <User className="h-5 w-5" />
-                                </span>
-                                <Input
-                                  {...field}
-                                  type="text"
-                                  placeholder="Last Name"
-                                  className="pl-10"
-                                  disabled={isLoading}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="extension_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Extension Name</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                  <User className="h-5 w-5" />
-                                </span>
-                                <Input
-                                  {...field}
-                                  type="text"
-                                  placeholder="Jr., Sr., III, etc."
-                                  className="pl-10"
-                                  disabled={isLoading}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                <User className="h-5 w-5" />
+                              </span>
+                              <Input
+                                {...field}
+                                type="text"
+                                placeholder="Enter your full name"
+                                className="pl-10"
+                                disabled={isLoading}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email Address <span className="text-red-500">*</span></FormLabel>
+                          <FormLabel>Email Address</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -418,38 +250,10 @@ const Register = () => {
                     
                     <FormField
                       control={form.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <User className="h-5 w-5" />
-                              </span>
-                              <Input
-                                {...field}
-                                type="text"
-                                placeholder="Choose a username (3-30 characters)"
-                                className="pl-10"
-                                disabled={isLoading}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormDescription>
-                            Username must be between 3-30 characters and unique.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
+                          <FormLabel>Password</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -503,7 +307,7 @@ const Register = () => {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm Password <span className="text-red-500">*</span></FormLabel>
+                          <FormLabel>Confirm Password</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">

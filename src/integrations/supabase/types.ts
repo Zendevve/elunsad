@@ -9,45 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      register_account: {
-        Row: {
-          created_at: string | null
-          email: string
-          extension_name: string | null
-          firstname: string
-          id: string
-          lastname: string
-          middlename: string | null
-          password: string
-          updated_at: string | null
-          username: string
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          extension_name?: string | null
-          firstname: string
-          id?: string
-          lastname: string
-          middlename?: string | null
-          password: string
-          updated_at?: string | null
-          username: string
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          extension_name?: string | null
-          firstname?: string
-          id?: string
-          lastname?: string
-          middlename?: string | null
-          password?: string
-          updated_at?: string | null
-          username?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never

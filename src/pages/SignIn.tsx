@@ -1,8 +1,8 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, LogIn, Facebook } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, LogIn, Facebook, AlignJustify } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,26 +15,18 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 
-// Create a validation schema for the form
-const signInSchema = z.object({
-  identifier: z.string().min(1, "Email or username is required"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type SignInFormData = z.infer<typeof signInSchema>;
+interface SignInFormData {
+  identifier: string;
+  password: string;
+}
 
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const form = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema),
     defaultValues: {
       identifier: "",
       password: "",
@@ -45,61 +37,22 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      // Check if the identifier is an email or username
-      const isEmail = data.identifier.includes('@');
-      const field = isEmail ? 'email' : 'username';
-      
-      console.log(`Attempting to sign in with ${field}: ${data.identifier}`);
-      
-      // Query the register_account table to find the user
-      const { data: users, error } = await supabase
-        .from('register_account')
-        .select('*')
-        .eq(field, data.identifier.trim());
-      
-      if (error) {
-        console.error("Error fetching user data:", error);
-        throw new Error("Authentication failed. Please try again.");
-      }
-      
-      if (!users || users.length === 0) {
-        console.error("No user found with the provided credentials");
-        throw new Error("Invalid username/email or password");
-      }
-      
-      const userData = users[0];
-      
-      // Verify the password
-      if (userData.password !== data.password) {
-        console.error("Password doesn't match");
-        throw new Error("Invalid username/email or password");
-      }
-      
-      console.log("Sign in successful for user:", userData.firstname);
-      
-      // Store user info in session storage (only non-sensitive info)
-      sessionStorage.setItem('user', JSON.stringify({
-        id: userData.id,
-        firstname: userData.firstname,
-        lastname: userData.lastname,
-        username: userData.username,
-        email: userData.email
-      }));
+      // In a real app, this would be replaced with actual authentication
+      console.log("Sign in attempted with:", data);
       
       toast({
-        title: "Sign In Successful",
-        description: `Welcome back, ${userData.firstname}!`,
+        title: "Sign in attempt received",
+        description: "This is a placeholder for actual authentication.",
       });
       
-      // Redirect to dashboard or home page
-      navigate('/dashboard');
+      // Simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
     } catch (error) {
-      console.error("Sign in error:", error);
       toast({
         variant: "destructive",
-        title: "Sign In Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        title: "Error",
+        description: "An error occurred during sign in.",
       });
     } finally {
       setIsLoading(false);
