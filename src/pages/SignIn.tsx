@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Mail, Lock, User, LogIn } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,9 +19,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define validation schema
+// Define validation schema - now with email only
 const signInSchema = z.object({
-  identifier: z.string().min(1, "Username or email is required"),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -36,7 +36,7 @@ const SignIn = () => {
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      identifier: "",
+      email: "",
       password: "",
     },
   });
@@ -45,15 +45,15 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      // Check if identifier is username or email
+      // Query based on email only
       const { data: userData, error: userError } = await supabase
         .from('register_account')
         .select('*')
-        .or(`username.eq.${data.identifier},email.eq.${data.identifier}`)
+        .eq('email', data.email)
         .single();
 
       if (userError || !userData) {
-        throw new Error("Invalid credentials. User not found.");
+        throw new Error("Invalid credentials. Email not found.");
       }
 
       // Verify password (in a real app, this would use hashing)
@@ -137,10 +137,10 @@ const SignIn = () => {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="identifier"
+                    name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Username or Email</FormLabel>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -148,8 +148,8 @@ const SignIn = () => {
                             </span>
                             <Input
                               {...field}
-                              type="text"
-                              placeholder="Enter your username or email"
+                              type="email"
+                              placeholder="Enter your email address"
                               className="pl-10"
                               disabled={isLoading}
                             />
