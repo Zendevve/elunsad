@@ -2,27 +2,40 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Upload, ArrowLeft, HelpCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, HelpCircle, CheckCircle2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ApplicationHeader from "@/components/application/ApplicationHeader";
+import BusinessInformationSection from "@/components/application/BusinessInformationSection";
+import OwnerInformationSection from "@/components/application/OwnerInformationSection";
+import BusinessOperationSection from "@/components/application/BusinessOperationSection";
+import BusinessLinesSection from "@/components/application/BusinessLinesSection";
+import DeclarationSection from "@/components/application/DeclarationSection";
+import { useToast } from "@/components/ui/use-toast";
 
 const Applications = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 5;
+  const { toast } = useToast();
+
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      // Submit the form
+      toast({
+        title: "Application Submitted",
+        description: "Your business permit application has been submitted successfully.",
+      });
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -39,140 +52,103 @@ const Applications = () => {
         </div>
       </div>
 
-      {/* Title Section */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900">New Business Permit Application</h1>
-          <p className="mt-2 text-gray-600">
-            Complete all required information and upload necessary documents to submit your business permit application.
-          </p>
-        </div>
-      </div>
-
-      {/* Progress Indicator */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="relative">
-          <div className="h-2 bg-gray-200 rounded-full">
-            <div 
-              className="h-2 bg-blue-600 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-            />
-          </div>
-          <div className="mt-4 grid grid-cols-4 gap-4">
-            {[
-              "Business Information",
-              "Permit Details",
-              "Documents",
-              "Review"
-            ].map((step, index) => (
-              <div key={step} className="text-center">
-                <Badge 
-                  variant={currentStep > index ? "default" : "outline"}
-                  className="mb-2"
-                >
-                  Step {index + 1}
-                </Badge>
-                <p className="text-sm font-medium text-gray-900">{step}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Application Header with Progress */}
+      <ApplicationHeader currentStep={currentStep} totalSteps={totalSteps} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form Sections */}
           <div className="lg:col-span-2 space-y-6">
-            <Tabs defaultValue="business" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="business">Business</TabsTrigger>
-                <TabsTrigger value="permit">Permit</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="review">Review</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="business">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Business Information</CardTitle>
-                    <CardDescription>
-                      Enter your business details and contact information
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="businessName">Business Name</Label>
-                        <Input id="businessName" placeholder="Enter business name" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="registrationNumber">Registration Number</Label>
-                        <Input id="registrationNumber" placeholder="Enter registration number" />
+            {/* Step content based on current step */}
+            {currentStep === 1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Application Type</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center space-x-2 p-4 border rounded-md hover:bg-gray-50 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        id="newApplication" 
+                        name="applicationType" 
+                        className="h-5 w-5 text-blue-600"
+                        defaultChecked 
+                      />
+                      <div>
+                        <label htmlFor="newApplication" className="font-medium text-gray-900">New Business Application</label>
+                        <p className="text-sm text-gray-500">Apply for a new business permit</p>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Business Address</Label>
-                      <Input id="address" placeholder="Enter complete address" />
+                    
+                    <div className="flex items-center space-x-2 p-4 border rounded-md hover:bg-gray-50 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        id="renewalApplication" 
+                        name="applicationType" 
+                        className="h-5 w-5 text-blue-600" 
+                      />
+                      <div>
+                        <label htmlFor="renewalApplication" className="font-medium text-gray-900">Renewal Application</label>
+                        <p className="text-sm text-gray-500">Renew an existing business permit</p>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="permit">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Permit Details</CardTitle>
-                    <CardDescription>
-                      Select permit type and provide required details
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Permit details form fields will go here */}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="documents">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Document Upload</CardTitle>
-                    <CardDescription>
-                      Upload all required documents for your permit application
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-600">
-                        Drag and drop your files here, or click to select files
-                      </p>
+                    
+                    <div className="flex items-center space-x-2 p-4 border rounded-md hover:bg-gray-50 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        id="amendmentApplication" 
+                        name="applicationType" 
+                        className="h-5 w-5 text-blue-600" 
+                      />
+                      <div>
+                        <label htmlFor="amendmentApplication" className="font-medium text-gray-900">Amendment/Change of Information</label>
+                        <p className="text-sm text-gray-500">Update information for an existing business permit</p>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-              <TabsContent value="review">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Review & Submit</CardTitle>
-                    <CardDescription>
-                      Review your application before final submission
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Review summary will go here */}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            {currentStep === 2 && (
+              <>
+                <BusinessInformationSection />
+              </>
+            )}
 
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}>
+            {currentStep === 3 && (
+              <>
+                <OwnerInformationSection />
+              </>
+            )}
+
+            {currentStep === 4 && (
+              <>
+                <BusinessOperationSection />
+                <BusinessLinesSection />
+              </>
+            )}
+
+            {currentStep === 5 && (
+              <>
+                <DeclarationSection />
+              </>
+            )}
+
+            <div className="flex justify-between mt-8">
+              <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
-              <Button onClick={() => setCurrentStep(Math.min(totalSteps, currentStep + 1))}>
-                {currentStep === totalSteps ? "Submit Application" : "Next Step"}
+              <Button onClick={handleNext}>
+                {currentStep === totalSteps ? (
+                  "Submit Application"
+                ) : (
+                  <>
+                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -193,16 +169,35 @@ const Applications = () => {
                     <div>
                       <h4 className="font-medium">Document Checklist</h4>
                       <p className="text-sm text-gray-600">
-                        Ensure you have all required documents ready
+                        Ensure you have all required documents ready:
+                      </p>
+                      <ul className="text-sm text-gray-600 mt-2 list-disc list-inside ml-1">
+                        <li>Barangay Business Clearance</li>
+                        <li>DTI/SEC Registration</li>
+                        <li>Contract of Lease (if renting)</li>
+                        <li>Community Tax Certificate</li>
+                        <li>Picture of Business Establishment</li>
+                        <li>Tax Identification Number (TIN)</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium">Application Tips</h4>
+                      <p className="text-sm text-gray-600">
+                        Fill out all fields completely and accurately to avoid delays in processing.
+                        You can save your application and continue later.
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-2">
                     <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
                     <div>
-                      <h4 className="font-medium">Guidelines</h4>
+                      <h4 className="font-medium">Contact Support</h4>
                       <p className="text-sm text-gray-600">
-                        Read our application guidelines
+                        Need help? Contact BPLO at (046342) 788-2316 local 111
+                        or email at bplolucena@gmail.com
                       </p>
                     </div>
                   </div>
@@ -220,7 +215,7 @@ const Applications = () => {
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Contact Support</h3>
               <p className="mt-2 text-sm text-gray-600">
-                Need help? Contact our support team at support@example.com
+                Need help? Contact our support team at bplolucena@gmail.com
               </p>
             </div>
             <div>
