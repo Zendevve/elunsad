@@ -19,20 +19,6 @@ const ApplicationHeader = ({ currentStep, totalSteps }: ApplicationHeaderProps) 
         </div>
         
         <h1 className="text-2xl font-bold text-gray-900">UNIFIED APPLICATION FORM FOR BUSINESS PERMIT</h1>
-        <div className="flex justify-center mt-3 space-x-4">
-          <div className="flex items-center space-x-2">
-            <input type="checkbox" id="new" className="h-4 w-4" />
-            <label htmlFor="new" className="text-sm font-medium">NEW</label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <input type="checkbox" id="renewal" className="h-4 w-4" />
-            <label htmlFor="renewal" className="text-sm font-medium">RENEWAL</label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <input type="checkbox" id="changeInfo" className="h-4 w-4" />
-            <label htmlFor="changeInfo" className="text-sm font-medium">CHANGE OF INFO</label>
-          </div>
-        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 mt-6 gap-4">
           <div className="text-left space-y-2">
