@@ -2,16 +2,16 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
 
 const OwnerInformationSection = () => {
-  const [civilStatus, setCivilStatus] = useState<string | null>(null);
-  const [sex, setSex] = useState<string | null>(null);
-  const [nationality, setNationality] = useState<string | null>(null);
+  const [civilStatus, setCivilStatus] = useState<string>("single");
+  const [sex, setSex] = useState<string>("male");
+  const [nationality, setNationality] = useState<string>("filipino");
 
   return (
     <Card className="mt-6">
@@ -47,32 +47,24 @@ const OwnerInformationSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="space-y-2">
             <Label>Civil Status</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <RadioGroup
+              value={civilStatus}
+              onValueChange={setCivilStatus}
+              className="grid grid-cols-3 gap-4"
+            >
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="single" 
-                  checked={civilStatus === "single"}
-                  onCheckedChange={() => setCivilStatus("single")}
-                />
+                <RadioGroupItem value="single" id="single" />
                 <Label htmlFor="single">Single</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="married" 
-                  checked={civilStatus === "married"}
-                  onCheckedChange={() => setCivilStatus("married")}
-                />
+                <RadioGroupItem value="married" id="married" />
                 <Label htmlFor="married">Married</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="widowed" 
-                  checked={civilStatus === "widowed"}
-                  onCheckedChange={() => setCivilStatus("widowed")}
-                />
+                <RadioGroupItem value="widowed" id="widowed" />
                 <Label htmlFor="widowed">Widowed</Label>
               </div>
-            </div>
+            </RadioGroup>
           </div>
           
           <div className="space-y-2">
@@ -82,46 +74,38 @@ const OwnerInformationSection = () => {
           
           <div className="space-y-2">
             <Label>Sex</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <RadioGroup
+              value={sex}
+              onValueChange={setSex}
+              className="grid grid-cols-2 gap-4"
+            >
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="male" 
-                  checked={sex === "male"}
-                  onCheckedChange={() => setSex("male")}
-                />
+                <RadioGroupItem value="male" id="male" />
                 <Label htmlFor="male">Male</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="female" 
-                  checked={sex === "female"}
-                  onCheckedChange={() => setSex("female")}
-                />
+                <RadioGroupItem value="female" id="female" />
                 <Label htmlFor="female">Female</Label>
               </div>
-            </div>
+            </RadioGroup>
           </div>
           
           <div className="space-y-2">
             <Label>Nationality</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <RadioGroup
+              value={nationality}
+              onValueChange={setNationality}
+              className="grid grid-cols-2 gap-4"
+            >
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="filipino" 
-                  checked={nationality === "filipino"}
-                  onCheckedChange={() => setNationality("filipino")}
-                />
+                <RadioGroupItem value="filipino" id="filipino" />
                 <Label htmlFor="filipino">Filipino</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="foreigner" 
-                  checked={nationality === "foreigner"}
-                  onCheckedChange={() => setNationality("foreigner")}
-                />
+                <RadioGroupItem value="foreigner" id="foreigner" />
                 <Label htmlFor="foreigner">Foreigner</Label>
               </div>
-            </div>
+            </RadioGroup>
           </div>
         </div>
 
