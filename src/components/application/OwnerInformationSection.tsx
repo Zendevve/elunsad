@@ -45,67 +45,77 @@ const OwnerInformationSection = () => {
 
         {/* Civil Status, Age, Sex, Nationality */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Civil Status */}
           <div className="space-y-3">
             <Label>Civil Status</Label>
-            <RadioGroup
-              value={civilStatus}
-              onValueChange={setCivilStatus}
-              className="flex space-x-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="single" id="single" />
-                <Label htmlFor="single" className="cursor-pointer">Single</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="married" id="married" />
-                <Label htmlFor="married" className="cursor-pointer">Married</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="widowed" id="widowed" />
-                <Label htmlFor="widowed" className="cursor-pointer">Widowed</Label>
-              </div>
-            </RadioGroup>
+            <div className="flex flex-col space-y-2">
+              <RadioGroup
+                value={civilStatus}
+                onValueChange={setCivilStatus}
+                className="flex flex-wrap gap-x-6 gap-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="single" id="single" />
+                  <Label htmlFor="single" className="cursor-pointer">Single</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="married" id="married" />
+                  <Label htmlFor="married" className="cursor-pointer">Married</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="widowed" id="widowed" />
+                  <Label htmlFor="widowed" className="cursor-pointer">Widowed</Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
           
+          {/* Age */}
           <div className="space-y-2">
             <Label htmlFor="age">Age</Label>
             <Input id="age" type="number" placeholder="Enter age" />
           </div>
           
+          {/* Sex */}
           <div className="space-y-3">
             <Label>Sex</Label>
-            <RadioGroup
-              value={sex}
-              onValueChange={setSex}
-              className="flex space-x-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="male" id="male" />
-                <Label htmlFor="male" className="cursor-pointer">Male</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="female" id="female" />
-                <Label htmlFor="female" className="cursor-pointer">Female</Label>
-              </div>
-            </RadioGroup>
+            <div className="flex flex-col space-y-2">
+              <RadioGroup
+                value={sex}
+                onValueChange={setSex}
+                className="flex flex-wrap gap-x-6 gap-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="male" id="male" />
+                  <Label htmlFor="male" className="cursor-pointer">Male</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="female" id="female" />
+                  <Label htmlFor="female" className="cursor-pointer">Female</Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
           
+          {/* Nationality */}
           <div className="space-y-3">
             <Label>Nationality</Label>
-            <RadioGroup
-              value={nationality}
-              onValueChange={setNationality}
-              className="flex space-x-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="filipino" id="filipino" />
-                <Label htmlFor="filipino" className="cursor-pointer">Filipino</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="foreigner" id="foreigner" />
-                <Label htmlFor="foreigner" className="cursor-pointer">Foreigner</Label>
-              </div>
-            </RadioGroup>
+            <div className="flex flex-col space-y-2">
+              <RadioGroup
+                value={nationality}
+                onValueChange={setNationality}
+                className="flex flex-wrap gap-x-6 gap-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="filipino" id="filipino" />
+                  <Label htmlFor="filipino" className="cursor-pointer">Filipino</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="foreigner" id="foreigner" />
+                  <Label htmlFor="foreigner" className="cursor-pointer">Foreigner</Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
         </div>
 
