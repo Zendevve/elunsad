@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -65,7 +65,7 @@ const BusinessOperationSection = () => {
           
           <div className="space-y-2">
             <Label htmlFor="deliveryVehicles">No. of Delivery Vehicles (if applicable)</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Input id="vanTruck" placeholder="Van/Truck" />
               <Input id="motorcycle" placeholder="Motorcycle" />
               <Input id="other" placeholder="Other" />
@@ -85,74 +85,54 @@ const BusinessOperationSection = () => {
             <Input id="capitalization" type="number" placeholder="Enter amount in PHP" />
           </div>
           
-          <div className="space-y-2">
-            <Label>Do you have tax incentives from any Government Entity?</Label>
-            <div className="flex space-x-6">
+          <div className="space-y-4">
+            <Label className="block mb-2">Do you have tax incentives from any Government Entity?</Label>
+            <RadioGroup
+              value={hasTaxIncentives || ""}
+              onValueChange={setHasTaxIncentives}
+              className="flex flex-wrap gap-x-6 gap-y-3"
+            >
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="taxYes" 
-                  checked={hasTaxIncentives === "yes"}
-                  onCheckedChange={() => setHasTaxIncentives("yes")}
-                />
-                <Label htmlFor="taxYes">Yes (Please attach a copy of your certificate)</Label>
+                <RadioGroupItem value="yes" id="taxYes" />
+                <Label htmlFor="taxYes" className="cursor-pointer">Yes (Please attach a copy of your certificate)</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="taxNo" 
-                  checked={hasTaxIncentives === "no"}
-                  onCheckedChange={() => setHasTaxIncentives("no")}
-                />
-                <Label htmlFor="taxNo">No</Label>
+                <RadioGroupItem value="no" id="taxNo" />
+                <Label htmlFor="taxNo" className="cursor-pointer">No</Label>
               </div>
-            </div>
+            </RadioGroup>
           </div>
         </div>
 
         {/* Business Activity */}
-        <div className="space-y-2">
-          <Label>Business Activity (Please check one)</Label>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="space-y-4">
+          <Label className="block text-lg font-medium">Business Activity (Please check one)</Label>
+          <RadioGroup
+            value={businessActivity || ""}
+            onValueChange={setBusinessActivity}
+            className="flex flex-wrap gap-x-6 gap-y-3"
+          >
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="mainOffice" 
-                checked={businessActivity === "mainOffice"}
-                onCheckedChange={() => setBusinessActivity("mainOffice")}
-              />
-              <Label htmlFor="mainOffice">Main Office</Label>
+              <RadioGroupItem value="mainOffice" id="mainOffice" />
+              <Label htmlFor="mainOffice" className="cursor-pointer">Main Office</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="branchOffice" 
-                checked={businessActivity === "branchOffice"}
-                onCheckedChange={() => setBusinessActivity("branchOffice")}
-              />
-              <Label htmlFor="branchOffice">Branch Office</Label>
+              <RadioGroupItem value="branchOffice" id="branchOffice" />
+              <Label htmlFor="branchOffice" className="cursor-pointer">Branch Office</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="adminOffice" 
-                checked={businessActivity === "adminOffice"}
-                onCheckedChange={() => setBusinessActivity("adminOffice")}
-              />
-              <Label htmlFor="adminOffice">Admin Office Only</Label>
+              <RadioGroupItem value="adminOffice" id="adminOffice" />
+              <Label htmlFor="adminOffice" className="cursor-pointer">Admin Office Only</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="warehouse" 
-                checked={businessActivity === "warehouse"}
-                onCheckedChange={() => setBusinessActivity("warehouse")}
-              />
-              <Label htmlFor="warehouse">Warehouse</Label>
+              <RadioGroupItem value="warehouse" id="warehouse" />
+              <Label htmlFor="warehouse" className="cursor-pointer">Warehouse</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="others" 
-                checked={businessActivity === "others"}
-                onCheckedChange={() => setBusinessActivity("others")}
-              />
-              <Label htmlFor="others">Others, please specify</Label>
+              <RadioGroupItem value="others" id="others" />
+              <Label htmlFor="others" className="cursor-pointer">Others, please specify</Label>
             </div>
-          </div>
+          </RadioGroup>
         </div>
 
         {/* Main Office Address */}
@@ -212,26 +192,22 @@ const BusinessOperationSection = () => {
         {/* Property Ownership */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="col-span-1 space-y-2">
+            <div className="col-span-1 space-y-4">
               <Label>Property Owned?</Label>
-              <div className="flex space-x-6">
+              <RadioGroup
+                value={propertyOwned || ""}
+                onValueChange={setPropertyOwned}
+                className="flex flex-wrap gap-x-6 gap-y-3"
+              >
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="propertyYes" 
-                    checked={propertyOwned === "yes"}
-                    onCheckedChange={() => setPropertyOwned("yes")}
-                  />
-                  <Label htmlFor="propertyYes">Yes</Label>
+                  <RadioGroupItem value="yes" id="propertyYes" />
+                  <Label htmlFor="propertyYes" className="cursor-pointer">Yes</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="propertyNo" 
-                    checked={propertyOwned === "no"}
-                    onCheckedChange={() => setPropertyOwned("no")}
-                  />
-                  <Label htmlFor="propertyNo">No</Label>
+                  <RadioGroupItem value="no" id="propertyNo" />
+                  <Label htmlFor="propertyNo" className="cursor-pointer">No</Label>
                 </div>
-              </div>
+              </RadioGroup>
             </div>
             
             <div className="col-span-2 space-y-2">
