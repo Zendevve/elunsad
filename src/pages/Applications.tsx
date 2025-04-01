@@ -11,6 +11,7 @@ import BusinessOperationSection from "@/components/application/BusinessOperation
 import BusinessLinesSection from "@/components/application/BusinessLinesSection";
 import DeclarationSection from "@/components/application/DeclarationSection";
 import { useToast } from "@/components/ui/use-toast";
+import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 
 const Applications = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -41,13 +42,13 @@ const Applications = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <nav className="flex text-sm">
             <Link to="/" className="text-gray-500 hover:text-gray-700">
               Dashboard
             </Link>
             <span className="mx-2 text-gray-400">/</span>
-            <span className="text-gray-900">Applications</span>
+            <span className="text-gray-900">Business Permit Application</span>
           </nav>
         </div>
       </div>
@@ -56,72 +57,67 @@ const Applications = () => {
       <ApplicationHeader currentStep={currentStep} totalSteps={totalSteps} />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form Sections */}
           <div className="lg:col-span-2 space-y-6">
             {/* Step content based on current step */}
             {currentStep === 1 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Application Type</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center space-x-2 p-4 border rounded-md hover:bg-gray-50 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        id="newApplication" 
-                        name="applicationType" 
-                        className="h-5 w-5 text-blue-600"
-                        defaultChecked 
-                      />
-                      <div>
-                        <label htmlFor="newApplication" className="font-medium text-gray-900">New Business Application</label>
-                        <p className="text-sm text-gray-500">Apply for a new business permit</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-4 border rounded-md hover:bg-gray-50 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        id="renewalApplication" 
-                        name="applicationType" 
-                        className="h-5 w-5 text-blue-600" 
-                      />
-                      <div>
-                        <label htmlFor="renewalApplication" className="font-medium text-gray-900">Renewal Application</label>
-                        <p className="text-sm text-gray-500">Renew an existing business permit</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-4 border rounded-md hover:bg-gray-50 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        id="amendmentApplication" 
-                        name="applicationType" 
-                        className="h-5 w-5 text-blue-600" 
-                      />
-                      <div>
-                        <label htmlFor="amendmentApplication" className="font-medium text-gray-900">Amendment/Change of Information</label>
-                        <p className="text-sm text-gray-500">Update information for an existing business permit</p>
-                      </div>
+              <FormSectionWrapper 
+                title="Application Type" 
+                description="Select the type of application you wish to submit"
+                stepNumber={1}
+              >
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="flex items-start p-4 border rounded-md bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      id="newApplication" 
+                      name="applicationType" 
+                      className="h-5 w-5 text-primary mt-1" 
+                      defaultChecked 
+                    />
+                    <div className="ml-3">
+                      <label htmlFor="newApplication" className="font-medium text-gray-900 block cursor-pointer">New Business Application</label>
+                      <p className="text-sm text-gray-500 mt-1">For first-time business permit applications</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  
+                  <div className="flex items-start p-4 border rounded-md bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      id="renewalApplication" 
+                      name="applicationType" 
+                      className="h-5 w-5 text-primary mt-1"
+                    />
+                    <div className="ml-3">
+                      <label htmlFor="renewalApplication" className="font-medium text-gray-900 block cursor-pointer">Renewal Application</label>
+                      <p className="text-sm text-gray-500 mt-1">For renewing an existing business permit</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start p-4 border rounded-md bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                    <input 
+                      type="radio" 
+                      id="amendmentApplication" 
+                      name="applicationType" 
+                      className="h-5 w-5 text-primary mt-1"
+                    />
+                    <div className="ml-3">
+                      <label htmlFor="amendmentApplication" className="font-medium text-gray-900 block cursor-pointer">Amendment/Change of Information</label>
+                      <p className="text-sm text-gray-500 mt-1">For updating details on an existing business permit</p>
+                    </div>
+                  </div>
+                </div>
+              </FormSectionWrapper>
             )}
 
             {currentStep === 2 && (
-              <>
-                <BusinessInformationSection />
-              </>
+              <BusinessInformationSection />
             )}
 
             {currentStep === 3 && (
-              <>
-                <OwnerInformationSection />
-              </>
+              <OwnerInformationSection />
             )}
 
             {currentStep === 4 && (
@@ -132,16 +128,22 @@ const Applications = () => {
             )}
 
             {currentStep === 5 && (
-              <>
-                <DeclarationSection />
-              </>
+              <DeclarationSection />
             )}
 
             <div className="flex justify-between mt-8">
-              <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>
+              <Button 
+                variant="outline" 
+                onClick={handleBack} 
+                disabled={currentStep === 1}
+                className="px-6"
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
-              <Button onClick={handleNext}>
+              <Button 
+                onClick={handleNext}
+                className="px-6 bg-primary"
+              >
                 {currentStep === totalSteps ? (
                   "Submit Application"
                 ) : (
@@ -155,49 +157,65 @@ const Applications = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <HelpCircle className="mr-2 h-5 w-5" />
-                  Helpful Resources
+            <Card className="sticky top-6">
+              <CardHeader className="py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b">
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <HelpCircle className="mr-2 h-5 w-5 text-primary" />
+                  Application Guidance
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <div className="space-y-4">
                   <div className="flex items-start space-x-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
                     <div>
-                      <h4 className="font-medium">Document Checklist</h4>
-                      <p className="text-sm text-gray-600">
-                        Ensure you have all required documents ready:
-                      </p>
-                      <ul className="text-sm text-gray-600 mt-2 list-disc list-inside ml-1">
-                        <li>Barangay Business Clearance</li>
-                        <li>DTI/SEC Registration</li>
-                        <li>Contract of Lease (if renting)</li>
-                        <li>Community Tax Certificate</li>
-                        <li>Picture of Business Establishment</li>
-                        <li>Tax Identification Number (TIN)</li>
+                      <h4 className="font-medium text-sm">Required Documents</h4>
+                      <ul className="text-sm text-gray-600 mt-2 space-y-1.5 list-inside">
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>Barangay Business Clearance</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>DTI/SEC Registration</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>Contract of Lease (if applicable)</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>Tax Identification Number (TIN)</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>Establishment Photos</span>
+                        </li>
                       </ul>
                     </div>
                   </div>
+
                   <div className="flex items-start space-x-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
                     <div>
-                      <h4 className="font-medium">Application Tips</h4>
-                      <p className="text-sm text-gray-600">
-                        Fill out all fields completely and accurately to avoid delays in processing.
-                        You can save your application and continue later.
+                      <h4 className="font-medium text-sm">Current Step: {currentStep} of {totalSteps}</h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {currentStep === 1 && "Choose your application type"}
+                        {currentStep === 2 && "Enter your business details"}
+                        {currentStep === 3 && "Enter owner information"}
+                        {currentStep === 4 && "Provide business operation details"}
+                        {currentStep === 5 && "Review and submit your application"}
                       </p>
                     </div>
                   </div>
+                  
                   <div className="flex items-start space-x-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
                     <div>
-                      <h4 className="font-medium">Contact Support</h4>
-                      <p className="text-sm text-gray-600">
-                        Need help? Contact BPLO at (046342) 788-2316 local 111
-                        or email at bplolucena@gmail.com
+                      <h4 className="font-medium text-sm">Need Help?</h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Contact BPLO at (046) 788-2316 or<br/>
+                        <a href="mailto:bplolucena@gmail.com" className="text-primary hover:underline">bplolucena@gmail.com</a>
                       </p>
                     </div>
                   </div>
@@ -209,25 +227,26 @@ const Applications = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <footer className="bg-white border-t mt-12 text-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Contact Support</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Support</h3>
               <p className="mt-2 text-sm text-gray-600">
-                Need help? Contact our support team at bplolucena@gmail.com
+                Need assistance? Contact us at<br/>
+                <a href="mailto:bplolucena@gmail.com" className="text-primary hover:underline">bplolucena@gmail.com</a>
               </p>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Legal</h3>
-              <ul className="mt-4 space-y-2">
+              <ul className="mt-2 space-y-1">
                 <li>
-                  <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                  <a href="#" className="text-sm text-gray-600 hover:text-primary hover:underline">
                     Privacy Policy
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                  <a href="#" className="text-sm text-gray-600 hover:text-primary hover:underline">
                     Terms of Service
                   </a>
                 </li>
@@ -236,7 +255,8 @@ const Applications = () => {
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Office Hours</h3>
               <p className="mt-2 text-sm text-gray-600">
-                Monday - Friday: 9:00 AM - 5:00 PM
+                Monday - Friday: 8:00 AM - 5:00 PM<br/>
+                Closed on weekends and holidays
               </p>
             </div>
           </div>

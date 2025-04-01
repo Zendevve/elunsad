@@ -3,156 +3,223 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import FormSectionWrapper from "./FormSectionWrapper";
 
 const BusinessInformationSection = () => {
   const [ownershipType, setOwnershipType] = useState<string>("soleProprietorship");
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle>A. BUSINESS INFORMATION AND REGISTRATION</CardTitle>
-        <CardDescription>
-          Enter your business details and registration information
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <FormSectionWrapper 
+      title="Business Information and Registration"
+      description="Enter your business details and registration information"
+      stepNumber={2}
+    >
+      <div className="space-y-8">
         {/* Business Name and Trade Name */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="businessName">Business Name</Label>
-            <Input id="businessName" placeholder="Enter business name" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tradeName">Trade Name / Franchise (if applicable)</Label>
-            <Input id="tradeName" placeholder="Enter trade name or franchise" />
+        <div>
+          <h3 className="font-medium text-base mb-3">Business Identification</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="businessName" className="text-sm">Business Name <span className="text-red-500">*</span></Label>
+              <Input id="businessName" placeholder="Enter official business name" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tradeName" className="text-sm">Trade Name / Franchise</Label>
+              <Input id="tradeName" placeholder="If different from business name" />
+              <p className="text-xs text-muted-foreground mt-1">Leave blank if same as business name</p>
+            </div>
           </div>
         </div>
 
         {/* Registration Numbers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="dtiSecCdaNumber">DTI/SEC/CDA Registration Number</Label>
-            <Input id="dtiSecCdaNumber" placeholder="Enter registration number" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tinNumber">Tax Identification Number (TIN)</Label>
-            <Input id="tinNumber" placeholder="Enter TIN" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sssNumber">Social Security System (SSS) Number</Label>
-            <Input id="sssNumber" placeholder="Enter SSS number" />
+        <div>
+          <h3 className="font-medium text-base mb-3">Registration Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="dtiSecCdaNumber" className="text-sm">DTI/SEC/CDA Registration No. <span className="text-red-500">*</span></Label>
+              <Input id="dtiSecCdaNumber" placeholder="Registration number" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tinNumber" className="text-sm">Tax Identification Number <span className="text-red-500">*</span></Label>
+              <Input id="tinNumber" placeholder="Format: XXX-XXX-XXX-XXX" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sssNumber" className="text-sm">SSS Number</Label>
+              <Input id="sssNumber" placeholder="Format: XX-XXXXXXX-X" />
+            </div>
           </div>
         </div>
 
         {/* Kind of Ownership */}
-        <div className="space-y-4">
-          <Label className="text-lg font-medium">Kind of Ownership</Label>
-          <RadioGroup
-            value={ownershipType}
-            onValueChange={setOwnershipType}
-            className="flex flex-wrap gap-x-6 gap-y-3"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="soleProprietorship" id="soleProprietorship" />
-              <Label htmlFor="soleProprietorship" className="cursor-pointer">Sole Proprietorship</Label>
+        <div>
+          <h3 className="font-medium text-base mb-3">Ownership Type <span className="text-red-500">*</span></h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            <div className="relative">
+              <input
+                type="radio"
+                id="soleProprietorship"
+                name="ownershipType"
+                value="soleProprietorship"
+                checked={ownershipType === 'soleProprietorship'}
+                onChange={() => setOwnershipType('soleProprietorship')}
+                className="peer absolute opacity-0 w-full h-full cursor-pointer"
+              />
+              <label
+                htmlFor="soleProprietorship"
+                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
+              >
+                <span className="text-center text-sm font-medium">Sole Proprietorship</span>
+              </label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="onePersonCorp" id="onePersonCorp" />
-              <Label htmlFor="onePersonCorp" className="cursor-pointer">One Person Corp</Label>
+            
+            <div className="relative">
+              <input
+                type="radio"
+                id="onePersonCorp"
+                name="ownershipType"
+                value="onePersonCorp"
+                checked={ownershipType === 'onePersonCorp'}
+                onChange={() => setOwnershipType('onePersonCorp')}
+                className="peer absolute opacity-0 w-full h-full cursor-pointer"
+              />
+              <label
+                htmlFor="onePersonCorp"
+                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
+              >
+                <span className="text-center text-sm font-medium">One Person Corp</span>
+              </label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="partnership" id="partnership" />
-              <Label htmlFor="partnership" className="cursor-pointer">Partnership</Label>
+            
+            <div className="relative">
+              <input
+                type="radio"
+                id="partnership"
+                name="ownershipType"
+                value="partnership"
+                checked={ownershipType === 'partnership'}
+                onChange={() => setOwnershipType('partnership')}
+                className="peer absolute opacity-0 w-full h-full cursor-pointer"
+              />
+              <label
+                htmlFor="partnership"
+                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
+              >
+                <span className="text-center text-sm font-medium">Partnership</span>
+              </label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="corporation" id="corporation" />
-              <Label htmlFor="corporation" className="cursor-pointer">Corporation</Label>
+            
+            <div className="relative">
+              <input
+                type="radio"
+                id="corporation"
+                name="ownershipType"
+                value="corporation"
+                checked={ownershipType === 'corporation'}
+                onChange={() => setOwnershipType('corporation')}
+                className="peer absolute opacity-0 w-full h-full cursor-pointer"
+              />
+              <label
+                htmlFor="corporation"
+                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
+              >
+                <span className="text-center text-sm font-medium">Corporation</span>
+              </label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="cooperative" id="cooperative" />
-              <Label htmlFor="cooperative" className="cursor-pointer">Cooperative</Label>
+            
+            <div className="relative">
+              <input
+                type="radio"
+                id="cooperative"
+                name="ownershipType"
+                value="cooperative"
+                checked={ownershipType === 'cooperative'}
+                onChange={() => setOwnershipType('cooperative')}
+                className="peer absolute opacity-0 w-full h-full cursor-pointer"
+              />
+              <label
+                htmlFor="cooperative"
+                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
+              >
+                <span className="text-center text-sm font-medium">Cooperative</span>
+              </label>
             </div>
-          </RadioGroup>
+          </div>
         </div>
 
         {/* Business Address */}
-        <div className="space-y-4">
-          <Label className="text-lg font-medium">Business Address</Label>
+        <div>
+          <h3 className="font-medium text-base mb-3">Business Address <span className="text-red-500">*</span></h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="space-y-2">
-              <Label htmlFor="blockNo">Block No.</Label>
-              <Input id="blockNo" placeholder="Enter block number" />
+              <Label htmlFor="houseBldgNo" className="text-sm">House/Bldg. No.</Label>
+              <Input id="houseBldgNo" placeholder="Enter number" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lotNo">Lot No.</Label>
-              <Input id="lotNo" placeholder="Enter lot number" />
+              <Label htmlFor="buildingName" className="text-sm">Building Name</Label>
+              <Input id="buildingName" placeholder="If applicable" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="houseBldgNo">House/Bldg. No.</Label>
-              <Input id="houseBldgNo" placeholder="Enter house/bldg number" />
+              <Label htmlFor="blockNo" className="text-sm">Block No.</Label>
+              <Input id="blockNo" placeholder="If applicable" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="buildingName">Name of Building</Label>
-              <Input id="buildingName" placeholder="Enter building name" />
+              <Label htmlFor="lotNo" className="text-sm">Lot No.</Label>
+              <Input id="lotNo" placeholder="If applicable" />
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="space-y-2">
-              <Label htmlFor="street">Street</Label>
+              <Label htmlFor="street" className="text-sm">Street <span className="text-red-500">*</span></Label>
               <Input id="street" placeholder="Enter street name" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="subdivision">Subdivision</Label>
-              <Input id="subdivision" placeholder="Enter subdivision" />
+              <Label htmlFor="subdivision" className="text-sm">Subdivision</Label>
+              <Input id="subdivision" placeholder="If applicable" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="barangay">Barangay</Label>
+              <Label htmlFor="barangay" className="text-sm">Barangay <span className="text-red-500">*</span></Label>
               <Input id="barangay" placeholder="Enter barangay" />
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cityMunicipality">City/Municipality</Label>
+              <Label htmlFor="cityMunicipality" className="text-sm">City/Municipality <span className="text-red-500">*</span></Label>
               <Input id="cityMunicipality" placeholder="Enter city/municipality" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="province">Province</Label>
+              <Label htmlFor="province" className="text-sm">Province <span className="text-red-500">*</span></Label>
               <Input id="province" placeholder="Enter province" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="zipCode">Zip Code</Label>
+              <Label htmlFor="zipCode" className="text-sm">Zip Code <span className="text-red-500">*</span></Label>
               <Input id="zipCode" placeholder="Enter zip code" />
             </div>
           </div>
         </div>
 
         {/* Contact Information */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="telephoneNo">Telephone No.</Label>
-            <Input id="telephoneNo" placeholder="Enter telephone number" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mobileNo">Mobile No.</Label>
-            <Input id="mobileNo" placeholder="Enter mobile number" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="emailAddress">Email Address</Label>
-            <Input id="emailAddress" type="email" placeholder="Enter email address" />
+        <div>
+          <h3 className="font-medium text-base mb-3">Contact Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="telephoneNo" className="text-sm">Telephone No.</Label>
+              <Input id="telephoneNo" placeholder="Enter telephone number" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mobileNo" className="text-sm">Mobile No. <span className="text-red-500">*</span></Label>
+              <Input id="mobileNo" placeholder="Enter mobile number" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="emailAddress" className="text-sm">Email Address <span className="text-red-500">*</span></Label>
+              <Input id="emailAddress" type="email" placeholder="Enter email address" />
+            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </FormSectionWrapper>
   );
 };
 
