@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Card,
   CardContent,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 
 const BusinessInformationSection = () => {
-  const [ownershipType, setOwnershipType] = useState<string | null>(null);
+  const [ownershipType, setOwnershipType] = useState<string>("soleProprietorship");
 
   return (
     <Card className="mt-6">
@@ -52,50 +52,34 @@ const BusinessInformationSection = () => {
         </div>
 
         {/* Kind of Ownership */}
-        <div className="space-y-2">
-          <Label>Kind of Ownership</Label>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="space-y-4">
+          <Label className="text-lg font-medium">Kind of Ownership</Label>
+          <RadioGroup
+            value={ownershipType}
+            onValueChange={setOwnershipType}
+            className="flex flex-wrap gap-x-6 gap-y-3"
+          >
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="soleProprietorship" 
-                checked={ownershipType === "soleProprietorship"}
-                onCheckedChange={() => setOwnershipType("soleProprietorship")}
-              />
-              <Label htmlFor="soleProprietorship">Sole Proprietorship</Label>
+              <RadioGroupItem value="soleProprietorship" id="soleProprietorship" />
+              <Label htmlFor="soleProprietorship" className="cursor-pointer">Sole Proprietorship</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="onePersonCorp" 
-                checked={ownershipType === "onePersonCorp"}
-                onCheckedChange={() => setOwnershipType("onePersonCorp")}
-              />
-              <Label htmlFor="onePersonCorp">One Person Corp</Label>
+              <RadioGroupItem value="onePersonCorp" id="onePersonCorp" />
+              <Label htmlFor="onePersonCorp" className="cursor-pointer">One Person Corp</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="partnership" 
-                checked={ownershipType === "partnership"}
-                onCheckedChange={() => setOwnershipType("partnership")}
-              />
-              <Label htmlFor="partnership">Partnership</Label>
+              <RadioGroupItem value="partnership" id="partnership" />
+              <Label htmlFor="partnership" className="cursor-pointer">Partnership</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="corporation" 
-                checked={ownershipType === "corporation"}
-                onCheckedChange={() => setOwnershipType("corporation")}
-              />
-              <Label htmlFor="corporation">Corporation</Label>
+              <RadioGroupItem value="corporation" id="corporation" />
+              <Label htmlFor="corporation" className="cursor-pointer">Corporation</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="cooperative" 
-                checked={ownershipType === "cooperative"}
-                onCheckedChange={() => setOwnershipType("cooperative")}
-              />
-              <Label htmlFor="cooperative">Cooperative</Label>
+              <RadioGroupItem value="cooperative" id="cooperative" />
+              <Label htmlFor="cooperative" className="cursor-pointer">Cooperative</Label>
             </div>
-          </div>
+          </RadioGroup>
         </div>
 
         {/* Business Address */}
