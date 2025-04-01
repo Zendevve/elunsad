@@ -1,6 +1,8 @@
 
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -10,6 +12,8 @@ import {
 } from "@/components/ui/card";
 
 const DeclarationSection = () => {
+  const [isAgreed, setIsAgreed] = useState(false);
+  
   return (
     <Card className="mt-6">
       <CardHeader>
@@ -27,6 +31,18 @@ const DeclarationSection = () => {
             city/municipal government may be processed, profiled, or shared with requesting parties or for the purpose of any court, legal process, examination, inquiry, audit, or investigation of any 
             authority.
           </p>
+        </div>
+
+        <div className="flex items-start space-x-2">
+          <Checkbox 
+            id="agreementCheck" 
+            checked={isAgreed}
+            onCheckedChange={(checked) => setIsAgreed(checked === true)}
+            className="mt-1"
+          />
+          <Label htmlFor="agreementCheck" className="text-sm">
+            I have read and agree to the declaration above
+          </Label>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
