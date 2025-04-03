@@ -3,10 +3,49 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FormSectionWrapper from "./FormSectionWrapper";
 
 const BusinessInformationSection = () => {
   const [ownershipType, setOwnershipType] = useState<string>("soleProprietorship");
+  const [selectedBarangay, setSelectedBarangay] = useState<string>("");
+
+  // List of barangays in Lucena
+  const barangays = [
+    "Barangay 1 (Poblacion)",
+    "Barangay 2 (Poblacion)",
+    "Barangay 3 (Poblacion)",
+    "Barangay 4 (Poblacion)",
+    "Barangay 5 (Poblacion)",
+    "Barangay 6 (Poblacion)",
+    "Barangay 7 (Poblacion)",
+    "Barangay 8 (Poblacion)",
+    "Barangay 9 (Poblacion)",
+    "Barangay 10 (Poblacion)",
+    "Barangay 11 (Poblacion)",
+    "Barra",
+    "Bocohan",
+    "Cotta",
+    "Gulang-Gulang",
+    "Dalahican",
+    "Domoit",
+    "Ibabang Dupay",
+    "Ibabang Iyam",
+    "Ibabang Talim",
+    "Ilayang Dupay",
+    "Ilayang Iyam",
+    "Ilayang Talim",
+    "Isabang",
+    "Market View",
+    "Mayao Castillo",
+    "Mayao Crossing",
+    "Mayao Kanluran",
+    "Mayao Parada",
+    "Mayao Silangan",
+    "Ransohan",
+    "Salinas",
+    "Talao-Talao"
+  ];
 
   return (
     <FormSectionWrapper 
@@ -180,7 +219,18 @@ const BusinessInformationSection = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="barangay" className="text-sm">Barangay <span className="text-red-500">*</span></Label>
-              <Input id="barangay" placeholder="Enter barangay" />
+              <Select value={selectedBarangay} onValueChange={setSelectedBarangay}>
+                <SelectTrigger id="barangay" className="w-full">
+                  <SelectValue placeholder="Select barangay" />
+                </SelectTrigger>
+                <SelectContent>
+                  {barangays.map((barangay) => (
+                    <SelectItem key={barangay} value={barangay}>
+                      {barangay}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
