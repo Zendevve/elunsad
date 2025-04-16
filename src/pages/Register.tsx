@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 // Define validation schema
@@ -48,9 +48,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showVerifyPassword, setShowVerifyPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<"weak" | "medium" | "strong" | null>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -87,25 +85,29 @@ const Register = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      // Insert record into register_account table
-      const {
-        error
-      } = await supabase.from('register_account').insert({
-        firstname: data.firstname,
-        middlename: data.middlename || null,
-        lastname: data.lastname,
-        extension_name: data.extension_name || null,
-        username: data.username,
+      // Sign up with Supabase Auth
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
         password: data.password,
-        // Note: In a production app, this should be hashed
-        email: data.email
+        options: {
+          data: {
+            firstname: data.firstname,
+            middlename: data.middlename || null,
+            lastname: data.lastname,
+            extension_name: data.extension_name || null,
+            username: data.username,
+          },
+          emailRedirectTo: `${window.location.origin}/signin`,
+        },
       });
-      if (error) {
-        throw new Error(error.message);
+
+      if (signUpError) {
+        throw new Error(signUpError.message);
       }
+
       toast({
         title: "Registration successful",
-        description: "Your account has been created. You can now sign in."
+        description: "Please check your email to confirm your account."
       });
 
       // Redirect to sign in page
