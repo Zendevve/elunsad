@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ const AuthCallback = () => {
         });
 
         if (error) {
+          console.error("Email confirmation error:", error);
           toast({
             variant: "destructive",
             title: "Error confirming email",
