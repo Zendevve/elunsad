@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import Register from "./pages/Register";
+import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 import Applications from "./pages/Applications";
 import Documents from "./pages/Documents";
@@ -32,6 +33,7 @@ const App = () => (
         <Routes>
           <Route path="/signin" element={<SignIn />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Apply Layout to all routes except signin, register and 404 */}
           <Route element={<Layout />}>

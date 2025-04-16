@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 // Define validation schema
@@ -97,7 +97,7 @@ const Register = () => {
             extension_name: data.extension_name || null,
             username: data.username,
           },
-          emailRedirectTo: `${window.location.origin}/signin`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
@@ -122,7 +122,8 @@ const Register = () => {
       setIsLoading(false);
     }
   };
-  return <div className="min-h-screen bg-gray-50 flex flex-col">
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -164,173 +165,278 @@ const Register = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Registrant Profile</h3>
                     
-                    <FormField control={form.control} name="firstname" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>First name *</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <User className="h-5 w-5" />
-                              </span>
-                              <Input {...field} type="text" placeholder="Firstname" className="pl-10" disabled={isLoading} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    <FormField
+                    control={form.control}
+                    name="firstname"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First name *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <User className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="Firstname"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField control={form.control} name="middlename" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Middle name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <User className="h-5 w-5" />
-                              </span>
-                              <Input {...field} type="text" placeholder="Middlename" className="pl-10" disabled={isLoading} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    <FormField
+                    control={form.control}
+                    name="middlename"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Middle name</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <User className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="Middlename"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField control={form.control} name="lastname" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Last name *</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <User className="h-5 w-5" />
-                              </span>
-                              <Input {...field} type="text" placeholder="Lastname" className="pl-10" disabled={isLoading} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    <FormField
+                    control={form.control}
+                    name="lastname"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last name *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <User className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="Lastname"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField control={form.control} name="extension_name" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Extension Name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <User className="h-5 w-5" />
-                              </span>
-                              <Input {...field} type="text" placeholder="e.g. Jr, III" className="pl-10" disabled={isLoading} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    <FormField
+                    control={form.control}
+                    name="extension_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Extension Name</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <User className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="e.g. Jr, III"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   </div>
 
                   {/* Account Details Section */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Account Details</h3>
                     
-                    <FormField control={form.control} name="username" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Username *</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <User className="h-5 w-5" />
-                              </span>
-                              <Input {...field} type="text" placeholder="Username" className="pl-10" disabled={isLoading} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <User className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="Username"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField control={form.control} name="password" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Password *</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <Lock className="h-5 w-5" />
-                              </span>
-                              <Input {...field} type={showPassword ? "text" : "password"} placeholder="Password" className="pl-10 pr-10" disabled={isLoading} onChange={e => {
-                          field.onChange(e);
-                          checkPasswordStrength(e.target.value);
-                        }} />
-                              <button type="button" className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500" onClick={() => setShowPassword(!showPassword)}>
-                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                              </button>
+                    <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <Lock className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Password"
+                              className="pl-10 pr-10"
+                              disabled={isLoading}
+                              onChange={e => {
+                                field.onChange(e);
+                                checkPasswordStrength(e.target.value);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
+                        </FormControl>
+                        {passwordStrength && (
+                          <div className="mt-2">
+                            <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full ${passwordStrengthColors[passwordStrength]} ${passwordStrength === "weak" ? "w-1/3" : passwordStrength === "medium" ? "w-2/3" : "w-full"}`}
+                              />
                             </div>
-                          </FormControl>
-                          {passwordStrength && <div className="mt-2">
-                              <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                                <div className={`h-full ${passwordStrengthColors[passwordStrength]} ${passwordStrength === "weak" ? "w-1/3" : passwordStrength === "medium" ? "w-2/3" : "w-full"}`} />
-                              </div>
-                              <p className="text-xs mt-1 text-gray-600">
-                                Password strength: {passwordStrength}
-                              </p>
-                            </div>}
-                          <FormMessage />
-                        </FormItem>} />
+                            <p className="text-xs mt-1 text-gray-600">
+                              Password strength: {passwordStrength}
+                            </p>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField control={form.control} name="verifyPassword" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Verify Password *</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <Lock className="h-5 w-5" />
-                              </span>
-                              <Input {...field} type={showVerifyPassword ? "text" : "password"} placeholder="Verify Password" className="pl-10 pr-10" disabled={isLoading} />
-                              <button type="button" className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500" onClick={() => setShowVerifyPassword(!showVerifyPassword)}>
-                                {showVerifyPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                              </button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    <FormField
+                    control={form.control}
+                    name="verifyPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Verify Password *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <Lock className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type={showVerifyPassword ? "text" : "password"}
+                              placeholder="Verify Password"
+                              className="pl-10 pr-10"
+                              disabled={isLoading}
+                            />
+                            <button
+                              type="button"
+                              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                              onClick={() => setShowVerifyPassword(!showVerifyPassword)}
+                            >
+                              {showVerifyPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField control={form.control} name="email" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Email Address *</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <Mail className="h-5 w-5" />
-                              </span>
-                              <Input {...field} type="email" placeholder="Email Address" className="pl-10" disabled={isLoading} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <Mail className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="email"
+                              placeholder="Email Address"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   </div>
 
                   {/* Terms & Conditions */}
-                  <FormField control={form.control} name="agreeToTerms" render={({
-                  field
-                }) => <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-sm font-normal">
-                            I agree to the{" "}
-                            <a href="#" className="text-primary hover:text-primary/80">
-                              Terms of Service
-                            </a>{" "}
-                            and{" "}
-                            <a href="#" className="text-primary hover:text-primary/80">
-                              Privacy Policy
-                            </a>
-                          </FormLabel>
-                          <FormMessage />
-                        </div>
-                      </FormItem>} />
+                  <FormField
+                  control={form.control}
+                  name="agreeToTerms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal">
+                          I agree to the{" "}
+                          <a href="#" className="text-primary hover:text-primary/80">
+                            Terms of Service
+                          </a>{" "}
+                          and{" "}
+                          <a href="#" className="text-primary hover:text-primary/80">
+                            Privacy Policy
+                          </a>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
                   {/* Call-to-Action */}
-                  <Button type="submit" className="w-full flex items-center justify-center gap-2" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="w-full flex items-center justify-center gap-2"
+                    disabled={isLoading}
+                  >
                     <UserPlus className="h-5 w-5" />
                     {isLoading ? "Registering..." : "Register"}
                   </Button>
@@ -363,6 +469,8 @@ const Register = () => {
           </div>
         </div>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Register;
