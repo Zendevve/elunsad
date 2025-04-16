@@ -19,7 +19,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define validation schema - now with email only
+// Define validation schema
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -45,34 +45,36 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      // Query based on email only
-      const { data: userData, error: userError } = await supabase
-        .from('register_account')
-        .select('*')
-        .eq('email', data.email)
+      // Sign in with Supabase Auth
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!authData.user) {
+        throw new Error("No user data returned after sign in");
+      }
+
+      // Fetch user profile from the profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('firstname, lastname')
+        .eq('id', authData.user.id)
         .single();
 
-      if (userError || !userData) {
-        throw new Error("Invalid credentials. Email not found.");
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
       }
 
-      // Verify password (in a real app, this would use hashing)
-      if (userData.password !== data.password) {
-        throw new Error("Invalid credentials. Password is incorrect.");
-      }
-
-      // Store user data in session storage
-      sessionStorage.setItem('user', JSON.stringify({
-        id: userData.id,
-        firstname: userData.firstname,
-        lastname: userData.lastname,
-        username: userData.username,
-        email: userData.email,
-      }));
+      const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
       
       toast({
         title: "Sign in successful",
-        description: `Welcome back, ${userData.firstname}!`,
+        description: `Welcome back, ${firstname}!`,
       });
       
       // Redirect to dashboard
