@@ -86,7 +86,7 @@ const Register = () => {
     setIsLoading(true);
     try {
       // Sign up with Supabase Auth
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -105,10 +105,20 @@ const Register = () => {
         throw new Error(signUpError.message);
       }
 
-      toast({
-        title: "Registration successful",
-        description: "Please check your email to confirm your account."
-      });
+      console.log("Registration response:", authData);
+      
+      // Check if email confirmation is needed
+      if (authData?.user && !authData.user.email_confirmed_at) {
+        toast({
+          title: "Registration successful",
+          description: "Please check your email to confirm your account. If you don't receive an email within a few minutes, please check your spam folder."
+        });
+      } else {
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created."
+        });
+      }
 
       // Redirect to sign in page
       navigate('/signin');

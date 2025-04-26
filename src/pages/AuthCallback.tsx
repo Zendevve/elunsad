@@ -16,7 +16,7 @@ const AuthCallback = () => {
         
         // If we have hash params, handle the authentication
         if (hashParams && hashParams.length > 1) {
-          console.log("Processing auth callback with hash");
+          console.log("Processing auth callback with hash:", hashParams);
           
           // Let Supabase handle the rest - it will extract tokens from the URL
           const { data, error } = await supabase.auth.getSession();
@@ -28,15 +28,52 @@ const AuthCallback = () => {
               title: "Authentication error",
               description: error.message
             });
-          } else if (data?.session) {
-            console.log("Authentication successful");
+            navigate('/signin');
+            return;
+          }
+          
+          if (data?.session) {
+            console.log("Authentication successful, session found:", data.session);
+            
+            // Check if email is verified
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (user) {
+              console.log("User data retrieved:", user);
+              
+              if (user.email_confirmed_at || user.confirmed_at) {
+                toast({
+                  title: "Authentication successful",
+                  description: "Your email has been confirmed."
+                });
+                navigate('/dashboard');
+              } else {
+                toast({
+                  variant: "default",
+                  title: "Email verification required",
+                  description: "Please check your inbox and confirm your email address before signing in."
+                });
+                navigate('/signin');
+              }
+            } else {
+              toast({
+                title: "Authentication successful",
+                description: "Welcome back!"
+              });
+              navigate('/dashboard');
+            }
+          } else {
+            console.log("No session found in callback");
             toast({
-              title: "Authentication successful",
-              description: "Your email has been confirmed."
+              variant: "destructive", 
+              title: "Authentication issue",
+              description: "No session was created. Please try signing in again."
             });
+            navigate('/signin');
           }
         } else {
           console.log("No hash params found in callback URL");
+          navigate('/signin');
         }
       } catch (error) {
         console.error("Error processing authentication callback:", error);
@@ -45,8 +82,6 @@ const AuthCallback = () => {
           title: "Error processing authentication",
           description: "Please try signing in again."
         });
-      } finally {
-        // Redirect to sign in page regardless of outcome
         navigate('/signin');
       }
     };
