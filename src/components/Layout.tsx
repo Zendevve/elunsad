@@ -63,7 +63,7 @@ const Layout = () => {
           </header>
         )}
 
-        <main className="px-0">
+        <main>
           <Outlet />
         </main>
       </div>
