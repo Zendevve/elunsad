@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,6 +38,14 @@ const Applications = () => {
       description: "For updating details on an existing business permit"
     }
   ];
+
+  // Handle step click to navigate to previous steps only
+  const handleStepClick = (step: number) => {
+    if (step < currentStep) {
+      setCurrentStep(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   // Add fade-in animation when step changes
   useEffect(() => {
@@ -83,7 +90,11 @@ const Applications = () => {
       </div>
 
       {/* Application Header with Progress */}
-      <ApplicationHeader currentStep={currentStep} totalSteps={totalSteps} />
+      <ApplicationHeader 
+        currentStep={currentStep} 
+        totalSteps={totalSteps} 
+        onStepClick={handleStepClick}
+      />
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

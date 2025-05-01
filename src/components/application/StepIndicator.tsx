@@ -7,6 +7,7 @@ interface StepIndicatorProps {
   totalSteps: number;
   stepTitles: string[];
   className?: string;
+  onStepClick?: (step: number) => void;
 }
 
 const StepIndicator = ({
@@ -14,6 +15,7 @@ const StepIndicator = ({
   totalSteps,
   stepTitles,
   className,
+  onStepClick,
 }: StepIndicatorProps) => {
   return (
     <div className={cn("w-full py-3", className)}>
@@ -22,6 +24,7 @@ const StepIndicator = ({
           const stepNumber = index + 1;
           const isActive = stepNumber === currentStep;
           const isCompleted = stepNumber < currentStep;
+          const isClickable = isCompleted && onStepClick;
           
           return (
             <li 
@@ -33,17 +36,23 @@ const StepIndicator = ({
               )}
             >
               <div className="flex flex-col items-center">
-                {/* Step indicator */}
-                <div
+                {/* Step indicator button */}
+                <button
+                  type="button"
+                  onClick={() => isClickable && onStepClick?.(stepNumber)}
+                  disabled={!isClickable}
                   className={cn(
                     "flex items-center justify-center w-8 h-8 rounded-full shrink-0 border-2 transition-all duration-300 font-medium text-xs",
                     isActive && "border-primary bg-primary text-primary-foreground",
                     isCompleted && "border-primary bg-primary text-primary-foreground",
-                    !isActive && !isCompleted && "border-muted-foreground text-muted-foreground"
+                    !isActive && !isCompleted && "border-muted-foreground text-muted-foreground",
+                    isClickable && "cursor-pointer hover:scale-110 hover:shadow-sm",
+                    !isClickable && "cursor-default"
                   )}
+                  aria-label={isClickable ? `Go to ${stepTitles[index]}` : `Step ${stepNumber}: ${stepTitles[index]}`}
                 >
                   {isCompleted ? <Check className="h-4 w-4" /> : stepNumber}
-                </div>
+                </button>
                 
                 {/* Step title */}
                 <span
@@ -51,8 +60,10 @@ const StepIndicator = ({
                     "absolute hidden md:block mt-10 text-xs text-center",
                     isActive && "font-medium text-primary",
                     isCompleted && "text-primary",
-                    !isActive && !isCompleted && "text-muted-foreground"
+                    !isActive && !isCompleted && "text-muted-foreground",
+                    isClickable && "cursor-pointer hover:underline",
                   )}
+                  onClick={() => isClickable && onStepClick?.(stepNumber)}
                 >
                   {stepTitles[index]}
                 </span>

@@ -4,6 +4,7 @@ import StepIndicator from "./StepIndicator";
 interface ApplicationHeaderProps {
   currentStep: number;
   totalSteps: number;
+  onStepClick?: (step: number) => void;
 }
 
 const stepTitles = [
@@ -14,7 +15,7 @@ const stepTitles = [
   "Review & Submit"
 ];
 
-const ApplicationHeader = ({ currentStep, totalSteps }: ApplicationHeaderProps) => {
+const ApplicationHeader = ({ currentStep, totalSteps, onStepClick }: ApplicationHeaderProps) => {
   return (
     <div className="bg-white border-b shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
@@ -25,6 +26,7 @@ const ApplicationHeader = ({ currentStep, totalSteps }: ApplicationHeaderProps) 
             currentStep={currentStep} 
             totalSteps={totalSteps} 
             stepTitles={stepTitles}
+            onStepClick={onStepClick}
           />
         </div>
       </div>
