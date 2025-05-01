@@ -32,7 +32,7 @@ const StepIndicator = ({
                 "md:transition-all md:duration-500"
               )}
             >
-              <div className="flex flex-col items-center relative">
+              <div className="flex flex-col items-center">
                 {/* Step indicator */}
                 <div
                   className={cn(
@@ -45,10 +45,10 @@ const StepIndicator = ({
                   {isCompleted ? <Check className="h-4 w-4" /> : stepNumber}
                 </div>
                 
-                {/* Step title - Make sure they don't go outside their container */}
+                {/* Step title - Now positioned below the circle with proper spacing */}
                 <span
                   className={cn(
-                    "absolute md:block mt-10 text-xs text-center max-w-[90px] truncate",
+                    "mt-2 text-xs text-center max-w-[90px] truncate",
                     isActive && "font-medium text-primary",
                     isCompleted && "text-primary",
                     !isActive && !isCompleted && "text-muted-foreground"
