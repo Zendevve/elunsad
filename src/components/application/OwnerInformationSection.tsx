@@ -1,13 +1,29 @@
 
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import FormSectionWrapper from "./FormSectionWrapper";
+import { FormField } from "@/components/ui/form-field";
+import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 
 const OwnerInformationSection = () => {
   const [civilStatus, setCivilStatus] = useState<string>("single");
   const [sex, setSex] = useState<string>("male");
   const [nationality, setNationality] = useState<string>("filipino");
+
+  const civilStatusOptions = [
+    { value: "single", label: "Single" },
+    { value: "married", label: "Married" },
+    { value: "widowed", label: "Widowed" }
+  ];
+
+  const sexOptions = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" }
+  ];
+
+  const nationalityOptions = [
+    { value: "filipino", label: "Filipino" },
+    { value: "foreigner", label: "Other" }
+  ];
 
   return (
     <FormSectionWrapper 
@@ -25,22 +41,28 @@ const OwnerInformationSection = () => {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="surname" className="text-sm">Last Name</Label>
-              <Input id="surname" placeholder="Enter last name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="givenName" className="text-sm">First Name</Label>
-              <Input id="givenName" placeholder="Enter first name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="middleName" className="text-sm">Middle Name</Label>
-              <Input id="middleName" placeholder="Enter middle name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="suffix" className="text-sm">Suffix</Label>
-              <Input id="suffix" placeholder="Jr, Sr, III, etc." />
-            </div>
+            <FormField
+              id="surname"
+              label="Last Name"
+              required
+              tooltip="Enter your legal last name"
+            />
+            <FormField
+              id="givenName"
+              label="First Name"
+              required
+              tooltip="Enter your legal first name"
+            />
+            <FormField
+              id="middleName"
+              label="Middle Name"
+              tooltip="Enter your middle name"
+            />
+            <FormField
+              id="suffix"
+              label="Suffix"
+              tooltip="Jr, Sr, III, etc."
+            />
           </div>
         </div>
 
@@ -51,161 +73,55 @@ const OwnerInformationSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Civil Status */}
             <div>
-              <Label className="text-sm block mb-3">Civil Status <span className="text-red-500">*</span></Label>
-              <div className="grid grid-cols-1 gap-2">
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="single"
-                    name="civilStatus"
-                    value="single"
-                    checked={civilStatus === 'single'}
-                    onChange={() => setCivilStatus('single')}
-                    className="peer absolute opacity-0 w-full h-full cursor-pointer"
-                  />
-                  <label
-                    htmlFor="single"
-                    className="flex items-center p-2 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-                  >
-                    <div className="w-4 h-4 border rounded-full mr-2 flex items-center justify-center peer-checked:border-primary">
-                      {civilStatus === 'single' && <div className="w-2 h-2 rounded-full bg-primary"></div>}
-                    </div>
-                    <span className="text-sm">Single</span>
-                  </label>
-                </div>
-                
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="married"
-                    name="civilStatus"
-                    value="married"
-                    checked={civilStatus === 'married'}
-                    onChange={() => setCivilStatus('married')}
-                    className="peer absolute opacity-0 w-full h-full cursor-pointer"
-                  />
-                  <label
-                    htmlFor="married"
-                    className="flex items-center p-2 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-                  >
-                    <div className="w-4 h-4 border rounded-full mr-2 flex items-center justify-center">
-                      {civilStatus === 'married' && <div className="w-2 h-2 rounded-full bg-primary"></div>}
-                    </div>
-                    <span className="text-sm">Married</span>
-                  </label>
-                </div>
-                
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="widowed"
-                    name="civilStatus"
-                    value="widowed"
-                    checked={civilStatus === 'widowed'}
-                    onChange={() => setCivilStatus('widowed')}
-                    className="peer absolute opacity-0 w-full h-full cursor-pointer"
-                  />
-                  <label
-                    htmlFor="widowed"
-                    className="flex items-center p-2 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-                  >
-                    <div className="w-4 h-4 border rounded-full mr-2 flex items-center justify-center">
-                      {civilStatus === 'widowed' && <div className="w-2 h-2 rounded-full bg-primary"></div>}
-                    </div>
-                    <span className="text-sm">Widowed</span>
-                  </label>
-                </div>
-              </div>
+              <label className="text-sm font-medium block mb-2">
+                Civil Status <span className="text-red-500">*</span>
+              </label>
+              <EnhancedRadioGroup
+                options={civilStatusOptions}
+                value={civilStatus}
+                onValueChange={setCivilStatus}
+                name="civilStatus"
+              />
             </div>
             
             {/* Age */}
-            <div className="space-y-2">
-              <Label htmlFor="age" className="text-sm">Age <span className="text-red-500">*</span></Label>
-              <Input id="age" type="number" placeholder="Enter age" min="18" />
+            <div>
+              <FormField
+                id="age"
+                type="number"
+                label="Age"
+                required
+                min="18"
+                tooltip="Must be at least 18 years old"
+              />
             </div>
             
             {/* Sex */}
             <div>
-              <Label className="text-sm block mb-3">Sex <span className="text-red-500">*</span></Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="male"
-                    name="sex"
-                    value="male"
-                    checked={sex === 'male'}
-                    onChange={() => setSex('male')}
-                    className="peer absolute opacity-0 w-full h-full cursor-pointer"
-                  />
-                  <label
-                    htmlFor="male"
-                    className="flex items-center justify-center p-2 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-                  >
-                    <span className="text-sm">Male</span>
-                  </label>
-                </div>
-                
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="female"
-                    name="sex"
-                    value="female"
-                    checked={sex === 'female'}
-                    onChange={() => setSex('female')}
-                    className="peer absolute opacity-0 w-full h-full cursor-pointer"
-                  />
-                  <label
-                    htmlFor="female"
-                    className="flex items-center justify-center p-2 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-                  >
-                    <span className="text-sm">Female</span>
-                  </label>
-                </div>
-              </div>
+              <label className="text-sm font-medium block mb-2">
+                Sex <span className="text-red-500">*</span>
+              </label>
+              <EnhancedRadioGroup
+                options={sexOptions}
+                value={sex}
+                onValueChange={setSex}
+                orientation="horizontal"
+                name="sex"
+              />
             </div>
             
             {/* Nationality */}
             <div>
-              <Label className="text-sm block mb-3">Nationality <span className="text-red-500">*</span></Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="filipino"
-                    name="nationality"
-                    value="filipino"
-                    checked={nationality === 'filipino'}
-                    onChange={() => setNationality('filipino')}
-                    className="peer absolute opacity-0 w-full h-full cursor-pointer"
-                  />
-                  <label
-                    htmlFor="filipino"
-                    className="flex items-center justify-center p-2 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-                  >
-                    <span className="text-sm">Filipino</span>
-                  </label>
-                </div>
-                
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="foreigner"
-                    name="nationality"
-                    value="foreigner"
-                    checked={nationality === 'foreigner'}
-                    onChange={() => setNationality('foreigner')}
-                    className="peer absolute opacity-0 w-full h-full cursor-pointer"
-                  />
-                  <label
-                    htmlFor="foreigner"
-                    className="flex items-center justify-center p-2 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-                  >
-                    <span className="text-sm">Other</span>
-                  </label>
-                </div>
-              </div>
+              <label className="text-sm font-medium block mb-2">
+                Nationality <span className="text-red-500">*</span>
+              </label>
+              <EnhancedRadioGroup
+                options={nationalityOptions}
+                value={nationality}
+                onValueChange={setNationality}
+                orientation="horizontal"
+                name="nationality"
+              />
             </div>
           </div>
         </div>
@@ -215,52 +131,61 @@ const OwnerInformationSection = () => {
           <h3 className="font-medium text-base mb-3">Owner's Residential Address <span className="text-red-500">*</span></h3>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label htmlFor="ownerHouseBldgNo" className="text-sm">House/Bldg. No.</Label>
-              <Input id="ownerHouseBldgNo" placeholder="Enter number" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ownerBuildingName" className="text-sm">Building Name</Label>
-              <Input id="ownerBuildingName" placeholder="If applicable" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ownerBlockNo" className="text-sm">Block No.</Label>
-              <Input id="ownerBlockNo" placeholder="If applicable" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ownerLotNo" className="text-sm">Lot No.</Label>
-              <Input id="ownerLotNo" placeholder="If applicable" />
-            </div>
+            <FormField 
+              id="ownerHouseBldgNo" 
+              label="House/Bldg. No."
+            />
+            <FormField 
+              id="ownerBuildingName" 
+              label="Building Name"
+              helperText="If applicable"
+            />
+            <FormField 
+              id="ownerBlockNo" 
+              label="Block No."
+              helperText="If applicable"
+            />
+            <FormField 
+              id="ownerLotNo" 
+              label="Lot No."
+              helperText="If applicable"
+            />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label htmlFor="ownerStreet" className="text-sm">Street <span className="text-red-500">*</span></Label>
-              <Input id="ownerStreet" placeholder="Enter street name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ownerSubdivision" className="text-sm">Subdivision</Label>
-              <Input id="ownerSubdivision" placeholder="If applicable" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ownerBarangay" className="text-sm">Barangay <span className="text-red-500">*</span></Label>
-              <Input id="ownerBarangay" placeholder="Enter barangay" />
-            </div>
+            <FormField 
+              id="ownerStreet" 
+              label="Street"
+              required
+            />
+            <FormField 
+              id="ownerSubdivision" 
+              label="Subdivision"
+              helperText="If applicable"
+            />
+            <FormField 
+              id="ownerBarangay" 
+              label="Barangay"
+              required
+            />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="ownerCityMunicipality" className="text-sm">City/Municipality <span className="text-red-500">*</span></Label>
-              <Input id="ownerCityMunicipality" placeholder="Enter city/municipality" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ownerProvince" className="text-sm">Province <span className="text-red-500">*</span></Label>
-              <Input id="ownerProvince" placeholder="Enter province" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ownerZipCode" className="text-sm">Zip Code <span className="text-red-500">*</span></Label>
-              <Input id="ownerZipCode" placeholder="Enter zip code" />
-            </div>
+            <FormField 
+              id="ownerCityMunicipality" 
+              label="City/Municipality"
+              required
+            />
+            <FormField 
+              id="ownerProvince" 
+              label="Province"
+              required
+            />
+            <FormField 
+              id="ownerZipCode" 
+              label="Zip Code"
+              required
+            />
           </div>
         </div>
       </div>

@@ -1,9 +1,9 @@
 
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FormSectionWrapper from "./FormSectionWrapper";
+import { FormField } from "@/components/ui/form-field";
+import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 
 const BusinessInformationSection = () => {
   const [ownershipType, setOwnershipType] = useState<string>("soleProprietorship");
@@ -46,6 +46,34 @@ const BusinessInformationSection = () => {
     "Talao-Talao"
   ];
 
+  const ownershipOptions = [
+    {
+      value: "soleProprietorship",
+      label: "Sole Proprietorship",
+      description: "Business owned by one person"
+    },
+    {
+      value: "onePersonCorp",
+      label: "One Person Corp",
+      description: "Corporation with a single stockholder"
+    },
+    {
+      value: "partnership",
+      label: "Partnership",
+      description: "Business owned by two or more individuals"
+    },
+    {
+      value: "corporation",
+      label: "Corporation",
+      description: "Business entity with shareholders"
+    },
+    {
+      value: "cooperative",
+      label: "Cooperative",
+      description: "Business owned and run by its members"
+    }
+  ];
+
   return (
     <FormSectionWrapper 
       title="Business Information and Registration"
@@ -57,15 +85,18 @@ const BusinessInformationSection = () => {
         <div>
           <h3 className="font-medium text-base mb-3">Business Identification</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="businessName" className="text-sm">Business Name <span className="text-red-500">*</span></Label>
-              <Input id="businessName" placeholder="Enter official business name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tradeName" className="text-sm">Trade Name / Franchise</Label>
-              <Input id="tradeName" placeholder="If different from business name" />
-              <p className="text-xs text-muted-foreground mt-1">Leave blank if same as business name</p>
-            </div>
+            <FormField 
+              id="businessName" 
+              label="Business Name"
+              required
+              tooltip="Enter the official registered business name as it appears on your DTI/SEC registration"
+            />
+            <FormField 
+              id="tradeName" 
+              label="Trade Name / Franchise"
+              helperText="Leave blank if same as business name"
+              tooltip="Enter the name you use for your business if different from the registered business name"
+            />
           </div>
         </div>
 
@@ -73,114 +104,42 @@ const BusinessInformationSection = () => {
         <div>
           <h3 className="font-medium text-base mb-3">Registration Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="dtiSecCdaNumber" className="text-sm">DTI/SEC/CDA Registration No. <span className="text-red-500">*</span></Label>
-              <Input id="dtiSecCdaNumber" placeholder="Registration number" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tinNumber" className="text-sm">Tax Identification Number <span className="text-red-500">*</span></Label>
-              <Input id="tinNumber" placeholder="Format: XXX-XXX-XXX-XXX" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sssNumber" className="text-sm">SSS Number</Label>
-              <Input id="sssNumber" placeholder="Format: XX-XXXXXXX-X" />
-            </div>
+            <FormField 
+              id="dtiSecCdaNumber" 
+              label="DTI/SEC/CDA Registration No."
+              required
+              tooltip="Enter your Department of Trade and Industry, Securities and Exchange Commission, or Cooperative Development Authority registration number"
+            />
+            <FormField 
+              id="tinNumber" 
+              label="Tax Identification Number"
+              required
+              placeholder="XXX-XXX-XXX-XXX"
+              tooltip="Enter your 12-digit Tax Identification Number from BIR"
+            />
+            <FormField 
+              id="sssNumber" 
+              label="SSS Number"
+              placeholder="XX-XXXXXXX-X"
+              tooltip="Enter your Social Security System employer number"
+            />
           </div>
         </div>
 
         {/* Kind of Ownership */}
         <div>
-          <h3 className="font-medium text-base mb-3">Ownership Type <span className="text-red-500">*</span></h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            <div className="relative">
-              <input
-                type="radio"
-                id="soleProprietorship"
-                name="ownershipType"
-                value="soleProprietorship"
-                checked={ownershipType === 'soleProprietorship'}
-                onChange={() => setOwnershipType('soleProprietorship')}
-                className="peer absolute opacity-0 w-full h-full cursor-pointer"
-              />
-              <label
-                htmlFor="soleProprietorship"
-                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-              >
-                <span className="text-center text-sm font-medium">Sole Proprietorship</span>
-              </label>
-            </div>
-            
-            <div className="relative">
-              <input
-                type="radio"
-                id="onePersonCorp"
-                name="ownershipType"
-                value="onePersonCorp"
-                checked={ownershipType === 'onePersonCorp'}
-                onChange={() => setOwnershipType('onePersonCorp')}
-                className="peer absolute opacity-0 w-full h-full cursor-pointer"
-              />
-              <label
-                htmlFor="onePersonCorp"
-                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-              >
-                <span className="text-center text-sm font-medium">One Person Corp</span>
-              </label>
-            </div>
-            
-            <div className="relative">
-              <input
-                type="radio"
-                id="partnership"
-                name="ownershipType"
-                value="partnership"
-                checked={ownershipType === 'partnership'}
-                onChange={() => setOwnershipType('partnership')}
-                className="peer absolute opacity-0 w-full h-full cursor-pointer"
-              />
-              <label
-                htmlFor="partnership"
-                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-              >
-                <span className="text-center text-sm font-medium">Partnership</span>
-              </label>
-            </div>
-            
-            <div className="relative">
-              <input
-                type="radio"
-                id="corporation"
-                name="ownershipType"
-                value="corporation"
-                checked={ownershipType === 'corporation'}
-                onChange={() => setOwnershipType('corporation')}
-                className="peer absolute opacity-0 w-full h-full cursor-pointer"
-              />
-              <label
-                htmlFor="corporation"
-                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-              >
-                <span className="text-center text-sm font-medium">Corporation</span>
-              </label>
-            </div>
-            
-            <div className="relative">
-              <input
-                type="radio"
-                id="cooperative"
-                name="ownershipType"
-                value="cooperative"
-                checked={ownershipType === 'cooperative'}
-                onChange={() => setOwnershipType('cooperative')}
-                className="peer absolute opacity-0 w-full h-full cursor-pointer"
-              />
-              <label
-                htmlFor="cooperative"
-                className="flex flex-col items-center justify-center h-full p-3 border rounded-md peer-checked:border-primary peer-checked:bg-primary/5 cursor-pointer transition-colors"
-              >
-                <span className="text-center text-sm font-medium">Cooperative</span>
-              </label>
-            </div>
+          <h3 className="font-medium text-base mb-3">
+            Ownership Type <span className="text-red-500">*</span>
+          </h3>
+          <div className="mt-2">
+            <EnhancedRadioGroup
+              options={ownershipOptions}
+              value={ownershipType}
+              onValueChange={setOwnershipType}
+              orientation="horizontal"
+              name="ownershipType"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            />
           </div>
         </div>
 
@@ -189,63 +148,80 @@ const BusinessInformationSection = () => {
           <h3 className="font-medium text-base mb-3">Business Address <span className="text-red-500">*</span></h3>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label htmlFor="houseBldgNo" className="text-sm">House/Bldg. No.</Label>
-              <Input id="houseBldgNo" placeholder="Enter number" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="buildingName" className="text-sm">Building Name</Label>
-              <Input id="buildingName" placeholder="If applicable" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="blockNo" className="text-sm">Block No.</Label>
-              <Input id="blockNo" placeholder="If applicable" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lotNo" className="text-sm">Lot No.</Label>
-              <Input id="lotNo" placeholder="If applicable" />
-            </div>
+            <FormField 
+              id="houseBldgNo" 
+              label="House/Bldg. No."
+              tooltip="Enter the house or building number of your business address"
+            />
+            <FormField 
+              id="buildingName" 
+              label="Building Name"
+              helperText="If applicable"
+            />
+            <FormField 
+              id="blockNo" 
+              label="Block No."
+              helperText="If applicable"
+            />
+            <FormField 
+              id="lotNo" 
+              label="Lot No."
+              helperText="If applicable"
+            />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label htmlFor="street" className="text-sm">Street <span className="text-red-500">*</span></Label>
-              <Input id="street" placeholder="Enter street name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subdivision" className="text-sm">Subdivision</Label>
-              <Input id="subdivision" placeholder="If applicable" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="barangay" className="text-sm">Barangay <span className="text-red-500">*</span></Label>
-              <Select value={selectedBarangay} onValueChange={setSelectedBarangay}>
-                <SelectTrigger id="barangay" className="w-full">
-                  <SelectValue placeholder="Select barangay" />
-                </SelectTrigger>
-                <SelectContent>
-                  {barangays.map((barangay) => (
-                    <SelectItem key={barangay} value={barangay}>
-                      {barangay}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <FormField 
+              id="street" 
+              label="Street"
+              required
+              tooltip="Enter the street name of your business location"
+            />
+            <FormField 
+              id="subdivision" 
+              label="Subdivision"
+              helperText="If applicable"
+            />
+            <div className="space-y-1.5">
+              <div className="relative">
+                <Select value={selectedBarangay} onValueChange={setSelectedBarangay}>
+                  <SelectTrigger id="barangay" className="h-14 pt-4">
+                    <SelectValue placeholder="Select barangay" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-80">
+                    {barangays.map((barangay) => (
+                      <SelectItem key={barangay} value={barangay}>
+                        {barangay}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <label htmlFor="barangay" className="absolute left-3 top-2 text-xs text-primary pointer-events-none">
+                  Barangay <span className="text-destructive">*</span>
+                </label>
+              </div>
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cityMunicipality" className="text-sm">City/Municipality <span className="text-red-500">*</span></Label>
-              <Input id="cityMunicipality" placeholder="Enter city/municipality" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="province" className="text-sm">Province <span className="text-red-500">*</span></Label>
-              <Input id="province" placeholder="Enter province" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="zipCode" className="text-sm">Zip Code <span className="text-red-500">*</span></Label>
-              <Input id="zipCode" placeholder="Enter zip code" />
-            </div>
+            <FormField 
+              id="cityMunicipality" 
+              label="City/Municipality"
+              required
+              tooltip="Enter the city or municipality of your business location"
+            />
+            <FormField 
+              id="province" 
+              label="Province"
+              required
+              tooltip="Enter the province of your business location"
+            />
+            <FormField 
+              id="zipCode" 
+              label="Zip Code"
+              required
+              tooltip="Enter the postal or zip code of your business location"
+            />
           </div>
         </div>
 
@@ -253,18 +229,24 @@ const BusinessInformationSection = () => {
         <div>
           <h3 className="font-medium text-base mb-3">Contact Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="telephoneNo" className="text-sm">Telephone No.</Label>
-              <Input id="telephoneNo" placeholder="Enter telephone number" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mobileNo" className="text-sm">Mobile No. <span className="text-red-500">*</span></Label>
-              <Input id="mobileNo" placeholder="Enter mobile number" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="emailAddress" className="text-sm">Email Address <span className="text-red-500">*</span></Label>
-              <Input id="emailAddress" type="email" placeholder="Enter email address" />
-            </div>
+            <FormField 
+              id="telephoneNo" 
+              label="Telephone No."
+              tooltip="Enter your business landline number"
+            />
+            <FormField 
+              id="mobileNo" 
+              label="Mobile No."
+              required
+              tooltip="Enter a mobile number where you can be contacted"
+            />
+            <FormField 
+              id="emailAddress" 
+              type="email" 
+              label="Email Address"
+              required
+              tooltip="Enter an active email address for communications"
+            />
           </div>
         </div>
       </div>

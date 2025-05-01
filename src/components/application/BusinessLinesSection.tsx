@@ -1,5 +1,4 @@
 
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Trash2 } from "lucide-react";
@@ -20,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FormField } from "@/components/ui/form-field";
 
 interface BusinessLine {
   id: number;
@@ -60,36 +60,36 @@ const BusinessLinesSection = () => {
   };
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle>Line of Business</CardTitle>
+    <Card className="mt-6 shadow-sm border">
+      <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
+        <CardTitle className="text-lg font-medium">Line of Business</CardTitle>
         <CardDescription>
           Enter all business lines, products/services, and gross sales
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Line of Business</TableHead>
-              <TableHead>
-                Philippine Standard Industrial Code
-                <br />(if available)
+            <TableRow className="bg-muted/40">
+              <TableHead className="font-medium">Line of Business</TableHead>
+              <TableHead className="font-medium whitespace-nowrap">
+                PSIC<br />(if available)
               </TableHead>
-              <TableHead>Products / Services</TableHead>
-              <TableHead>No. of Units</TableHead>
-              <TableHead>Last Year's Gross Sales/Receipts</TableHead>
+              <TableHead className="font-medium">Products / Services</TableHead>
+              <TableHead className="font-medium">No. of Units</TableHead>
+              <TableHead className="font-medium whitespace-nowrap">Last Year's Gross Sales</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {businessLines.map((line) => (
-              <TableRow key={line.id}>
+              <TableRow key={line.id} className="hover:bg-muted/20 transition-colors">
                 <TableCell>
                   <Input 
                     value={line.lineOfBusiness} 
                     onChange={(e) => updateBusinessLine(line.id, "lineOfBusiness", e.target.value)}
                     placeholder="Enter line of business"
+                    className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
                 <TableCell>
@@ -97,6 +97,7 @@ const BusinessLinesSection = () => {
                     value={line.psicCode} 
                     onChange={(e) => updateBusinessLine(line.id, "psicCode", e.target.value)}
                     placeholder="Enter PSIC code"
+                    className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
                 <TableCell>
@@ -104,6 +105,7 @@ const BusinessLinesSection = () => {
                     value={line.productsServices} 
                     onChange={(e) => updateBusinessLine(line.id, "productsServices", e.target.value)}
                     placeholder="Enter products/services"
+                    className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
                 <TableCell>
@@ -111,6 +113,7 @@ const BusinessLinesSection = () => {
                     value={line.units} 
                     onChange={(e) => updateBusinessLine(line.id, "units", e.target.value)}
                     placeholder="Enter units"
+                    className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
                 <TableCell>
@@ -118,6 +121,7 @@ const BusinessLinesSection = () => {
                     value={line.grossSales} 
                     onChange={(e) => updateBusinessLine(line.id, "grossSales", e.target.value)}
                     placeholder="Enter amount"
+                    className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
                 <TableCell>
@@ -126,6 +130,7 @@ const BusinessLinesSection = () => {
                     size="icon"
                     onClick={() => removeBusinessLine(line.id)}
                     disabled={businessLines.length === 1}
+                    className="hover:bg-rose-100 hover:text-rose-600 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -135,15 +140,15 @@ const BusinessLinesSection = () => {
           </TableBody>
         </Table>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="bg-muted/20">
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="mt-2"
+          className="mt-2 group"
           onClick={addBusinessLine}
         >
-          <PlusCircle className="h-4 w-4 mr-2" />
+          <PlusCircle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
           Add Another Line of Business
         </Button>
       </CardFooter>

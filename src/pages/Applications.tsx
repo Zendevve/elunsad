@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, HelpCircle, CheckCircle2 } from "lucide-react";
@@ -12,11 +12,40 @@ import BusinessLinesSection from "@/components/application/BusinessLinesSection"
 import DeclarationSection from "@/components/application/DeclarationSection";
 import { useToast } from "@/components/ui/use-toast";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
+import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 
 const Applications = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
   const { toast } = useToast();
+  const [applicationType, setApplicationType] = useState("newApplication");
+  const [fadeIn, setFadeIn] = useState(false);
+
+  // Application type options
+  const applicationTypeOptions = [
+    {
+      value: "newApplication",
+      label: "New Business Application",
+      description: "For first-time business permit applications"
+    },
+    {
+      value: "renewalApplication",
+      label: "Renewal Application",
+      description: "For renewing an existing business permit"
+    },
+    {
+      value: "amendmentApplication",
+      label: "Amendment/Change of Information",
+      description: "For updating details on an existing business permit"
+    }
+  ];
+
+  // Add fade-in animation when step changes
+  useEffect(() => {
+    setFadeIn(false);
+    const timer = setTimeout(() => setFadeIn(true), 50);
+    return () => clearTimeout(timer);
+  }, [currentStep]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -41,10 +70,10 @@ const Applications = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <nav className="flex text-sm">
-            <Link to="/" className="text-gray-500 hover:text-gray-700">
+            <Link to="/" className="text-gray-500 hover:text-gray-700 hover:underline transition-colors">
               Dashboard
             </Link>
             <span className="mx-2 text-gray-400">/</span>
@@ -57,10 +86,10 @@ const Applications = () => {
       <ApplicationHeader currentStep={currentStep} totalSteps={totalSteps} />
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form Sections */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className={`lg:col-span-2 space-y-6 transition-opacity duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
             {/* Step content based on current step */}
             {currentStep === 1 && (
               <FormSectionWrapper 
@@ -68,46 +97,13 @@ const Applications = () => {
                 description="Select the type of application you wish to submit"
                 stepNumber={1}
               >
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="flex items-start p-4 border rounded-md bg-white hover:bg-gray-50 cursor-pointer transition-colors">
-                    <input 
-                      type="radio" 
-                      id="newApplication" 
-                      name="applicationType" 
-                      className="h-5 w-5 text-primary mt-1" 
-                      defaultChecked 
-                    />
-                    <div className="ml-3">
-                      <label htmlFor="newApplication" className="font-medium text-gray-900 block cursor-pointer">New Business Application</label>
-                      <p className="text-sm text-gray-500 mt-1">For first-time business permit applications</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start p-4 border rounded-md bg-white hover:bg-gray-50 cursor-pointer transition-colors">
-                    <input 
-                      type="radio" 
-                      id="renewalApplication" 
-                      name="applicationType" 
-                      className="h-5 w-5 text-primary mt-1"
-                    />
-                    <div className="ml-3">
-                      <label htmlFor="renewalApplication" className="font-medium text-gray-900 block cursor-pointer">Renewal Application</label>
-                      <p className="text-sm text-gray-500 mt-1">For renewing an existing business permit</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start p-4 border rounded-md bg-white hover:bg-gray-50 cursor-pointer transition-colors">
-                    <input 
-                      type="radio" 
-                      id="amendmentApplication" 
-                      name="applicationType" 
-                      className="h-5 w-5 text-primary mt-1"
-                    />
-                    <div className="ml-3">
-                      <label htmlFor="amendmentApplication" className="font-medium text-gray-900 block cursor-pointer">Amendment/Change of Information</label>
-                      <p className="text-sm text-gray-500 mt-1">For updating details on an existing business permit</p>
-                    </div>
-                  </div>
+                <div className="mt-4">
+                  <EnhancedRadioGroup
+                    options={applicationTypeOptions}
+                    value={applicationType}
+                    onValueChange={setApplicationType}
+                    name="applicationType"
+                  />
                 </div>
               </FormSectionWrapper>
             )}
@@ -136,19 +132,19 @@ const Applications = () => {
                 variant="outline" 
                 onClick={handleBack} 
                 disabled={currentStep === 1}
-                className="px-6"
+                className="px-6 group"
               >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back
               </Button>
               <Button 
                 onClick={handleNext}
-                className="px-6 bg-primary"
+                className="px-6 bg-primary group hover:bg-primary/90 transition-all"
               >
                 {currentStep === totalSteps ? (
                   "Submit Application"
                 ) : (
                   <>
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                    Next <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </>
                 )}
               </Button>
@@ -157,7 +153,7 @@ const Applications = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-6">
+            <Card className="sticky top-6 shadow-md border border-gray-200/80">
               <CardHeader className="py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b">
                 <CardTitle className="text-lg font-medium flex items-center">
                   <HelpCircle className="mr-2 h-5 w-5 text-primary" />
