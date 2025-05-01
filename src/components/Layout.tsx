@@ -1,13 +1,12 @@
-
-import React, { useState } from "react";
+import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Sidebar from "./Sidebar";
 import UserTools from "./UserTools";
+import { AppSidebar } from "./AppSidebar";
+import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 
 const Layout = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
   
   // Determine if we should show the sidebar based on the current path
@@ -20,29 +19,25 @@ const Layout = () => {
     avatar: "/placeholder.svg"
   };
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Sidebar - only show if not on landing page */}
-      {showSidebar && (
-        <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-      )}
+  // If we're on the landing page, render without sidebar
+  if (isLandingPage) {
+    return (
+      <main>
+        <Outlet />
+      </main>
+    );
+  }
 
-      {/* Main content */}
-      <div className={`${showSidebar && isSidebarOpen ? 'ml-64' : 'ml-0'} transition-margin duration-300 ease-in-out`}>
-        {showSidebar && (
+  // Otherwise render the app with sidebar
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-svh w-full">
+        <AppSidebar />
+        
+        <SidebarInset>
           <header className="bg-white shadow-sm">
             <div className="flex items-center justify-between px-4 py-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setIsSidebarOpen(true)} 
-                className={isSidebarOpen ? 'invisible' : 'visible'}
-                aria-label="Open sidebar"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-
-              {/* Add the UserTools component */}
+              <SidebarTrigger />
               <UserTools 
                 user={mockUser} 
                 settings={{
@@ -61,13 +56,13 @@ const Layout = () => {
               />
             </div>
           </header>
-        )}
-
-        <main>
-          <Outlet />
-        </main>
+          
+          <div className="flex-grow">
+            <Outlet />
+          </div>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
