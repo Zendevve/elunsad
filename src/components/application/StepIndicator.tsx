@@ -16,7 +16,7 @@ const StepIndicator = ({
   className,
 }: StepIndicatorProps) => {
   return (
-    <div className={cn("w-full py-4 px-4", className)}>
+    <div className={cn("w-full py-4", className)}>
       <ol className="flex items-center w-full">
         {Array.from({ length: totalSteps }).map((_, index) => {
           const stepNumber = index + 1;
@@ -27,7 +27,7 @@ const StepIndicator = ({
             <li 
               key={stepNumber}
               className={cn(
-                "flex items-center flex-col relative",
+                "flex items-center",
                 stepNumber < totalSteps ? "w-full" : "",
                 "md:transition-all md:duration-500"
               )}
@@ -36,19 +36,19 @@ const StepIndicator = ({
                 {/* Step indicator */}
                 <div
                   className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-full shrink-0 border-2 transition-all duration-300 font-medium text-sm",
+                    "flex items-center justify-center w-10 h-10 rounded-full shrink-0 border-2 transition-all duration-300 font-medium text-sm",
                     isActive && "border-primary bg-primary text-primary-foreground",
                     isCompleted && "border-primary bg-primary text-primary-foreground",
                     !isActive && !isCompleted && "border-muted-foreground text-muted-foreground"
                   )}
                 >
-                  {isCompleted ? <Check className="h-4 w-4" /> : stepNumber}
+                  {isCompleted ? <Check className="h-5 w-5" /> : stepNumber}
                 </div>
                 
                 {/* Step title */}
                 <span
                   className={cn(
-                    "text-xs mt-2 text-center max-w-[80px] truncate px-1",
+                    "absolute hidden md:block mt-12 text-xs",
                     isActive && "font-medium text-primary",
                     isCompleted && "text-primary",
                     !isActive && !isCompleted && "text-muted-foreground"
@@ -60,7 +60,7 @@ const StepIndicator = ({
               
               {/* Connector line */}
               {stepNumber < totalSteps && (
-                <div className="w-full absolute top-4 left-1/2 h-0.5 z-0">
+                <div className="w-full flex items-center">
                   <div 
                     className={cn(
                       "w-full h-0.5",

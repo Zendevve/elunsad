@@ -25,7 +25,6 @@ const ApplicationHeader = ({ currentStep, totalSteps }: ApplicationHeaderProps) 
             currentStep={currentStep} 
             totalSteps={totalSteps} 
             stepTitles={stepTitles}
-            className="px-8 md:px-16"
           />
         </div>
       </div>
