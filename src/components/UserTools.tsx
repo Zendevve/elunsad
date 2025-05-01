@@ -13,14 +13,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserToolsProps {
   user?: {
     name: string;
     avatar: string;
-  } | null;
-  loading?: boolean;
+  };
   settings?: {
     title: string;
     options: {
@@ -30,7 +28,7 @@ interface UserToolsProps {
   };
 }
 
-const UserTools: React.FC<UserToolsProps> = ({ user, loading = false, settings }) => {
+const UserTools: React.FC<UserToolsProps> = ({ user, settings }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -76,12 +74,7 @@ const UserTools: React.FC<UserToolsProps> = ({ user, loading = false, settings }
       </Button>
 
       {/* User Menu */}
-      {loading ? (
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-5 w-24" />
-        </div>
-      ) : user ? (
+      {user && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
@@ -150,10 +143,6 @@ const UserTools: React.FC<UserToolsProps> = ({ user, loading = false, settings }
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      ) : (
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/signin">Sign In</Link>
-        </Button>
       )}
     </div>
   );
