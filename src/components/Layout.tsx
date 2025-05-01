@@ -31,7 +31,7 @@ const Layout = () => {
       <div className={`${showSidebar && isSidebarOpen ? 'ml-64' : 'ml-0'} transition-margin duration-300 ease-in-out`}>
         {showSidebar && (
           <header className="bg-white shadow-sm">
-            <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center justify-between px-4 py-4">
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -63,7 +63,7 @@ const Layout = () => {
           </header>
         )}
 
-        <main className="px-4">
+        <main className="px-0">
           <Outlet />
         </main>
       </div>
