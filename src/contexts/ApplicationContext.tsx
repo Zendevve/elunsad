@@ -6,6 +6,7 @@ import {
   ApplicationType, 
   ApplicationStatus
 } from '@/services/applicationService';
+import { supabase } from "@/integrations/supabase/client";
 
 interface ApplicationContextType {
   applicationId: string | null;
@@ -25,10 +26,49 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [applicationType, setApplicationType] = useState<ApplicationType | null>(null);
   const [applicationStatus, setApplicationStatus] = useState<ApplicationStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const { toast } = useToast();
+
+  // Check if the user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error("Auth error:", error);
+          setIsAuthenticated(false);
+        } else {
+          setIsAuthenticated(!!data.user);
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+    
+    // Listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   // Create a new application
   const createNewApplication = async (type: ApplicationType) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create an application.",
+        variant: "destructive",
+      });
+      return null;
+    }
+    
     setIsLoading(true);
     try {
       const application = await applicationService.createApplication(type);

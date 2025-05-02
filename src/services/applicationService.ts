@@ -116,11 +116,17 @@ export const applicationService = {
   // Create a new application
   async createApplication(applicationType: ApplicationType) {
     try {
+      // Get current user
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Not authenticated");
+      
       const { data, error } = await supabase
         .from('applications')
         .insert({
           application_type: applicationType,
-          application_status: 'draft'
+          application_status: 'draft',
+          user_id: authData.user.id // Add the user ID from auth
         })
         .select('*')
         .single();
