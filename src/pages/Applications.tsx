@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, HelpCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,8 @@ import DeclarationSection from "@/components/application/DeclarationSection";
 import { useToast } from "@/components/ui/use-toast";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
+import { useApplication } from "@/contexts/ApplicationContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Applications = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -19,6 +22,39 @@ const Applications = () => {
   const { toast } = useToast();
   const [applicationType, setApplicationType] = useState("newApplication");
   const [fadeIn, setFadeIn] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(false); // Declaration agreement state
+  const navigate = useNavigate();
+  
+  // Get application context
+  const { 
+    applicationId, 
+    createNewApplication, 
+    updateStatus, 
+    applicationStatus,
+    isLoading
+  } = useApplication();
+
+  // Check if user is authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getUser();
+      setIsAuthenticated(!!data.user);
+      
+      if (!data.user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to create an application.",
+          variant: "destructive",
+        });
+        // Redirect to login page
+        navigate("/auth");
+      }
+    };
+    
+    checkAuth();
+  }, [navigate, toast]);
 
   // Application type options
   const applicationTypeOptions = [
@@ -38,6 +74,19 @@ const Applications = () => {
       description: "For updating details on an existing business permit"
     }
   ];
+
+  // Start a new application when type is selected on step 1
+  useEffect(() => {
+    const initializeApplication = async () => {
+      if (currentStep === 1 && applicationType && !applicationId && isAuthenticated) {
+        await createNewApplication(applicationType as any);
+      }
+    };
+    
+    if (isAuthenticated !== null) {
+      initializeApplication();
+    }
+  }, [applicationType, applicationId, currentStep, createNewApplication, isAuthenticated]);
 
   // Handle step click to navigate to previous steps only
   const handleStepClick = (step: number) => {
@@ -59,11 +108,8 @@ const Applications = () => {
       setCurrentStep(currentStep + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // Submit the form
-      toast({
-        title: "Application Submitted",
-        description: "Your business permit application has been submitted successfully.",
-      });
+      // Final step - submit the application
+      handleSubmitApplication();
     }
   };
 
@@ -73,6 +119,72 @@ const Applications = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  // Handle final application submission
+  const handleSubmitApplication = async () => {
+    if (!isAgreed) {
+      toast({
+        title: "Agreement Required",
+        description: "You must agree to the declaration before submitting the application.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!applicationId) {
+      toast({
+        title: "Application Error",
+        description: "Could not find application to submit. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Update application status to submitted
+      await updateStatus('submitted');
+      
+      toast({
+        title: "Application Submitted",
+        description: "Your business permit application has been submitted successfully.",
+      });
+      
+      // Redirect to status page
+      navigate('/status');
+    } catch (error) {
+      console.error("Application submission error:", error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your application. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Pass isAgreed to DeclarationSection
+  const handleAgreementChange = (agreed: boolean) => {
+    setIsAgreed(agreed);
+  };
+
+  if (isAuthenticated === false) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Authentication Required</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-center">You need to be logged in to access this page.</p>
+            <div className="flex justify-center">
+              <Button onClick={() => navigate("/auth")}>
+                Go to Login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -135,7 +247,7 @@ const Applications = () => {
             )}
 
             {currentStep === 5 && (
-              <DeclarationSection />
+              <DeclarationSection onAgreementChange={handleAgreementChange} />
             )}
 
             <div className="flex justify-between mt-8">
@@ -150,8 +262,11 @@ const Applications = () => {
               <Button 
                 onClick={handleNext}
                 className="px-6 bg-primary group hover:bg-primary/90 transition-all"
+                disabled={isLoading}
               >
-                {currentStep === totalSteps ? (
+                {isLoading ? (
+                  "Processing..."
+                ) : currentStep === totalSteps ? (
                   "Submit Application"
                 ) : (
                   <>

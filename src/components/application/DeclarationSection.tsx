@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
@@ -9,9 +9,28 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form-field";
+import { useApplication } from "@/contexts/ApplicationContext";
 
-const DeclarationSection = () => {
+interface DeclarationSectionProps {
+  onAgreementChange?: (isAgreed: boolean) => void;
+}
+
+const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
   const [isAgreed, setIsAgreed] = useState(false);
+  const [signature, setSignature] = useState("");
+  const [designation, setDesignation] = useState("");
+  const { applicationId } = useApplication();
+  
+  // Send agreement state up to parent component
+  useEffect(() => {
+    if (onAgreementChange) {
+      onAgreementChange(isAgreed);
+    }
+  }, [isAgreed, onAgreementChange]);
+  
+  const handleAgreementChange = (checked: boolean) => {
+    setIsAgreed(checked);
+  };
   
   return (
     <Card className="mt-6 border shadow-sm">
@@ -38,7 +57,7 @@ const DeclarationSection = () => {
           <Checkbox 
             id="agreementCheck" 
             checked={isAgreed}
-            onCheckedChange={(checked) => setIsAgreed(checked === true)}
+            onCheckedChange={(checked) => handleAgreementChange(checked === true)}
             className="mt-1 h-5 w-5 border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           />
           <label htmlFor="agreementCheck" className="text-sm cursor-pointer">
@@ -52,12 +71,16 @@ const DeclarationSection = () => {
             label="SIGNATURE OF APPLICANT/ OWNER OVER PRINTED NAME"
             required
             tooltip="Type your full name to sign electronically"
+            value={signature}
+            onChange={(e) => setSignature(e.target.value)}
           />
           
           <FormField 
             id="designation" 
             label="DESIGNATION / POSITION / TITLE"
             tooltip="Enter your position or title in the business"
+            value={designation}
+            onChange={(e) => setDesignation(e.target.value)}
           />
         </div>
       </CardContent>
