@@ -18,43 +18,48 @@ import Administration from "./pages/Administration";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Layout from "./components/Layout";
+import { ApplicationProvider } from "./contexts/ApplicationContext";
 
 // Placeholder components for routes that haven't been implemented yet
 const Settings = () => <div className="p-6">Settings Page</div>;
+const Status = () => <div className="p-6">Application Status Tracking Page</div>;
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* Add explicit auth callback routes to handle all variations */}
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/auth/callback/*" element={<AuthCallback />} />
-          
-          {/* Apply Layout to all routes except signin, register and 404 */}
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/applications" element={<Applications />} />
-            <Route path="/documents/*" element={<Documents />} />
-            <Route path="/analytics/*" element={<Analytics />} />
-            <Route path="/map" element={<MapView />} />
-            <Route path="/notifications/*" element={<Notifications />} />
-            <Route path="/admin/*" element={<Administration />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <ApplicationProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Add explicit auth callback routes to handle all variations */}
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/auth/callback/*" element={<AuthCallback />} />
+            
+            {/* Apply Layout to all routes except signin, register and 404 */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/applications" element={<Applications />} />
+              <Route path="/documents/*" element={<Documents />} />
+              <Route path="/analytics/*" element={<Analytics />} />
+              <Route path="/map" element={<MapView />} />
+              <Route path="/notifications/*" element={<Notifications />} />
+              <Route path="/admin/*" element={<Administration />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/status" element={<Status />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ApplicationProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

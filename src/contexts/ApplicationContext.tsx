@@ -1,0 +1,147 @@
+
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useToast } from "@/components/ui/use-toast";
+import { 
+  applicationService, 
+  ApplicationType, 
+  ApplicationStatus
+} from '@/services/applicationService';
+
+interface ApplicationContextType {
+  applicationId: string | null;
+  applicationType: ApplicationType | null;
+  applicationStatus: ApplicationStatus | null;
+  isLoading: boolean;
+  setApplicationId: (id: string | null) => void;
+  createNewApplication: (type: ApplicationType) => Promise<string | null>;
+  getApplicationDetails: () => Promise<void>;
+  updateStatus: (status: ApplicationStatus) => Promise<void>;
+}
+
+const ApplicationContext = createContext<ApplicationContextType | undefined>(undefined);
+
+export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [applicationId, setApplicationId] = useState<string | null>(null);
+  const [applicationType, setApplicationType] = useState<ApplicationType | null>(null);
+  const [applicationStatus, setApplicationStatus] = useState<ApplicationStatus | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  // Create a new application
+  const createNewApplication = async (type: ApplicationType) => {
+    setIsLoading(true);
+    try {
+      const application = await applicationService.createApplication(type);
+      if (application) {
+        setApplicationId(application.id);
+        setApplicationType(application.application_type);
+        setApplicationStatus(application.application_status);
+        return application.id;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error creating application:", error);
+      toast({
+        title: "Application Creation Failed",
+        description: "There was an error creating your application. Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get application details
+  const getApplicationDetails = async () => {
+    if (!applicationId) return;
+    
+    setIsLoading(true);
+    try {
+      const application = await applicationService.getApplicationById(applicationId);
+      if (application) {
+        setApplicationType(application.application_type);
+        setApplicationStatus(application.application_status);
+      } else {
+        // Application not found, reset state
+        setApplicationId(null);
+        setApplicationType(null);
+        setApplicationStatus(null);
+      }
+    } catch (error) {
+      console.error("Error getting application details:", error);
+      toast({
+        title: "Failed to Retrieve Application",
+        description: "There was an error loading your application. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update application status
+  const updateStatus = async (status: ApplicationStatus) => {
+    if (!applicationId) return;
+    
+    setIsLoading(true);
+    try {
+      const application = await applicationService.updateApplicationStatus(applicationId, status);
+      if (application) {
+        setApplicationStatus(application.application_status);
+        
+        // Show success message for submission
+        if (status === 'submitted') {
+          toast({
+            title: "Application Submitted Successfully",
+            description: "Your application has been submitted for review.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      toast({
+        title: "Status Update Failed",
+        description: "There was an error updating your application status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load application details when applicationId changes
+  useEffect(() => {
+    if (applicationId) {
+      getApplicationDetails();
+    } else {
+      setApplicationType(null);
+      setApplicationStatus(null);
+    }
+  }, [applicationId]);
+
+  const value = {
+    applicationId,
+    applicationType,
+    applicationStatus,
+    isLoading,
+    setApplicationId,
+    createNewApplication,
+    getApplicationDetails,
+    updateStatus
+  };
+
+  return (
+    <ApplicationContext.Provider value={value}>
+      {children}
+    </ApplicationContext.Provider>
+  );
+};
+
+export const useApplication = () => {
+  const context = useContext(ApplicationContext);
+  if (context === undefined) {
+    throw new Error('useApplication must be used within an ApplicationProvider');
+  }
+  return context;
+};

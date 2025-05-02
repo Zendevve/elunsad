@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, Bell, User } from "lucide-react";
+import { LayoutDashboard, FileText, Bell, User, ClipboardList, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 
@@ -10,7 +10,7 @@ interface SidebarProps {
   setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
-// Streamlined navigation for business owners/applicants
+// Navigation items for both applicants and staff
 const navigation = [
   {
     name: 'Dashboard',
@@ -25,12 +25,23 @@ const navigation = [
   {
     name: 'Notifications',
     href: '/notifications',
-    icon: Bell
+    icon: Bell,
+    badge: 3 // Example for notification count
   }, 
   {
     name: 'Profile',
     href: '/profile',
     icon: User
+  },
+  {
+    name: 'Status Tracker',
+    href: '/status',
+    icon: ClipboardList
+  },
+  {
+    name: 'Settings',
+    href: '/settings',
+    icon: Settings
   }
 ];
 
@@ -49,7 +60,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) =>
           <Menu className="h-6 w-6" />
         </Button>
       </div>
-      <nav className="mt-5 px-2 space-y-1">
+      
+      <div className="p-4 border-b">
+        <div className="text-sm text-gray-500 font-medium">Business Licensing Office</div>
+        <div className="text-xs text-gray-400">City of Lucena</div>
+      </div>
+      
+      <nav className="mt-2 px-2 space-y-1">
         {navigation.map(item => (
           <Link 
             key={item.name} 
@@ -61,10 +78,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) =>
             }`}
           >
             <item.icon className="mr-3 h-5 w-5" />
-            {item.name}
+            <span>{item.name}</span>
+            
+            {/* Badge for notifications */}
+            {item.badge && (
+              <span className="ml-auto bg-primary text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                {item.badge}
+              </span>
+            )}
           </Link>
         ))}
       </nav>
+      
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+              JD
+            </div>
+            <div>
+              <div className="text-sm font-medium">John Doe</div>
+              <div className="text-xs text-gray-500">Business Owner</div>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm">
+            <Bell className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
