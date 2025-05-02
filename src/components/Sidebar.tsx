@@ -1,14 +1,16 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, LayoutDashboard, FileText, Files, PieChart, Map, Bell, Settings } from "lucide-react";
+import { LayoutDashboard, FileText, Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
+// Streamlined navigation for business owners/applicants
 const navigation = [
   {
     name: 'Dashboard',
@@ -21,29 +23,14 @@ const navigation = [
     icon: FileText
   }, 
   {
-    name: 'Documents',
-    href: '/documents',
-    icon: Files
-  }, 
-  {
-    name: 'Analytics',
-    href: '/analytics',
-    icon: PieChart
-  }, 
-  {
-    name: 'Map View',
-    href: '/map',
-    icon: Map
-  },
-  {
     name: 'Notifications',
     href: '/notifications',
     icon: Bell
   }, 
   {
-    name: 'Administration',
-    href: '/admin',
-    icon: Settings
+    name: 'Profile',
+    href: '/profile',
+    icon: User
   }
 ];
 
