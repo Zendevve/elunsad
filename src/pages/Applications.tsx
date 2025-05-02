@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, HelpCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, HelpCircle, CheckCircle2, Loader } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ApplicationHeader from "@/components/application/ApplicationHeader";
 import BusinessInformationSection from "@/components/application/BusinessInformationSection";
@@ -15,6 +15,7 @@ import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { supabase } from "@/integrations/supabase/client";
+import { applicationService } from "@/services/applicationService";
 
 const Applications = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -31,7 +32,8 @@ const Applications = () => {
     createNewApplication, 
     updateStatus, 
     applicationStatus,
-    isLoading
+    isLoading,
+    setIsLoading
   } = useApplication();
 
   // Check if user is authenticated
@@ -120,27 +122,94 @@ const Applications = () => {
     }
   };
 
-  // Handle final application submission
-  const handleSubmitApplication = async () => {
-    if (!isAgreed) {
-      toast({
-        title: "Agreement Required",
-        description: "You must agree to the declaration before submitting the application.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  // Validate required data before submission
+  const validateApplication = async () => {
     if (!applicationId) {
       toast({
         title: "Application Error",
         description: "Could not find application to submit. Please try again.",
         variant: "destructive",
       });
-      return;
+      return false;
+    }
+    
+    if (!isAgreed) {
+      toast({
+        title: "Agreement Required",
+        description: "You must agree to the declaration before submitting the application.",
+        variant: "destructive",
+      });
+      return false;
     }
 
     try {
+      // Check if all required data is present
+      const businessInfo = await applicationService.getBusinessInformation(applicationId);
+      const ownerInfo = await applicationService.getOwnerInformation(applicationId);
+      const businessLines = await applicationService.getBusinessLines(applicationId);
+      const declaration = await applicationService.getDeclaration(applicationId);
+      
+      if (!businessInfo) {
+        toast({
+          title: "Incomplete Application",
+          description: "Please complete the Business Information section before submitting.",
+          variant: "destructive",
+        });
+        setCurrentStep(2); // Go to Business Information step
+        return false;
+      }
+      
+      if (!ownerInfo) {
+        toast({
+          title: "Incomplete Application",
+          description: "Please complete the Owner Information section before submitting.",
+          variant: "destructive",
+        });
+        setCurrentStep(3); // Go to Owner Information step
+        return false;
+      }
+      
+      if (!businessLines || businessLines.length === 0) {
+        toast({
+          title: "Incomplete Application",
+          description: "Please add at least one Line of Business before submitting.",
+          variant: "destructive",
+        });
+        setCurrentStep(4); // Go to Business Lines step
+        return false;
+      }
+      
+      if (!declaration || !declaration.signature) {
+        toast({
+          title: "Signature Required",
+          description: "Please sign the declaration before submitting.",
+          variant: "destructive",
+        });
+        setCurrentStep(5); // Go to Declaration step
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Validation error:", error);
+      toast({
+        title: "Validation Error",
+        description: "An error occurred while validating your application. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  // Handle final application submission
+  const handleSubmitApplication = async () => {
+    // Validate the application data
+    const isValid = await validateApplication();
+    if (!isValid) return;
+
+    try {
+      setIsLoading(true);
+      
       // Update application status to submitted
       await updateStatus('submitted');
       
@@ -158,6 +227,7 @@ const Applications = () => {
         description: "There was an error submitting your application. Please try again.",
         variant: "destructive",
       });
+      setIsLoading(false);
     }
   };
 
@@ -254,7 +324,7 @@ const Applications = () => {
               <Button 
                 variant="outline" 
                 onClick={handleBack} 
-                disabled={currentStep === 1}
+                disabled={currentStep === 1 || isLoading}
                 className="px-6 group"
               >
                 <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back
@@ -265,7 +335,9 @@ const Applications = () => {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  "Processing..."
+                  <span className="flex items-center">
+                    <Loader className="mr-2 h-4 w-4 animate-spin" /> Processing...
+                  </span>
                 ) : currentStep === totalSteps ? (
                   "Submit Application"
                 ) : (

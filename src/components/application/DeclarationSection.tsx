@@ -10,27 +10,108 @@ import {
 } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form-field";
 import { useApplication } from "@/contexts/ApplicationContext";
+import { applicationService } from "@/services/applicationService";
+import { useToast } from "@/components/ui/use-toast";
 
 interface DeclarationSectionProps {
   onAgreementChange?: (isAgreed: boolean) => void;
 }
 
 const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
+  const { applicationId, isLoading, setIsLoading } = useApplication();
+  const { toast } = useToast();
+  
   const [isAgreed, setIsAgreed] = useState(false);
   const [signature, setSignature] = useState("");
   const [designation, setDesignation] = useState("");
-  const { applicationId } = useApplication();
   
-  // Send agreement state up to parent component
+  // Load saved data when component mounts
   useEffect(() => {
-    if (onAgreementChange) {
-      onAgreementChange(isAgreed);
+    const loadDeclaration = async () => {
+      if (!applicationId) return;
+      
+      try {
+        const data = await applicationService.getDeclaration(applicationId);
+        if (data) {
+          // Populate form fields with saved data
+          setIsAgreed(data.is_agreed || false);
+          setSignature(data.signature || "");
+          setDesignation(data.designation || "");
+          
+          // Update parent component with agreement state
+          if (onAgreementChange) {
+            onAgreementChange(data.is_agreed || false);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading declaration:", error);
+      }
+    };
+    
+    loadDeclaration();
+  }, [applicationId, onAgreementChange]);
+  
+  // Save data function
+  const saveDeclaration = async () => {
+    if (!applicationId) return;
+    if (!signature && isAgreed) return; // Don't save if agreeing without signature
+    
+    try {
+      setIsLoading(true);
+      
+      await applicationService.saveDeclaration({
+        application_id: applicationId,
+        is_agreed: isAgreed,
+        signature,
+        designation
+      });
+      
+      toast({
+        title: "Declaration Saved",
+        description: "Your declaration has been saved successfully.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error saving declaration:", error);
+      toast({
+        title: "Save Failed",
+        description: "There was an error saving your declaration.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, [isAgreed, onAgreementChange]);
+  };
   
   const handleAgreementChange = (checked: boolean) => {
     setIsAgreed(checked);
+    
+    // Send agreement state up to parent component
+    if (onAgreementChange) {
+      onAgreementChange(checked);
+    }
+    
+    // Auto-save when agreement changes
+    if (signature) {
+      const saveTimeout = setTimeout(() => {
+        saveDeclaration();
+      }, 500);
+      
+      return () => clearTimeout(saveTimeout);
+    }
   };
+  
+  // Auto-save when important fields change
+  useEffect(() => {
+    // Only save if signature is provided
+    if (applicationId && signature) {
+      const saveTimeout = setTimeout(() => {
+        saveDeclaration();
+      }, 1500);
+      
+      return () => clearTimeout(saveTimeout);
+    }
+  }, [signature, designation]);
   
   return (
     <Card className="mt-6 border shadow-sm">

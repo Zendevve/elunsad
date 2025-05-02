@@ -13,6 +13,7 @@ interface ApplicationContextType {
   applicationType: ApplicationType | null;
   applicationStatus: ApplicationStatus | null;
   isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setApplicationId: (id: string | null) => void;
   createNewApplication: (type: ApplicationType) => Promise<string | null>;
   getApplicationDetails: () => Promise<void>;
@@ -165,6 +166,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     applicationType,
     applicationStatus,
     isLoading,
+    setIsLoading,
     setApplicationId,
     createNewApplication,
     getApplicationDetails,

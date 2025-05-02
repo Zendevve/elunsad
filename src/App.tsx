@@ -17,12 +17,12 @@ import Notifications from "./pages/Notifications";
 import Administration from "./pages/Administration";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
+import Status from "./pages/Status";
 import Layout from "./components/Layout";
 import { ApplicationProvider } from "./contexts/ApplicationContext";
 
 // Placeholder components for routes that haven't been implemented yet
 const Settings = () => <div className="p-6">Settings Page</div>;
-const Status = () => <div className="p-6">Application Status Tracking Page</div>;
 
 const queryClient = new QueryClient();
 
