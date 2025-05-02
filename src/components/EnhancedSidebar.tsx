@@ -15,9 +15,9 @@ import {
   SidebarMenuButton,
   SidebarTrigger,
   SidebarMenuBadge,
-  SidebarInput,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { SidebarInput } from "@/components/ui/sidebar-input";
 
 // Navigation items organized in sections
 const mainNavigation = [
