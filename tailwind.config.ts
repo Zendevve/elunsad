@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -54,14 +53,14 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background, 0 0% 100%))',
-					foreground: 'hsl(var(--sidebar-foreground, 240 10% 3.9%))',
-					primary: 'hsl(var(--sidebar-primary, 262 83% 58%))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground, 0 0% 100%))',
-					accent: 'hsl(var(--sidebar-accent, 240 4.8% 95.9%))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground, 240 5.9% 10%))',
-					border: 'hsl(var(--sidebar-border, 240 5.9% 90%))',
-					ring: 'hsl(var(--sidebar-ring, 262 83% 58%))'
+					DEFAULT: 'hsl(var(--sidebar-background))',
+					foreground: 'hsl(var(--sidebar-foreground))',
+					primary: 'hsl(var(--sidebar-primary))',
+					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+					accent: 'hsl(var(--sidebar-accent))',
+					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+					border: 'hsl(var(--sidebar-border))',
+					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
 			borderRadius: {
@@ -90,9 +89,6 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
-			},
-			backgroundImage: {
-				'sidebar-gradient': 'linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(var(--sidebar-background)) 80%, hsl(262 83% 98%))',
 			}
 		}
 	},
