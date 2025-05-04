@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -20,9 +21,9 @@ export interface BusinessInformationData {
   registration_number?: string;
   tin_number: string;
   sss_number?: string;
-  ctc_number?: string;  // Added CTC number
-  ctc_date_issue?: string;  // Added CTC date of issue
-  ctc_place_issue?: string;  // Added CTC place of issue
+  ctc_number?: string;  // CTC number field
+  ctc_date_issue?: string;  // CTC date of issue field
+  ctc_place_issue?: string;  // CTC place of issue field
   ownership_type: OwnershipType;
   house_bldg_no?: string;
   building_name?: string;

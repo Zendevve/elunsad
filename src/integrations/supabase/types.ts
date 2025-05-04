@@ -48,6 +48,9 @@ export type Database = {
           business_name: string
           city_municipality: string
           created_at: string
+          ctc_date_issue: string | null
+          ctc_number: string | null
+          ctc_place_issue: string | null
           email_address: string
           house_bldg_no: string | null
           id: string
@@ -73,6 +76,9 @@ export type Database = {
           business_name: string
           city_municipality: string
           created_at?: string
+          ctc_date_issue?: string | null
+          ctc_number?: string | null
+          ctc_place_issue?: string | null
           email_address: string
           house_bldg_no?: string | null
           id?: string
@@ -98,6 +104,9 @@ export type Database = {
           business_name?: string
           city_municipality?: string
           created_at?: string
+          ctc_date_issue?: string | null
+          ctc_number?: string | null
+          ctc_place_issue?: string | null
           email_address?: string
           house_bldg_no?: string | null
           id?: string
@@ -298,29 +307,35 @@ export type Database = {
         Row: {
           application_id: string
           created_at: string
+          declaration_place: string | null
           designation: string | null
           id: string
           is_agreed: boolean
           signature: string
           updated_at: string
+          verified_by: string | null
         }
         Insert: {
           application_id: string
           created_at?: string
+          declaration_place?: string | null
           designation?: string | null
           id?: string
           is_agreed?: boolean
           signature: string
           updated_at?: string
+          verified_by?: string | null
         }
         Update: {
           application_id?: string
           created_at?: string
+          declaration_place?: string | null
           designation?: string | null
           id?: string
           is_agreed?: boolean
           signature?: string
           updated_at?: string
+          verified_by?: string | null
         }
         Relationships: [
           {
