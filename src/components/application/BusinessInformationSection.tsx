@@ -1,444 +1,413 @@
+
 import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useToast } from "@/components/ui/use-toast";
-import { useApplication } from "@/contexts/ApplicationContext";
-import { applicationService, BusinessInformationData } from "@/services/applicationService";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FormSectionWrapper from "./FormSectionWrapper";
+import { FormField } from "@/components/ui/form-field";
+import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
+import { useApplication } from "@/contexts/ApplicationContext";
+import { applicationService } from "@/services/applicationService";
+import { useToast } from "@/components/ui/use-toast";
 
 const BusinessInformationSection = () => {
   const { applicationId, isLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
-  const [saving, setSaving] = useState(false);
+  const [ownershipType, setOwnershipType] = useState<string>("soleProprietorship");
+  const [selectedBarangay, setSelectedBarangay] = useState<string>("");
+  
+  // Form fields state
+  const [businessName, setBusinessName] = useState<string>("");
+  const [tradeName, setTradeName] = useState<string>("");
+  const [registrationNumber, setRegistrationNumber] = useState<string>("");
+  const [tinNumber, setTinNumber] = useState<string>("");
+  const [sssNumber, setSssNumber] = useState<string>("");
+  const [houseBldgNo, setHouseBldgNo] = useState<string>("");
+  const [buildingName, setBuildingName] = useState<string>("");
+  const [blockNo, setBlockNo] = useState<string>("");
+  const [lotNo, setLotNo] = useState<string>("");
+  const [street, setStreet] = useState<string>("");
+  const [subdivision, setSubdivision] = useState<string>("");
+  const [cityMunicipality, setCityMunicipality] = useState<string>("Lucena");
+  const [province, setProvince] = useState<string>("Quezon");
+  const [zipCode, setZipCode] = useState<string>("");
+  const [telephoneNo, setTelephoneNo] = useState<string>("");
+  const [mobileNo, setMobileNo] = useState<string>("");
+  const [emailAddress, setEmailAddress] = useState<string>("");
 
-  const [businessInfo, setBusinessInfo] = useState<Partial<BusinessInformationData>>({
-    application_id: applicationId || "",
-    business_name: "",
-    trade_name: "",
-    registration_number: "",
-    tin_number: "",
-    sss_number: "",
-    ctc_number: "", // Add CTC number field
-    ctc_issue_date: "", // Add CTC issue date field
-    ctc_issue_place: "", // Add CTC issue place field
-    ownership_type: "soleProprietorship",
-    house_bldg_no: "",
-    building_name: "",
-    block_no: "",
-    lot_no: "",
-    street: "",
-    subdivision: "",
-    barangay: "",
-    city_municipality: "Lucena City",
-    province: "Quezon",
-    zip_code: "",
-    telephone_no: "",
-    mobile_no: "",
-    email_address: ""
-  });
-
+  // Load saved data when component mounts
   useEffect(() => {
-    const fetchBusinessInfo = async () => {
-      if (applicationId) {
-        try {
-          const data = await applicationService.getBusinessInformation(applicationId);
-          if (data) {
-            setBusinessInfo(data);
-          }
-        } catch (error) {
-          console.error("Error fetching business information:", error);
-          toast({
-            title: "Failed to Load",
-            description: "Could not load business information. Please try again.",
-            variant: "destructive",
-          });
+    const loadBusinessInfo = async () => {
+      if (!applicationId) return;
+      
+      try {
+        const data = await applicationService.getBusinessInformation(applicationId);
+        if (data) {
+          // Populate form fields with saved data
+          setBusinessName(data.business_name || "");
+          setTradeName(data.trade_name || "");
+          setRegistrationNumber(data.registration_number || "");
+          setTinNumber(data.tin_number || "");
+          setSssNumber(data.sss_number || "");
+          setOwnershipType(data.ownership_type || "soleProprietorship");
+          setHouseBldgNo(data.house_bldg_no || "");
+          setBuildingName(data.building_name || "");
+          setBlockNo(data.block_no || "");
+          setLotNo(data.lot_no || "");
+          setStreet(data.street || "");
+          setSubdivision(data.subdivision || "");
+          setSelectedBarangay(data.barangay || "");
+          setCityMunicipality(data.city_municipality || "Lucena");
+          setProvince(data.province || "Quezon");
+          setZipCode(data.zip_code || "");
+          setTelephoneNo(data.telephone_no || "");
+          setMobileNo(data.mobile_no || "");
+          setEmailAddress(data.email_address || "");
         }
+      } catch (error) {
+        console.error("Error loading business information:", error);
       }
     };
+    
+    loadBusinessInfo();
+  }, [applicationId]);
 
-    fetchBusinessInfo();
-  }, [applicationId, toast]);
-
-  const handleInputChange = (field: string, value: any) => {
-    setBusinessInfo(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async () => {
-    if (!applicationId) {
-      toast({
-        title: "Application Error",
-        description: "Could not find application to save. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setSaving(true);
-
+  // Save data function
+  const saveBusinessInformation = async () => {
+    if (!applicationId) return;
+    
     try {
-      // Ensure application_id is correctly set
-      const dataToSave = { ...businessInfo, application_id: applicationId };
-      await applicationService.saveBusinessInformation(dataToSave as BusinessInformationData);
-
+      setIsLoading(true);
+      
+      await applicationService.saveBusinessInformation({
+        application_id: applicationId,
+        business_name: businessName,
+        trade_name: tradeName,
+        registration_number: registrationNumber,
+        tin_number: tinNumber,
+        sss_number: sssNumber,
+        ownership_type: ownershipType as any,
+        house_bldg_no: houseBldgNo,
+        building_name: buildingName,
+        block_no: blockNo,
+        lot_no: lotNo,
+        street: street,
+        subdivision: subdivision,
+        barangay: selectedBarangay,
+        city_municipality: cityMunicipality,
+        province: province,
+        zip_code: zipCode,
+        telephone_no: telephoneNo,
+        mobile_no: mobileNo,
+        email_address: emailAddress
+      });
+      
       toast({
-        title: "Business Information Saved",
+        title: "Information Saved",
         description: "Your business information has been saved successfully.",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error saving business information:", error);
       toast({
         title: "Save Failed",
-        description: "There was an error saving your business information. Please try again.",
+        description: "There was an error saving your business information.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
-      setSaving(false);
     }
   };
 
+  // Auto-save when important fields change
   useEffect(() => {
-    // Autosave when businessInfo changes
-    const autoSave = async () => {
-      if (!applicationId || saving) return;
-
-      setSaving(true);
-      try {
-        // Ensure application_id is correctly set
-        const dataToSave = { ...businessInfo, application_id: applicationId };
-        await applicationService.saveBusinessInformation(dataToSave as BusinessInformationData);
-      } catch (error) {
-        console.error("Error autosaving business information:", error);
-      } finally {
-        setSaving(false);
-      }
-    };
-
-    if (applicationId && !isLoading) {
-      // Debounce the save
-      clearTimeout(window.autoSaveTimeout);
-      window.autoSaveTimeout = setTimeout(autoSave, 1000);
+    // Only save if at least business name and required fields are entered
+    if (applicationId && businessName && tinNumber && street && selectedBarangay) {
+      const saveTimeout = setTimeout(() => {
+        saveBusinessInformation();
+      }, 1500);
+      
+      return () => clearTimeout(saveTimeout);
     }
+  }, [
+    businessName, tinNumber, ownershipType, street, 
+    selectedBarangay, cityMunicipality, province, 
+    zipCode, mobileNo, emailAddress
+  ]);
 
-    return () => {
-      clearTimeout(window.autoSaveTimeout);
-    };
-  }, [businessInfo, applicationId, isLoading, saving]);
+  // List of barangays in Lucena
+  const barangays = [
+    "Barangay 1 (Poblacion)",
+    "Barangay 2 (Poblacion)",
+    "Barangay 3 (Poblacion)",
+    "Barangay 4 (Poblacion)",
+    "Barangay 5 (Poblacion)",
+    "Barangay 6 (Poblacion)",
+    "Barangay 7 (Poblacion)",
+    "Barangay 8 (Poblacion)",
+    "Barangay 9 (Poblacion)",
+    "Barangay 10 (Poblacion)",
+    "Barangay 11 (Poblacion)",
+    "Barra",
+    "Bocohan",
+    "Cotta",
+    "Gulang-Gulang",
+    "Dalahican",
+    "Domoit",
+    "Ibabang Dupay",
+    "Ibabang Iyam",
+    "Ibabang Talim",
+    "Ilayang Dupay",
+    "Ilayang Iyam",
+    "Ilayang Talim",
+    "Isabang",
+    "Market View",
+    "Mayao Castillo",
+    "Mayao Crossing",
+    "Mayao Kanluran",
+    "Mayao Parada",
+    "Mayao Silangan",
+    "Ransohan",
+    "Salinas",
+    "Talao-Talao"
+  ];
+
+  const ownershipOptions = [
+    {
+      value: "soleProprietorship",
+      label: "Sole Proprietorship",
+      description: "Business owned by one person"
+    },
+    {
+      value: "onePersonCorp",
+      label: "One Person Corp",
+      description: "Corporation with a single stockholder"
+    },
+    {
+      value: "partnership",
+      label: "Partnership",
+      description: "Business owned by two or more individuals"
+    },
+    {
+      value: "corporation",
+      label: "Corporation",
+      description: "Business entity with shareholders"
+    },
+    {
+      value: "cooperative",
+      label: "Cooperative",
+      description: "Business owned and run by its members"
+    }
+  ];
 
   return (
     <FormSectionWrapper 
-      title="Business Information" 
-      description="Provide details about your business"
+      title="Business Information and Registration"
+      description="Enter your business details and registration information"
       stepNumber={2}
     >
-      <form 
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSave();
-        }}
-        className="space-y-6"
-      >
-        {/* Business Name */}
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="business_name" className="text-base font-medium">Business Name <span className="text-red-500">*</span></Label>
-            <Input 
-              id="business_name" 
-              placeholder="Enter registered business name"
-              value={businessInfo.business_name || ""} 
-              onChange={(e) => handleInputChange("business_name", e.target.value)}
-              className="mt-1.5"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="trade_name" className="text-base font-medium">Trade Name / Franchise (if applicable)</Label>
-            <Input 
-              id="trade_name" 
-              placeholder="Enter trade name or franchise"
-              value={businessInfo.trade_name || ""} 
-              onChange={(e) => handleInputChange("trade_name", e.target.value)}
-              className="mt-1.5"
-            />
-          </div>
-        </div>
-
-        {/* Registration Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <Label htmlFor="registration_number" className="text-base font-medium">DTI/SEC/CDA Registration Number <span className="text-red-500">*</span></Label>
-            <Input 
-              id="registration_number" 
-              placeholder="Enter registration number"
-              value={businessInfo.registration_number || ""} 
-              onChange={(e) => handleInputChange("registration_number", e.target.value)}
-              className="mt-1.5"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="tin_number" className="text-base font-medium">TIN Number <span className="text-red-500">*</span></Label>
-            <Input 
-              id="tin_number" 
-              placeholder="000-000-000-000"
-              value={businessInfo.tin_number || ""} 
-              onChange={(e) => handleInputChange("tin_number", e.target.value)}
-              className="mt-1.5"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="sss_number" className="text-base font-medium">SSS Number</Label>
-            <Input 
-              id="sss_number" 
-              placeholder="00-0000000-0"
-              value={businessInfo.sss_number || ""} 
-              onChange={(e) => handleInputChange("sss_number", e.target.value)}
-              className="mt-1.5"
-            />
-          </div>
-          <div>
-            <Label htmlFor="ctc_number" className="text-base font-medium">CTC Number</Label>
-            <Input 
-              id="ctc_number" 
-              placeholder="Enter CTC Number"
-              value={businessInfo.ctc_number || ""} 
-              onChange={(e) => handleInputChange("ctc_number", e.target.value)}
-              className="mt-1.5"
-            />
-          </div>
-        </div>
-
-        {/* CTC Issue Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="ctc_issue_date" className="text-base font-medium">CTC Issue Date</Label>
-            <Input 
-              id="ctc_issue_date" 
-              type="date"
-              value={businessInfo.ctc_issue_date || ""} 
-              onChange={(e) => handleInputChange("ctc_issue_date", e.target.value)}
-              className="mt-1.5"
-            />
-          </div>
-          <div>
-            <Label htmlFor="ctc_issue_place" className="text-base font-medium">CTC Issue Place</Label>
-            <Input 
-              id="ctc_issue_place" 
-              placeholder="Enter place of issuance"
-              value={businessInfo.ctc_issue_place || ""} 
-              onChange={(e) => handleInputChange("ctc_issue_place", e.target.value)}
-              className="mt-1.5"
-            />
-          </div>
-        </div>
-
-        {/* Ownership Type */}
+      <div className="space-y-8">
+        {/* Business Name and Trade Name */}
         <div>
-          <Label className="text-base font-medium block mb-2">Kind of Ownership <span className="text-red-500">*</span></Label>
-          <RadioGroup 
-            value={businessInfo.ownership_type || "soleProprietorship"} 
-            onValueChange={(value) => handleInputChange("ownership_type", value)}
-            className="flex flex-wrap gap-4"
-            required
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="soleProprietorship" id="soleProprietorship" />
-              <Label htmlFor="soleProprietorship" className="font-normal">Sole Proprietorship</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="onePersonCorp" id="onePersonCorp" />
-              <Label htmlFor="onePersonCorp" className="font-normal">One Person Corporation</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="partnership" id="partnership" />
-              <Label htmlFor="partnership" className="font-normal">Partnership</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="corporation" id="corporation" />
-              <Label htmlFor="corporation" className="font-normal">Corporation</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="cooperative" id="cooperative" />
-              <Label htmlFor="cooperative" className="font-normal">Cooperative</Label>
-            </div>
-          </RadioGroup>
+          <h3 className="font-medium text-base mb-3">Business Identification</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField 
+              id="businessName" 
+              label="Business Name"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              required
+              tooltip="Enter the official registered business name as it appears on your DTI/SEC registration"
+            />
+            <FormField 
+              id="tradeName" 
+              label="Trade Name / Franchise"
+              value={tradeName}
+              onChange={(e) => setTradeName(e.target.value)}
+              helperText="Leave blank if same as business name"
+              tooltip="Enter the name you use for your business if different from the registered business name"
+            />
+          </div>
+        </div>
+
+        {/* Registration Numbers */}
+        <div>
+          <h3 className="font-medium text-base mb-3">Registration Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FormField 
+              id="dtiSecCdaNumber" 
+              label="DTI/SEC/CDA Registration No."
+              value={registrationNumber}
+              onChange={(e) => setRegistrationNumber(e.target.value)}
+              required
+              tooltip="Enter your Department of Trade and Industry, Securities and Exchange Commission, or Cooperative Development Authority registration number"
+            />
+            <FormField 
+              id="tinNumber" 
+              label="Tax Identification Number"
+              value={tinNumber}
+              onChange={(e) => setTinNumber(e.target.value)}
+              required
+              placeholder="XXX-XXX-XXX-XXX"
+              tooltip="Enter your 12-digit Tax Identification Number from BIR"
+            />
+            <FormField 
+              id="sssNumber" 
+              label="SSS Number"
+              value={sssNumber}
+              onChange={(e) => setSssNumber(e.target.value)}
+              placeholder="XX-XXXXXXX-X"
+              tooltip="Enter your Social Security System employer number"
+            />
+          </div>
+        </div>
+
+        {/* Kind of Ownership */}
+        <div>
+          <h3 className="font-medium text-base mb-3">
+            Ownership Type <span className="text-red-500">*</span>
+          </h3>
+          <div className="mt-2">
+            <EnhancedRadioGroup
+              options={ownershipOptions}
+              value={ownershipType}
+              onValueChange={setOwnershipType}
+              orientation="horizontal"
+              name="ownershipType"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            />
+          </div>
         </div>
 
         {/* Business Address */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Business Address</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="house_bldg_no" className="text-base font-medium">House/Bldg. No.</Label>
-              <Input 
-                id="house_bldg_no" 
-                placeholder="Enter house or building number"
-                value={businessInfo.house_bldg_no || ""} 
-                onChange={(e) => handleInputChange("house_bldg_no", e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="building_name" className="text-base font-medium">Building Name</Label>
-              <Input 
-                id="building_name" 
-                placeholder="Enter building name"
-                value={businessInfo.building_name || ""} 
-                onChange={(e) => handleInputChange("building_name", e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="block_no" className="text-base font-medium">Block No.</Label>
-              <Input 
-                id="block_no" 
-                placeholder="Enter block number"
-                value={businessInfo.block_no || ""} 
-                onChange={(e) => handleInputChange("block_no", e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="lot_no" className="text-base font-medium">Lot No.</Label>
-              <Input 
-                id="lot_no" 
-                placeholder="Enter lot number"
-                value={businessInfo.lot_no || ""} 
-                onChange={(e) => handleInputChange("lot_no", e.target.value)}
-                className="mt-1.5"
-              />
+        <div>
+          <h3 className="font-medium text-base mb-3">Business Address <span className="text-red-500">*</span></h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <FormField 
+              id="houseBldgNo" 
+              label="House/Bldg. No."
+              value={houseBldgNo}
+              onChange={(e) => setHouseBldgNo(e.target.value)}
+              tooltip="Enter the house or building number of your business address"
+            />
+            <FormField 
+              id="buildingName" 
+              label="Building Name"
+              value={buildingName}
+              onChange={(e) => setBuildingName(e.target.value)}
+              helperText="If applicable"
+            />
+            <FormField 
+              id="blockNo" 
+              label="Block No."
+              value={blockNo}
+              onChange={(e) => setBlockNo(e.target.value)}
+              helperText="If applicable"
+            />
+            <FormField 
+              id="lotNo" 
+              label="Lot No."
+              value={lotNo}
+              onChange={(e) => setLotNo(e.target.value)}
+              helperText="If applicable"
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <FormField 
+              id="street" 
+              label="Street"
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              required
+              tooltip="Enter the street name of your business location"
+            />
+            <FormField 
+              id="subdivision" 
+              label="Subdivision"
+              value={subdivision}
+              onChange={(e) => setSubdivision(e.target.value)}
+              helperText="If applicable"
+            />
+            <div className="space-y-1.5">
+              <div className="relative">
+                <Select value={selectedBarangay} onValueChange={setSelectedBarangay}>
+                  <SelectTrigger id="barangay" className="h-14 pt-4">
+                    <SelectValue placeholder="Select barangay" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-80">
+                    {barangays.map((barangay) => (
+                      <SelectItem key={barangay} value={barangay}>
+                        {barangay}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <label htmlFor="barangay" className="absolute left-3 top-2 text-xs text-primary pointer-events-none">
+                  Barangay <span className="text-destructive">*</span>
+                </label>
+              </div>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="street" className="text-base font-medium">Street <span className="text-red-500">*</span></Label>
-              <Input 
-                id="street" 
-                placeholder="Enter street"
-                value={businessInfo.street || ""} 
-                onChange={(e) => handleInputChange("street", e.target.value)}
-                className="mt-1.5"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="subdivision" className="text-base font-medium">Subdivision</Label>
-              <Input 
-                id="subdivision" 
-                placeholder="Enter subdivision"
-                value={businessInfo.subdivision || ""} 
-                onChange={(e) => handleInputChange("subdivision", e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="barangay" className="text-base font-medium">Barangay <span className="text-red-500">*</span></Label>
-              <Input 
-                id="barangay" 
-                placeholder="Enter barangay"
-                value={businessInfo.barangay || ""} 
-                onChange={(e) => handleInputChange("barangay", e.target.value)}
-                className="mt-1.5"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="city_municipality" className="text-base font-medium">City/Municipality <span className="text-red-500">*</span></Label>
-              <Input 
-                id="city_municipality" 
-                placeholder="Enter city/municipality"
-                value={businessInfo.city_municipality || "Lucena City"} 
-                onChange={(e) => handleInputChange("city_municipality", e.target.value)}
-                className="mt-1.5"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="province" className="text-base font-medium">Province <span className="text-red-500">*</span></Label>
-              <Input 
-                id="province" 
-                placeholder="Enter province"
-                value={businessInfo.province || "Quezon"} 
-                onChange={(e) => handleInputChange("province", e.target.value)}
-                className="mt-1.5"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="zip_code" className="text-base font-medium">Zip Code <span className="text-red-500">*</span></Label>
-              <Input 
-                id="zip_code" 
-                placeholder="Enter zip code"
-                value={businessInfo.zip_code || ""} 
-                onChange={(e) => handleInputChange("zip_code", e.target.value)}
-                className="mt-1.5"
-                required
-              />
-            </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField 
+              id="cityMunicipality" 
+              label="City/Municipality"
+              value={cityMunicipality}
+              onChange={(e) => setCityMunicipality(e.target.value)}
+              required
+              tooltip="Enter the city or municipality of your business location"
+            />
+            <FormField 
+              id="province" 
+              label="Province"
+              value={province}
+              onChange={(e) => setProvince(e.target.value)}
+              required
+              tooltip="Enter the province of your business location"
+            />
+            <FormField 
+              id="zipCode" 
+              label="Zip Code"
+              value={zipCode}
+              onChange={(e) => setZipCode(e.target.value)}
+              required
+              tooltip="Enter the postal or zip code of your business location"
+            />
           </div>
         </div>
 
         {/* Contact Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Contact Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="telephone_no" className="text-base font-medium">Telephone No.</Label>
-              <Input 
-                id="telephone_no" 
-                placeholder="Enter telephone number"
-                value={businessInfo.telephone_no || ""} 
-                onChange={(e) => handleInputChange("telephone_no", e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="mobile_no" className="text-base font-medium">Mobile No. <span className="text-red-500">*</span></Label>
-              <Input 
-                id="mobile_no" 
-                placeholder="Enter mobile number"
-                value={businessInfo.mobile_no || ""} 
-                onChange={(e) => handleInputChange("mobile_no", e.target.value)}
-                className="mt-1.5"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="email_address" className="text-base font-medium">Email Address <span className="text-red-500">*</span></Label>
-            <Input 
-              id="email_address" 
-              type="email"
-              placeholder="Enter email address"
-              value={businessInfo.email_address || ""} 
-              onChange={(e) => handleInputChange("email_address", e.target.value)}
-              className="mt-1.5"
+        <div>
+          <h3 className="font-medium text-base mb-3">Contact Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField 
+              id="telephoneNo" 
+              label="Telephone No."
+              value={telephoneNo}
+              onChange={(e) => setTelephoneNo(e.target.value)}
+              tooltip="Enter your business landline number"
+            />
+            <FormField 
+              id="mobileNo" 
+              label="Mobile No."
+              value={mobileNo}
+              onChange={(e) => setMobileNo(e.target.value)}
               required
+              tooltip="Enter a mobile number where you can be contacted"
+            />
+            <FormField 
+              id="emailAddress" 
+              type="email" 
+              label="Email Address"
+              value={emailAddress}
+              onChange={(e) => setEmailAddress(e.target.value)}
+              required
+              tooltip="Enter an active email address for communications"
             />
           </div>
         </div>
-
-        <div className="flex justify-end mt-8">
-          <button 
-            type="submit" 
-            className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium rounded-md text-sm px-5 py-2.5"
-            disabled={isLoading}
-          >
-            {isLoading ? "Saving..." : "Save Information"}
-          </button>
-        </div>
-      </form>
+      </div>
     </FormSectionWrapper>
   );
 };

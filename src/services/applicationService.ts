@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -20,9 +21,6 @@ export interface BusinessInformationData {
   registration_number?: string;
   tin_number: string;
   sss_number?: string;
-  ctc_number?: string;
-  ctc_issue_date?: string;
-  ctc_issue_place?: string;
   ownership_type: OwnershipType;
   house_bldg_no?: string;
   building_name?: string;
@@ -111,12 +109,6 @@ export interface DeclarationData {
   is_agreed: boolean;
   signature: string;
   designation?: string;
-}
-
-export interface PaymentOptionsData {
-  application_id: string;
-  payment_frequency: string;
-  payment_mode: string;
 }
 
 // Service methods for applications
@@ -483,36 +475,5 @@ export const applicationService = {
       console.error('Error fetching declaration:', error);
       throw error;
     }
-  },
-
-  // Temporary Payment Options methods using localStorage
-  async savePaymentOptions(applicationId: string, data: PaymentOptionsData) {
-    try {
-      // Temporarily store in localStorage until database table is created
-      localStorage.setItem(`payment_options_${applicationId}`, JSON.stringify({
-        application_id: applicationId,
-        payment_frequency: data.payment_frequency,
-        payment_mode: data.payment_mode
-      }));
-      
-      return data;
-    } catch (error) {
-      console.error('Error saving payment options:', error);
-      throw error;
-    }
-  },
-  
-  async getPaymentOptions(applicationId: string) {
-    try {
-      // Temporarily retrieve from localStorage until database table is created
-      const storedOptions = localStorage.getItem(`payment_options_${applicationId}`);
-      if (storedOptions) {
-        return JSON.parse(storedOptions);
-      }
-      return null;
-    } catch (error) {
-      console.error('Error fetching payment options:', error);
-      throw error;
-    }
-  },
+  }
 };

@@ -9,7 +9,6 @@ import BusinessInformationSection from "@/components/application/BusinessInforma
 import OwnerInformationSection from "@/components/application/OwnerInformationSection";
 import BusinessOperationSection from "@/components/application/BusinessOperationSection";
 import BusinessLinesSection from "@/components/application/BusinessLinesSection";
-import PaymentOptionsSection from "@/components/application/PaymentOptionsSection";
 import DeclarationSection from "@/components/application/DeclarationSection";
 import { useToast } from "@/components/ui/use-toast";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
@@ -20,13 +19,12 @@ import { applicationService } from "@/services/applicationService";
 
 const Applications = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 6; // Updated to include Payment Options step
+  const totalSteps = 5;
   const { toast } = useToast();
   const [applicationType, setApplicationType] = useState("newApplication");
   const [fadeIn, setFadeIn] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false); // Declaration agreement state
   const navigate = useNavigate();
-  const [trackingNumber, setTrackingNumber] = useState<string>(""); // Added tracking number
   
   // Get application context
   const { 
@@ -53,26 +51,12 @@ const Applications = () => {
           variant: "destructive",
         });
         // Redirect to login page
-        navigate("/signin");
+        navigate("/auth");
       }
     };
     
     checkAuth();
   }, [navigate, toast]);
-
-  // Generate tracking number when creating a new application
-  useEffect(() => {
-    if (applicationId) {
-      // Generate a tracking number based on application ID and current date
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const shortId = applicationId.substring(0, 8).toUpperCase();
-      
-      setTrackingNumber(`${year}${month}${day}-${shortId}`);
-    }
-  }, [applicationId]);
 
   // Application type options
   const applicationTypeOptions = [
@@ -164,7 +148,6 @@ const Applications = () => {
       const ownerInfo = await applicationService.getOwnerInformation(applicationId);
       const businessLines = await applicationService.getBusinessLines(applicationId);
       const declaration = await applicationService.getDeclaration(applicationId);
-      const paymentOptions = await applicationService.getPaymentOptions(applicationId);
       
       if (!businessInfo) {
         toast({
@@ -196,23 +179,13 @@ const Applications = () => {
         return false;
       }
       
-      if (!paymentOptions) {
-        toast({
-          title: "Incomplete Application",
-          description: "Please select your payment options before submitting.",
-          variant: "destructive",
-        });
-        setCurrentStep(5); // Go to Payment Options step
-        return false;
-      }
-      
       if (!declaration || !declaration.signature) {
         toast({
           title: "Signature Required",
           description: "Please sign the declaration before submitting.",
           variant: "destructive",
         });
-        setCurrentStep(6); // Go to Declaration step
+        setCurrentStep(5); // Go to Declaration step
         return false;
       }
       
@@ -273,7 +246,7 @@ const Applications = () => {
           <CardContent className="space-y-4">
             <p className="text-center">You need to be logged in to access this page.</p>
             <div className="flex justify-center">
-              <Button onClick={() => navigate("/signin")}>
+              <Button onClick={() => navigate("/auth")}>
                 Go to Login
               </Button>
             </div>
@@ -282,16 +255,6 @@ const Applications = () => {
       </div>
     );
   }
-
-  // Updated step titles
-  const stepTitles = [
-    "Application Type",
-    "Business Information",
-    "Owner Information",
-    "Business Operation",
-    "Payment Options",
-    "Review & Submit"
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -313,34 +276,10 @@ const Applications = () => {
         currentStep={currentStep} 
         totalSteps={totalSteps} 
         onStepClick={handleStepClick}
-        stepTitles={stepTitles}
       />
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Form Header Information */}
-        {applicationId && (
-          <div className="mb-6 bg-white rounded-lg border p-4 shadow-sm">
-            <div className="flex flex-wrap justify-between items-center">
-              <div className="mb-2 sm:mb-0">
-                <h3 className="text-sm font-medium text-gray-700">Tracking Number</h3>
-                <p className="text-lg font-semibold">{trackingNumber}</p>
-              </div>
-              <div className="mb-2 sm:mb-0">
-                <h3 className="text-sm font-medium text-gray-700">Application Type</h3>
-                <p className="text-lg font-semibold">
-                  {applicationType === "newApplication" ? "New Business" : 
-                   applicationType === "renewalApplication" ? "Renewal" : "Amendment"}
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-700">Date</h3>
-                <p className="text-lg font-semibold">{new Date().toLocaleDateString()}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form Sections */}
           <div className={`lg:col-span-2 space-y-6 transition-opacity duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
@@ -378,10 +317,6 @@ const Applications = () => {
             )}
 
             {currentStep === 5 && (
-              <PaymentOptionsSection />
-            )}
-
-            {currentStep === 6 && (
               <DeclarationSection onAgreementChange={handleAgreementChange} />
             )}
 
