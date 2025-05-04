@@ -112,7 +112,7 @@ export interface DeclarationData {
   signature: string;
   designation?: string;
   verified_by?: string;  // Added verified by field
-  declaration_place?: string;  // Added configurable declaration place
+  declaration_place?: string;  // Added declaration place field
 }
 
 // Service methods for applications
