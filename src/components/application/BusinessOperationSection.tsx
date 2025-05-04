@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -45,7 +44,8 @@ const BusinessOperationSection = () => {
     lessorAddress: "",
     lessorContactNumber: "",
     lessorEmailAddress: "",
-    monthlyRental: ""
+    monthlyRental: "",
+    otherActivitySpecification: ""  // Added field for "Others" specification
   });
 
   // Load existing data if available
@@ -86,7 +86,8 @@ const BusinessOperationSection = () => {
             lessorAddress: data.lessor_address || "",
             lessorContactNumber: data.lessor_contact_number || "",
             lessorEmailAddress: data.lessor_email_address || "",
-            monthlyRental: data.monthly_rental?.toString() || ""
+            monthlyRental: data.monthly_rental?.toString() || "",
+            otherActivitySpecification: data.other_activity || ""  // Load "Others" specification
           });
           
           setHasTaxIncentives(data.has_tax_incentives === true ? "yes" : (data.has_tax_incentives === false ? "no" : null));
@@ -152,6 +153,7 @@ const BusinessOperationSection = () => {
         has_tax_incentives: hasTaxIncentives === "yes" ? true : (hasTaxIncentives === "no" ? false : null),
         property_owned: propertyOwned === "yes" ? true : (propertyOwned === "no" ? false : null),
         business_activity: businessActivity,
+        other_activity: businessActivity === "others" ? formData.otherActivitySpecification : null,  // Save "Others" specification
         main_block_no: formData.mainBlockNo || null,
         main_lot_no: formData.mainLotNo || null,
         main_house_bldg_no: formData.mainHouseBldgNo || null,
@@ -331,7 +333,7 @@ const BusinessOperationSection = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="other" className="text-sm text-gray-600">Other</Label>
+                <Label htmlFor="other" className="text-sm text-gray-600">Other Vehicles</Label>
                 <Input 
                   id="other" 
                   type="number" 
@@ -420,7 +422,13 @@ const BusinessOperationSection = () => {
           </RadioGroup>
           {businessActivity === "others" && (
             <div className="mt-3 max-w-md">
-              <Input placeholder="Please specify business activity" className="focus:border-primary" />
+              <Input 
+                id="otherActivitySpecification" 
+                placeholder="Please specify business activity"
+                value={formData.otherActivitySpecification}
+                onChange={handleInputChange} 
+                className="focus:border-primary" 
+              />
             </div>
           )}
         </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FormSectionWrapper from "./FormSectionWrapper";
@@ -20,6 +19,9 @@ const BusinessInformationSection = () => {
   const [registrationNumber, setRegistrationNumber] = useState<string>("");
   const [tinNumber, setTinNumber] = useState<string>("");
   const [sssNumber, setSssNumber] = useState<string>("");
+  const [ctcNumber, setCtcNumber] = useState<string>("");  // Added CTC number
+  const [ctcDateIssue, setCtcDateIssue] = useState<string>("");  // Added CTC date
+  const [ctcPlaceIssue, setCtcPlaceIssue] = useState<string>("");  // Added CTC place
   const [houseBldgNo, setHouseBldgNo] = useState<string>("");
   const [buildingName, setBuildingName] = useState<string>("");
   const [blockNo, setBlockNo] = useState<string>("");
@@ -47,7 +49,9 @@ const BusinessInformationSection = () => {
           setRegistrationNumber(data.registration_number || "");
           setTinNumber(data.tin_number || "");
           setSssNumber(data.sss_number || "");
-          setOwnershipType(data.ownership_type || "soleProprietorship");
+          setCtcNumber(data.ctc_number || "");  // Set CTC number
+          setCtcDateIssue(data.ctc_date_issue || "");  // Set CTC date
+          setCtcPlaceIssue(data.ctc_place_issue || "");  // Set CTC place
           setHouseBldgNo(data.house_bldg_no || "");
           setBuildingName(data.building_name || "");
           setBlockNo(data.block_no || "");
@@ -84,6 +88,9 @@ const BusinessInformationSection = () => {
         registration_number: registrationNumber,
         tin_number: tinNumber,
         sss_number: sssNumber,
+        ctc_number: ctcNumber,  // Save CTC number
+        ctc_date_issue: ctcDateIssue,  // Save CTC date
+        ctc_place_issue: ctcPlaceIssue,  // Save CTC place
         ownership_type: ownershipType as any,
         house_bldg_no: houseBldgNo,
         building_name: buildingName,
@@ -130,7 +137,8 @@ const BusinessInformationSection = () => {
   }, [
     businessName, tinNumber, ownershipType, street, 
     selectedBarangay, cityMunicipality, province, 
-    zipCode, mobileNo, emailAddress
+    zipCode, mobileNo, emailAddress,
+    ctcNumber, ctcDateIssue, ctcPlaceIssue  // Add CTC fields to the dependency array
   ]);
 
   // List of barangays in Lucena
@@ -231,13 +239,12 @@ const BusinessInformationSection = () => {
         {/* Registration Numbers */}
         <div>
           <h3 className="font-medium text-base mb-3">Registration Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
             <FormField 
               id="dtiSecCdaNumber" 
               label="DTI/SEC/CDA Registration No."
               value={registrationNumber}
               onChange={(e) => setRegistrationNumber(e.target.value)}
-              required
               tooltip="Enter your Department of Trade and Industry, Securities and Exchange Commission, or Cooperative Development Authority registration number"
             />
             <FormField 
@@ -256,6 +263,32 @@ const BusinessInformationSection = () => {
               onChange={(e) => setSssNumber(e.target.value)}
               placeholder="XX-XXXXXXX-X"
               tooltip="Enter your Social Security System employer number"
+            />
+          </div>
+          
+          {/* CTC Information - New Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FormField 
+              id="ctcNumber" 
+              label="CTC Number"
+              value={ctcNumber}
+              onChange={(e) => setCtcNumber(e.target.value)}
+              tooltip="Enter your Community Tax Certificate (CTC) number"
+            />
+            <FormField 
+              id="ctcDateIssue" 
+              label="CTC Date of Issue"
+              value={ctcDateIssue}
+              onChange={(e) => setCtcDateIssue(e.target.value)}
+              tooltip="Enter the date when your CTC was issued"
+              type="date"
+            />
+            <FormField 
+              id="ctcPlaceIssue" 
+              label="CTC Place of Issue"
+              value={ctcPlaceIssue}
+              onChange={(e) => setCtcPlaceIssue(e.target.value)}
+              tooltip="Enter where your CTC was issued"
             />
           </div>
         </div>

@@ -24,6 +24,8 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
   const [isAgreed, setIsAgreed] = useState(false);
   const [signature, setSignature] = useState("");
   const [designation, setDesignation] = useState("");
+  const [verifiedBy, setVerifiedBy] = useState("");  // Added verified by field
+  const [declarationPlace, setDeclarationPlace] = useState("City of Lucena");  // Added configurable declaration place
   
   // Load saved data when component mounts
   useEffect(() => {
@@ -37,6 +39,8 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
           setIsAgreed(data.is_agreed || false);
           setSignature(data.signature || "");
           setDesignation(data.designation || "");
+          setVerifiedBy(data.verified_by || "");  // Load verified by
+          setDeclarationPlace(data.declaration_place || "City of Lucena");  // Load declaration place
           
           // Update parent component with agreement state
           if (onAgreementChange) {
@@ -63,7 +67,9 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
         application_id: applicationId,
         is_agreed: isAgreed,
         signature,
-        designation
+        designation,
+        verified_by: verifiedBy,  // Save verified by
+        declaration_place: declarationPlace  // Save declaration place
       });
       
       toast({
@@ -83,6 +89,7 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
     }
   };
   
+  // Handle agreement change
   const handleAgreementChange = (checked: boolean) => {
     setIsAgreed(checked);
     
@@ -111,7 +118,7 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       
       return () => clearTimeout(saveTimeout);
     }
-  }, [signature, designation]);
+  }, [signature, designation, verifiedBy, declarationPlace]);  // Add new fields to the dependency array
   
   return (
     <Card className="mt-6 border shadow-sm">
@@ -124,7 +131,7 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       <CardContent className="space-y-6 pt-6">
         <div className="p-5 bg-gray-50 rounded-md border border-gray-200 text-sm leading-relaxed">
           <p>
-            I DECLARE UNDER PENALTY OF PERJURY that all information in this application is true and correct based on my personal knowledge and authentic records submitted to the City of Lucena. 
+            I DECLARE UNDER PENALTY OF PERJURY that all information in this application is true and correct based on my personal knowledge and authentic records submitted to the {declarationPlace}. 
             Any false or misleading information supplied or production of falsified documents shall be grounds for appropriate legal action against me and automatically revoke the permit.
           </p>
           <p className="mt-3">
@@ -162,6 +169,25 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
             tooltip="Enter your position or title in the business"
             value={designation}
             onChange={(e) => setDesignation(e.target.value)}
+          />
+        </div>
+        
+        {/* Added Verified By field */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField 
+            id="verifiedBy" 
+            label="VERIFIED BY"
+            tooltip="Name of the person verifying this application"
+            value={verifiedBy}
+            onChange={(e) => setVerifiedBy(e.target.value)}
+          />
+          
+          <FormField 
+            id="declarationPlace" 
+            label="DECLARATION PLACE"
+            tooltip="Enter the governing body to which this declaration is submitted"
+            value={declarationPlace}
+            onChange={(e) => setDeclarationPlace(e.target.value)}
           />
         </div>
       </CardContent>

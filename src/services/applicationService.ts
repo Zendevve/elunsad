@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,6 +20,9 @@ export interface BusinessInformationData {
   registration_number?: string;
   tin_number: string;
   sss_number?: string;
+  ctc_number?: string;  // Added CTC number
+  ctc_date_issue?: string;  // Added CTC date of issue
+  ctc_place_issue?: string;  // Added CTC place of issue
   ownership_type: OwnershipType;
   house_bldg_no?: string;
   building_name?: string;
@@ -85,7 +87,7 @@ export interface BusinessOperationsData {
   property_owned?: boolean;
   tax_declaration_no?: string;
   business_activity?: string;
-  other_activity?: string;
+  other_activity?: string;  // Added to store the "Others" specification
   main_block_no?: string;
   main_lot_no?: string;
   main_house_bldg_no?: string;
@@ -109,6 +111,8 @@ export interface DeclarationData {
   is_agreed: boolean;
   signature: string;
   designation?: string;
+  verified_by?: string;  // Added verified by field
+  declaration_place?: string;  // Added configurable declaration place
 }
 
 // Service methods for applications
