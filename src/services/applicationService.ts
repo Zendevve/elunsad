@@ -485,40 +485,17 @@ export const applicationService = {
     }
   },
 
-  // Payment Options methods
+  // Temporary Payment Options methods using localStorage
   async savePaymentOptions(applicationId: string, data: PaymentOptionsData) {
     try {
-      // Check if payment options already exist for this application
-      const { data: existingData, error: checkError } = await supabase
-        .from('payment_options')
-        .select('id')
-        .eq('application_id', applicationId)
-        .maybeSingle();
+      // Temporarily store in localStorage until database table is created
+      localStorage.setItem(`payment_options_${applicationId}`, JSON.stringify({
+        application_id: applicationId,
+        payment_frequency: data.payment_frequency,
+        payment_mode: data.payment_mode
+      }));
       
-      if (checkError) throw checkError;
-      
-      if (existingData) {
-        // Update existing record
-        const { data: updatedData, error: updateError } = await supabase
-          .from('payment_options')
-          .update(data)
-          .eq('application_id', applicationId)
-          .select('*')
-          .single();
-        
-        if (updateError) throw updateError;
-        return updatedData;
-      } else {
-        // Insert new record
-        const { data: insertedData, error: insertError } = await supabase
-          .from('payment_options')
-          .insert(data)
-          .select('*')
-          .single();
-        
-        if (insertError) throw insertError;
-        return insertedData;
-      }
+      return data;
     } catch (error) {
       console.error('Error saving payment options:', error);
       throw error;
@@ -527,14 +504,12 @@ export const applicationService = {
   
   async getPaymentOptions(applicationId: string) {
     try {
-      const { data, error } = await supabase
-        .from('payment_options')
-        .select('*')
-        .eq('application_id', applicationId)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
+      // Temporarily retrieve from localStorage until database table is created
+      const storedOptions = localStorage.getItem(`payment_options_${applicationId}`);
+      if (storedOptions) {
+        return JSON.parse(storedOptions);
+      }
+      return null;
     } catch (error) {
       console.error('Error fetching payment options:', error);
       throw error;

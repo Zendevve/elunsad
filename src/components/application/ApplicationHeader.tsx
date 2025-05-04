@@ -13,6 +13,7 @@ const defaultStepTitles = [
   "Business Information",
   "Owner Information",
   "Business Operation",
+  "Payment Options",
   "Review & Submit"
 ];
 

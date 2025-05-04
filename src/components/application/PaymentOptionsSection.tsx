@@ -14,21 +14,24 @@ const PaymentOptionsSection = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchPaymentOptions = async () => {
+    // For now, we'll just use localStorage to persist the payment options
+    // This will be replaced with proper database storage once the table is created
+    const loadPaymentOptions = () => {
       if (applicationId) {
         try {
-          const data = await applicationService.getPaymentOptions(applicationId);
-          if (data) {
-            setPaymentFrequency(data.payment_frequency || "annually");
-            setPaymentMode(data.payment_mode || "over_the_counter");
+          const storedOptions = localStorage.getItem(`payment_options_${applicationId}`);
+          if (storedOptions) {
+            const options = JSON.parse(storedOptions);
+            setPaymentFrequency(options.payment_frequency || "annually");
+            setPaymentMode(options.payment_mode || "over_the_counter");
           }
         } catch (error) {
-          console.error("Error fetching payment options:", error);
+          console.error("Error loading payment options:", error);
         }
       }
     };
 
-    fetchPaymentOptions();
+    loadPaymentOptions();
   }, [applicationId]);
 
   useEffect(() => {
@@ -38,11 +41,13 @@ const PaymentOptionsSection = () => {
       
       setSaving(true);
       try {
-        await applicationService.savePaymentOptions(applicationId, {
+        // For now, we'll just use localStorage to persist the payment options
+        // This will be replaced with proper database storage once the table is created
+        localStorage.setItem(`payment_options_${applicationId}`, JSON.stringify({
           application_id: applicationId,
           payment_frequency: paymentFrequency,
           payment_mode: paymentMode
-        });
+        }));
       } catch (error) {
         console.error("Error saving payment options:", error);
       } finally {
