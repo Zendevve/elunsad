@@ -19,9 +19,7 @@ const ApplicationHeader = ({ currentStep, totalSteps, onStepClick }: Application
   return (
     <div className="bg-white border-b shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-        <h1 className="text-2xl font-bold text-primary text-center mb-5">
-          Business Permit Application
-        </h1>
+        <h1 className="text-2xl font-semibold text-center mb-5">Business Permit Application</h1>
         
         <div className="max-w-4xl mx-auto px-4">
           <StepIndicator 
