@@ -5,9 +5,10 @@ interface ApplicationHeaderProps {
   currentStep: number;
   totalSteps: number;
   onStepClick?: (step: number) => void;
+  stepTitles?: string[];
 }
 
-const stepTitles = [
+const defaultStepTitles = [
   "Application Type",
   "Business Information",
   "Owner Information",
@@ -15,7 +16,12 @@ const stepTitles = [
   "Review & Submit"
 ];
 
-const ApplicationHeader = ({ currentStep, totalSteps, onStepClick }: ApplicationHeaderProps) => {
+const ApplicationHeader = ({ 
+  currentStep, 
+  totalSteps, 
+  onStepClick,
+  stepTitles = defaultStepTitles
+}: ApplicationHeaderProps) => {
   return (
     <div className="bg-white border-b shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">

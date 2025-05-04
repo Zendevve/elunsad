@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,6 +20,9 @@ export interface BusinessInformationData {
   registration_number?: string;
   tin_number: string;
   sss_number?: string;
+  ctc_number?: string;
+  ctc_issue_date?: string;
+  ctc_issue_place?: string;
   ownership_type: OwnershipType;
   house_bldg_no?: string;
   building_name?: string;
@@ -109,6 +111,12 @@ export interface DeclarationData {
   is_agreed: boolean;
   signature: string;
   designation?: string;
+}
+
+export interface PaymentOptionsData {
+  application_id: string;
+  payment_frequency: string;
+  payment_mode: string;
 }
 
 // Service methods for applications
@@ -475,5 +483,61 @@ export const applicationService = {
       console.error('Error fetching declaration:', error);
       throw error;
     }
-  }
+  },
+
+  // Payment Options methods
+  async savePaymentOptions(applicationId: string, data: PaymentOptionsData) {
+    try {
+      // Check if payment options already exist for this application
+      const { data: existingData, error: checkError } = await supabase
+        .from('payment_options')
+        .select('id')
+        .eq('application_id', applicationId)
+        .maybeSingle();
+      
+      if (checkError) throw checkError;
+      
+      if (existingData) {
+        // Update existing record
+        const { data: updatedData, error: updateError } = await supabase
+          .from('payment_options')
+          .update(data)
+          .eq('application_id', applicationId)
+          .select('*')
+          .single();
+        
+        if (updateError) throw updateError;
+        return updatedData;
+      } else {
+        // Insert new record
+        const { data: insertedData, error: insertError } = await supabase
+          .from('payment_options')
+          .insert(data)
+          .select('*')
+          .single();
+        
+        if (insertError) throw insertError;
+        return insertedData;
+      }
+    } catch (error) {
+      console.error('Error saving payment options:', error);
+      throw error;
+    }
+  },
+  
+  async getPaymentOptions(applicationId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('payment_options')
+        .select('*')
+        .eq('application_id', applicationId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching payment options:', error);
+      throw error;
+    }
+  },
 };
