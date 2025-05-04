@@ -121,7 +121,7 @@ const BusinessInformationSection = () => {
   useEffect(() => {
     // Only save if at least business name and required fields are entered
     if (applicationId && businessName && tinNumber && street && selectedBarangay) {
-      const saveTimeout = setTimeout(() => {
+      const saveTimeout: ReturnType<typeof setTimeout> = setTimeout(() => {
         saveBusinessInformation();
       }, 1500);
       
