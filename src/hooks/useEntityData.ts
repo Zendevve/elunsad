@@ -50,7 +50,7 @@ export function useEntityData<T extends Record<string, any>>(
     setData(current => ({ ...current, ...updatedValues }));
   };
 
-  // Save data manually - Modified to be MORE EXPLICIT about toast suppression
+  // Save data manually - COMPLETELY PREVENTING ANY AUTO-SAVE TOASTS
   const saveData = async (showToast = false) => {
     if (!applicationId) {
       console.error("Cannot save data: applicationId is null");
@@ -65,7 +65,7 @@ export function useEntityData<T extends Record<string, any>>(
       if (result) {
         setLastSavedData({ ...data });
         
-        // Show toast ONLY if showToast is EXACTLY true (strict checking)
+        // Show toast ONLY if explicitly requested AND not from auto-save
         if (showToast === true) {
           console.log("Toast notification was requested and will be displayed");
           toast({
@@ -85,7 +85,7 @@ export function useEntityData<T extends Record<string, any>>(
     } catch (error) {
       console.error("Error saving data:", error);
       
-      // Show error toast ONLY if showToast is EXACTLY true (strict checking)
+      // Show error toast ONLY if explicitly requested AND not from auto-save
       if (showToast === true) {
         console.log("Error toast notification was requested and will be displayed");
         toast({
@@ -110,7 +110,7 @@ export function useEntityData<T extends Record<string, any>>(
     return JSON.stringify(data) !== JSON.stringify(lastSavedData);
   };
 
-  // Auto-save effect
+  // Auto-save effect - MODIFIED TO NEVER SHOW TOASTS
   useEffect(() => {
     if (!applicationId || !autoSaveEnabled || !isInitialized || isSaving) return;
     
@@ -167,7 +167,7 @@ export function useEntityData<T extends Record<string, any>>(
     const autoSaveTimeout = setTimeout(() => {
       if (hasUnsavedChanges() && checkRequiredFields(data, dataType)) {
         console.log(`Auto-saving data (${dataType}) because changes detected and required fields present`);
-        // Force FALSE to absolutely ensure no toasts on auto-save
+        // CRITICAL: Force FALSE to ensure no toasts on ANY auto-save
         saveData(false);
       }
     }, 1500);
