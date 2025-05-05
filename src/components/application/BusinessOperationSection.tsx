@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -89,7 +90,7 @@ const BusinessOperationSection = () => {
       };
       
       await businessOperationsService.saveBusinessOperations(businessOperationsData);
-      // No toasts here - they'll be shown by the parent component when needed
+      // NEVER show toasts here - they should only be shown by the parent component when Next button is clicked
     } catch (error) {
       console.error("Error saving business operations:", error);
     } finally {
@@ -138,8 +139,9 @@ const BusinessOperationSection = () => {
     setPropertyOwned(checked);
   };
 
-  // Update values and save on input blur - but never show toast
+  // Update values and save on input blur - NEVER show toast, explicitly set to false
   const handleInputBlur = () => {
+    // Force the showToast parameter to false to prevent any toast notifications
     handleSaveBusinessOperations(false);
   };
 
@@ -148,12 +150,14 @@ const BusinessOperationSection = () => {
     if (!window.businessOperationHelpers) {
       window.businessOperationHelpers = {
         validateAndSave: async () => {
+          // Only parent should show toast, never here - we're just providing validation
           await handleSaveBusinessOperations(false);
           return true; // Business operations don't have required fields for now
         }
       };
     } else {
       window.businessOperationHelpers.validateAndSave = async () => {
+        // Only parent should show toast, never here - we're just providing validation
         await handleSaveBusinessOperations(false);
         return true;
       };
