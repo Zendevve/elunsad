@@ -118,7 +118,7 @@ const Applications = () => {
       // Save/validate current step data before proceeding
       if (currentStep === 2) {
         // Check if the window helper is available and use it to validate/save
-        if (window.businessInfoHelpers?.validateAndSave) {
+        if (typeof window.businessInfoHelpers?.validateAndSave === 'function') {
           const isValid = await window.businessInfoHelpers.validateAndSave();
           
           if (!isValid) {
@@ -160,7 +160,7 @@ const Applications = () => {
         }
       } else if (currentStep === 3) {
         // Validate owner information
-        if (window.ownerInfoHelpers?.validateAndSave) {
+        if (typeof window.ownerInfoHelpers?.validateAndSave === 'function') {
           const isValid = await window.ownerInfoHelpers.validateAndSave();
           if (!isValid) {
             setIsSaving(false);
@@ -173,6 +173,26 @@ const Applications = () => {
             toast({
               title: "Incomplete Information",
               description: "Please complete the owner information before proceeding.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+          
+          // Validate required owner fields
+          const requiredOwnerFields = [
+            'surname', 'given_name', 'age', 'sex', 
+            'civil_status', 'nationality', 'owner_street', 
+            'owner_barangay', 'owner_city_municipality',
+            'owner_province', 'owner_zip_code'
+          ];
+          
+          const missingFields = requiredOwnerFields.filter(field => !ownerInfo[field as keyof typeof ownerInfo]);
+          
+          if (missingFields.length > 0) {
+            toast({
+              title: "Incomplete Information",
+              description: "Please complete all required owner information fields before proceeding.",
               variant: "destructive",
             });
             setIsSaving(false);

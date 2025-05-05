@@ -40,3 +40,18 @@ interface BusinessInformationData {
   mobile_no: string;
   email_address: string;
 }
+
+// Add helper interfaces for window augmentation
+interface BusinessInfoHelpers {
+  validateAndSave: () => Promise<boolean>;
+}
+
+interface OwnerInfoHelpers {
+  validateAndSave: () => Promise<boolean>;
+}
+
+// Augment the Window interface
+interface Window {
+  businessInfoHelpers?: BusinessInfoHelpers;
+  ownerInfoHelpers?: OwnerInfoHelpers;
+}
