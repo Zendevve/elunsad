@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,6 +10,15 @@ import FormSectionWrapper from "./FormSectionWrapper";
 
 interface DeclarationSectionProps {
   onAgreementChange: (agreed: boolean) => void;
+}
+
+interface DeclarationFormData {
+  application_id: string;
+  signature: string | null;
+  is_agreed: boolean;
+  name: string;
+  title: string;
+  // Add any other declaration fields here
 }
 
 const DeclarationSection: React.FC<DeclarationSectionProps> = ({ onAgreementChange }) => {
@@ -28,8 +38,8 @@ const DeclarationSection: React.FC<DeclarationSectionProps> = ({ onAgreementChan
         if (data) {
           setSignature(data.signature || null);
           setIsAgreed(data.is_agreed || false);
-          setName(data.name || "");
-          setTitle(data.title || "");
+          setName(data.designation || "");  // Updated to use the correct field name
+          setTitle(data.declaration_place || ""); // Updated to use the correct field name
         }
       } catch (error) {
         console.error("Error loading declaration:", error);
@@ -56,13 +66,13 @@ const DeclarationSection: React.FC<DeclarationSectionProps> = ({ onAgreementChan
   const handleNameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     setName(newName);
-    await saveDeclarationData({ name: newName });
+    await saveDeclarationData({ designation: newName });  // Updated field name
   };
 
   const handleTitleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
-    await saveDeclarationData({ title: newTitle });
+    await saveDeclarationData({ declaration_place: newTitle });  // Updated field name
   };
 
   const saveDeclarationData = async (updatedData: Partial<any>) => {
@@ -75,8 +85,8 @@ const DeclarationSection: React.FC<DeclarationSectionProps> = ({ onAgreementChan
         application_id: applicationId,
         signature: signature || null,
         is_agreed: isAgreed || false,
-        name: name || "",
-        title: title || "",
+        designation: name || "",  // Updated field name
+        declaration_place: title || "",  // Updated field name
         ...updatedData,
       };
       

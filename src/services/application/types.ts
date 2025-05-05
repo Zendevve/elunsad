@@ -1,116 +1,87 @@
-
-import { supabase } from "@/integrations/supabase/client";
-
-// Types for application data
 export type ApplicationType = 'newApplication' | 'renewalApplication' | 'amendmentApplication';
-export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info';
-export type OwnershipType = 'soleProprietorship' | 'onePersonCorp' | 'partnership' | 'corporation' | 'cooperative';
-export type CivilStatus = 'single' | 'married' | 'widowed' | 'divorced' | 'separated';
-export type Sex = 'male' | 'female';
+export type ApplicationStatus = 'draft' | 'submitted' | 'processing' | 'approved' | 'rejected';
 
 export interface ApplicationData {
-  id?: string;
+  id: string;
   application_type: ApplicationType;
+  application_status: ApplicationStatus;
+  submission_date?: string;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface BusinessInformationData {
+  id?: string;
   application_id: string;
   business_name: string;
   trade_name?: string;
-  registration_number?: string;
-  tin_number: string;
-  sss_number?: string;
-  ctc_number?: string;
-  ctc_date_issue?: string;
-  ctc_place_issue?: string;
-  ownership_type: OwnershipType;
-  house_bldg_no?: string;
-  building_name?: string;
-  block_no?: string;
-  lot_no?: string;
-  street: string;
-  subdivision?: string;
-  barangay: string;
-  city_municipality: string;
-  province: string;
-  zip_code: string;
-  telephone_no?: string;
-  mobile_no: string;
-  email_address: string;
+  business_address: string;
+  nature_of_business: string;
+  date_established?: string;
+  email_address?: string;
+  telephone_number?: string;
+  mobile_number?: string;
+  dti_sec_registration_number?: string;
+  barangay_micro_business_permit_number?: string;
+  gross_annual_income?: number;
+  number_of_employees?: number;
+  business_activities?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface OwnerInformationData {
+  id?: string;
   application_id: string;
-  surname: string;
-  given_name: string;
-  middle_name?: string;
-  suffix?: string;
-  civil_status: CivilStatus;
-  age: number;
-  sex: Sex;
-  nationality: string;
-  owner_house_bldg_no?: string;
-  owner_building_name?: string;
-  owner_block_no?: string;
-  owner_lot_no?: string;
-  owner_street: string;
-  owner_subdivision?: string;
-  owner_barangay: string;
-  owner_city_municipality: string;
-  owner_province: string;
-  owner_zip_code: string;
-}
-
-export interface BusinessLinesData {
-  application_id: string;
-  line_of_business: string;
-  psic_code?: string;
-  products_services: string;
-  units?: string;
-  gross_sales?: string;
+  owner_name: string;
+  owner_address: string;
+  owner_phone: string;
+  owner_email: string;
+  owner_nationality: string;
+  owner_type: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface BusinessOperationsData {
+  id?: string;
   application_id: string;
+  business_activity?: string;
   business_area?: number;
-  cctv_cameras?: number;
-  professional_male?: number;
-  professional_female?: number;
-  non_professional_male?: number;
-  non_professional_female?: number;
+  capitalization?: number;
+  total_employees?: number;  
   employees_in_lucena?: number;
+  employees_male?: number;  // Replacing employees_male_count
+  employees_female?: number;  // Replacing employees_female_count
+  has_tax_incentives?: boolean;
+  car?: number;
   van_truck?: number;
   motorcycle?: number;
-  other_vehicles?: number;
-  capitalization?: number;
-  has_tax_incentives?: boolean;
-  property_owned?: boolean;
-  tax_declaration_no?: string;
-  business_activity?: string;
-  other_activity?: string;
-  main_block_no?: string;
-  main_lot_no?: string;
-  main_house_bldg_no?: string;
-  main_building_name?: string;
-  main_street?: string;
-  main_subdivision?: string;
-  main_barangay?: string;
-  main_city_municipality?: string;
-  main_province?: string;
-  main_zip_code?: string;
-  lessor_full_name?: string;
-  lessor_business_name?: string;
-  lessor_address?: string;
-  lessor_contact_number?: string;
-  lessor_email_address?: string;
-  monthly_rental?: number;
+  cctv_cameras?: number;
+  security_guards?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BusinessLinesData {
+  id?: string;
+  application_id: string;
+  line_of_business: string;
+  description?: string;
+  units?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DeclarationData {
+  id?: string;
   application_id: string;
+  signature: string | null;
   is_agreed: boolean;
-  signature: string;
-  designation?: string;
+  designation: string;  // Field for the person's name
+  declaration_place: string;  // Field for the position/title
   verified_by?: string;
-  declaration_place?: string;
+  created_at?: string;
+  updated_at?: string;
 }

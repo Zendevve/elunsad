@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -126,7 +125,7 @@ const Applications = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+      }
   };
 
   // Validate required data before submission
@@ -156,7 +155,12 @@ const Applications = () => {
       const businessLines = await businessLinesService.getBusinessLines(applicationId);
       const declaration = await declarationService.getDeclaration(applicationId);
       
-      console.log("Validation data:", { businessInfo, ownerInfo, businessLines, declaration });
+      console.log("Validation data:", { 
+        businessInfo, 
+        ownerInfo, 
+        businessLines, 
+        declaration 
+      });
       
       if (!businessInfo) {
         toast({

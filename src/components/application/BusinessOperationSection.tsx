@@ -1,88 +1,109 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useApplication } from "@/contexts/ApplicationContext";
 import { businessOperationsService } from "@/services/application";
 import { useToast } from "@/components/ui/use-toast";
-import { useApplication } from "@/contexts/ApplicationContext";
 import FormSectionWrapper from "./FormSectionWrapper";
 
-interface BusinessOperationsData {
-  id?: string;
-  application_id?: string;
-  employees_male_count?: number | null;
-  employees_female_count?: number | null;
-  daily_operation_start?: string | null;
-  daily_operation_end?: string | null;
-  is_open_24hrs?: boolean | null;
-  is_seasonal?: boolean | null;
-  seasonal_operation_start?: string | null;
-  seasonal_operation_end?: string | null;
-}
-
 const BusinessOperationSection = () => {
-  const { applicationId } = useApplication();
+  const { applicationId, isLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
-  const [businessOperations, setBusinessOperations] = useState<BusinessOperationsData>({
-    employees_male_count: null,
-    employees_female_count: null,
-    daily_operation_start: null,
-    daily_operation_end: null,
-    is_open_24hrs: null,
-    is_seasonal: null,
-    seasonal_operation_start: null,
-    seasonal_operation_end: null,
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // Business operation state
+  const [businessActivity, setBusinessActivity] = useState("");
+  const [businessArea, setBusinessArea] = useState<number | null>(null);
+  const [capitalization, setCapitalization] = useState<number | null>(null);
+  const [totalEmployees, setTotalEmployees] = useState<number | null>(null);
+  const [employeesInLucena, setEmployeesInLucena] = useState<number | null>(null);
+  const [employeesMale, setEmployeesMale] = useState<number | null>(null);
+  const [employeesFemale, setEmployeesFemale] = useState<number | null>(null);
+  const [hasTaxIncentives, setHasTaxIncentives] = useState(false);
+
+  // Vehicle counts
+  const [car, setCar] = useState<number | null>(null);
+  const [vanTruck, setVanTruck] = useState<number | null>(null);
+  const [motorcycle, setMotorcycle] = useState<number | null>(null);
+  
+  // Security features
+  const [cctvCameras, setCctvCameras] = useState<number | null>(null);
+  const [securityGuards, setSecurityGuards] = useState<number | null>(null);
 
   useEffect(() => {
     const loadBusinessOperations = async () => {
       if (!applicationId) return;
-      setIsLoading(true);
+      
       try {
         const data = await businessOperationsService.getBusinessOperations(applicationId);
         if (data) {
-          setBusinessOperations({
-            ...data,
-            employees_male_count: data.employees_male_count !== null ? data.employees_male_count : null,
-            employees_female_count: data.employees_female_count !== null ? data.employees_female_count : null,
-          });
+          setBusinessActivity(data.business_activity || "");
+          setBusinessArea(data.business_area || null);
+          setCapitalization(data.capitalization || null);
+          setTotalEmployees(data.total_employees || null);
+          setEmployeesInLucena(data.employees_in_lucena || null);
+          setEmployeesMale(data.employees_male || null);
+          setEmployeesFemale(data.employees_female || null);
+          setHasTaxIncentives(data.has_tax_incentives || false);
+          
+          // Set vehicle counts
+          setCar(data.car || null);
+          setVanTruck(data.van_truck || null);
+          setMotorcycle(data.motorcycle || null);
+          
+          // Set security features
+          setCctvCameras(data.cctv_cameras || null);
+          setSecurityGuards(data.security_guards || null);
         }
       } catch (error) {
         console.error("Error loading business operations:", error);
-        toast({
-          title: "Load Failed",
-          description: "There was an error loading business operations data.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
       }
     };
-
+    
     loadBusinessOperations();
-  }, [applicationId, toast]);
+  }, [applicationId]);
 
-  const saveBusinessOperations = async (updatedData: Partial<BusinessOperationsData>) => {
+  const handleSaveBusinessOperations = async () => {
     if (!applicationId) return;
-    setIsLoading(true);
+    
     try {
-      const dataToSave = {
-        ...businessOperations,
-        ...updatedData,
+      setIsLoading(true);
+      
+      const businessOperationsData = {
         application_id: applicationId,
+        business_activity: businessActivity,
+        business_area: businessArea,
+        capitalization: capitalization,
+        total_employees: totalEmployees,
+        employees_in_lucena: employeesInLucena,
+        employees_male: employeesMale,
+        employees_female: employeesFemale,
+        has_tax_incentives: hasTaxIncentives,
+        
+        // Vehicle counts
+        car: car,
+        van_truck: vanTruck,
+        motorcycle: motorcycle,
+        
+        // Security features
+        cctv_cameras: cctvCameras,
+        security_guards: securityGuards,
       };
-      await businessOperationsService.saveBusinessOperations(dataToSave);
-      setBusinessOperations(dataToSave);
+      
+      await businessOperationsService.saveBusinessOperations(businessOperationsData);
+      
       toast({
         title: "Business Operations Saved",
-        description: "Your business operations information has been saved successfully.",
+        description: "Your business operation details have been saved.",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error saving business operations:", error);
       toast({
         title: "Save Failed",
-        description: "There was an error saving your business operations information.",
+        description: "There was an error saving your business operation details.",
         variant: "destructive",
       });
     } finally {
@@ -90,133 +111,146 @@ const BusinessOperationSection = () => {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    const parsedValue = name.includes('count') ? (value === '' ? null : parseInt(value, 10)) : value;
-  
-    saveBusinessOperations({ [name]: parsedValue });
+  // Input change handlers
+  const handleBusinessActivityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBusinessActivity(e.target.value);
   };
 
-  const handleSwitchChange = (checked: boolean) => {
-    saveBusinessOperations({ is_open_24hrs: checked });
+  const handleBusinessAreaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBusinessArea(e.target.value ? Number(e.target.value) : null);
   };
 
-  const handleSeasonalSwitchChange = (checked: boolean) => {
-    saveBusinessOperations({ is_seasonal: checked });
+  const handleCapitalizationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCapitalization(e.target.value ? Number(e.target.value) : null);
   };
 
-  const handleTimeChange = (name: string, value: string) => {
-    saveBusinessOperations({ [name]: value });
+  const handleTotalEmployeesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTotalEmployees(e.target.value ? Number(e.target.value) : null);
   };
 
-  const handleSeasonalTimeChange = (name: string, value: string) => {
-    saveBusinessOperations({ [name]: value });
+  const handleEmployeesInLucenaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmployeesInLucena(e.target.value ? Number(e.target.value) : null);
+  };
+
+  const handleEmployeesMaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmployeesMale(e.target.value ? Number(e.target.value) : null);
+  };
+
+  const handleEmployeesFemaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmployeesFemale(e.target.value ? Number(e.target.value) : null);
+  };
+
+  const handleHasTaxIncentivesChange = (checked: boolean) => {
+    setHasTaxIncentives(checked);
+  };
+
+  // Update values and save on input blur
+  const handleInputBlur = () => {
+    handleSaveBusinessOperations();
   };
 
   return (
     <FormSectionWrapper
-      title="Business Operations"
-      description="Provide details about your business operations"
+      title="Business Operation Details"
+      description="Provide information about your business operations"
       stepNumber={4}
     >
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* Number of Employees */}
-        <div>
-          <Label htmlFor="employees_male_count">Number of Male Employees</Label>
-          <Input
-            type="number"
-            id="employees_male_count"
-            name="employees_male_count"
-            value={businessOperations.employees_male_count !== null ? businessOperations.employees_male_count.toString() : ''}
-            onChange={handleInputChange}
-            placeholder="Enter number of male employees"
-            className="focus:ring-1 focus:ring-primary"
-          />
-        </div>
-        <div>
-          <Label htmlFor="employees_female_count">Number of Female Employees</Label>
-          <Input
-            type="number"
-            id="employees_female_count"
-            name="employees_female_count"
-            value={businessOperations.employees_female_count !== null ? businessOperations.employees_female_count.toString() : ''}
-            onChange={handleInputChange}
-            placeholder="Enter number of female employees"
-            className="focus:ring-1 focus:ring-primary"
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="businessActivity">Business Activity/Description</Label>
+            <Input 
+              id="businessActivity" 
+              placeholder="Describe your business activities" 
+              value={businessActivity}
+              onChange={handleBusinessActivityChange}
+              onBlur={handleInputBlur}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="businessArea">Business Area (sqm)</Label>
+            <Input 
+              id="businessArea" 
+              type="number" 
+              placeholder="Area in square meters" 
+              value={businessArea || ''}
+              onChange={handleBusinessAreaChange}
+              onBlur={handleInputBlur}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="capitalization">Capitalization (PHP)</Label>
+            <Input 
+              id="capitalization" 
+              type="number" 
+              placeholder="Amount in Philippine Peso" 
+              value={capitalization || ''}
+              onChange={handleCapitalizationChange}
+              onBlur={handleInputBlur}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="taxIncentives" 
+              checked={hasTaxIncentives} 
+              onCheckedChange={handleHasTaxIncentivesChange}
+            />
+            <Label htmlFor="taxIncentives">Has Tax Incentives</Label>
+          </div>
         </div>
 
-        {/* Daily Operation Hours */}
-        <div>
-          <Label htmlFor="daily_operation_start">Daily Operation Start Time</Label>
-          <Input
-            type="time"
-            id="daily_operation_start"
-            name="daily_operation_start"
-            value={businessOperations.daily_operation_start || ''}
-            onChange={(e) => handleTimeChange("daily_operation_start", e.target.value)}
-            className="focus:ring-1 focus:ring-primary"
-          />
-        </div>
-        <div>
-          <Label htmlFor="daily_operation_end">Daily Operation End Time</Label>
-          <Input
-            type="time"
-            id="daily_operation_end"
-            name="daily_operation_end"
-            value={businessOperations.daily_operation_end || ''}
-            onChange={(e) => handleTimeChange("daily_operation_end", e.target.value)}
-            className="focus:ring-1 focus:ring-primary"
-          />
-        </div>
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium mb-2">Employee Information</h3>
+          <div>
+            <Label htmlFor="totalEmployees">Total Employees</Label>
+            <Input 
+              id="totalEmployees" 
+              type="number" 
+              placeholder="Enter total number of employees" 
+              value={totalEmployees || ''}
+              onChange={handleTotalEmployeesChange}
+              onBlur={handleInputBlur}
+            />
+          </div>
 
-        {/* Open 24 Hours Switch */}
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="is_open_24hrs">Open 24 Hours</Label>
-          <Switch
-            id="is_open_24hrs"
-            checked={businessOperations.is_open_24hrs || false}
-            onCheckedChange={handleSwitchChange}
-          />
-        </div>
+          <div>
+            <Label htmlFor="employeesInLucena">Employees from Lucena</Label>
+            <Input 
+              id="employeesInLucena" 
+              type="number" 
+              placeholder="Number of employees from Lucena" 
+              value={employeesInLucena || ''}
+              onChange={handleEmployeesInLucenaChange}
+              onBlur={handleInputBlur}
+            />
+          </div>
 
-        {/* Seasonal Business Switch */}
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="is_seasonal">Seasonal Business</Label>
-          <Switch
-            id="is_seasonal"
-            checked={businessOperations.is_seasonal || false}
-            onCheckedChange={handleSeasonalSwitchChange}
-          />
-        </div>
-
-        {/* Seasonal Operation Dates (conditionally rendered) */}
-        {businessOperations.is_seasonal && (
-          <>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="seasonal_operation_start">Seasonal Operation Start Date</Label>
-              <Input
-                type="date"
-                id="seasonal_operation_start"
-                name="seasonal_operation_start"
-                value={businessOperations.seasonal_operation_start || ''}
-                onChange={(e) => handleSeasonalTimeChange("seasonal_operation_start", e.target.value)}
-                className="focus:ring-1 focus:ring-primary"
+              <Label htmlFor="employeesMale">Male Employees</Label>
+              <Input 
+                id="employeesMale" 
+                type="number" 
+                value={employeesMale || ''}
+                onChange={handleEmployeesMaleChange}
+                onBlur={handleInputBlur}
               />
             </div>
             <div>
-              <Label htmlFor="seasonal_operation_end">Seasonal Operation End Date</Label>
-              <Input
-                type="date"
-                id="seasonal_operation_end"
-                name="seasonal_operation_end"
-                value={businessOperations.seasonal_operation_end || ''}
-                onChange={(e) => handleSeasonalTimeChange("seasonal_operation_end", e.target.value)}
-                className="focus:ring-1 focus:ring-primary"
+              <Label htmlFor="employeesFemale">Female Employees</Label>
+              <Input 
+                id="employeesFemale" 
+                type="number" 
+                value={employeesFemale || ''}
+                onChange={handleEmployeesFemaleChange}
+                onBlur={handleInputBlur}
               />
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </FormSectionWrapper>
   );

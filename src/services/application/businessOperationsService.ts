@@ -6,7 +6,9 @@ import { BusinessOperationsData } from "./types";
 export const businessOperationsService = {
   async saveBusinessOperations(data: BusinessOperationsData) {
     try {
-      // Check if business operations already exists for this application
+      console.log("Saving business operations:", data);
+      
+      // Check if business operations already exist for this application
       const { data: existingData, error: checkError } = await supabase
         .from('business_operations')
         .select('id')
@@ -25,6 +27,7 @@ export const businessOperationsService = {
           .single();
         
         if (updateError) throw updateError;
+        console.log("Updated business operations:", updatedData);
         return updatedData;
       } else {
         // Insert new record
@@ -35,6 +38,7 @@ export const businessOperationsService = {
           .single();
         
         if (insertError) throw insertError;
+        console.log("Inserted business operations:", insertedData);
         return insertedData;
       }
     } catch (error) {
@@ -45,6 +49,8 @@ export const businessOperationsService = {
   
   async getBusinessOperations(applicationId: string) {
     try {
+      console.log("Fetching business operations for application:", applicationId);
+      
       const { data, error } = await supabase
         .from('business_operations')
         .select('*')
@@ -52,6 +58,7 @@ export const businessOperationsService = {
         .maybeSingle();
       
       if (error) throw error;
+      console.log("Retrieved business operations:", data);
       return data;
     } catch (error) {
       console.error('Error fetching business operations:', error);
