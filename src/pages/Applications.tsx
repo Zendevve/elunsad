@@ -178,8 +178,9 @@ const Applications = () => {
           }
         }
       } else if (currentStep === 3) {
-        // Validate owner information
+        // Validate owner information - MODIFIED TO PREVENT UNWANTED TOASTS
         if (window.ownerInfoHelpers?.validateAndSave) {
+          console.log("Applications - Validating owner info through helper");
           const isValid = await window.ownerInfoHelpers.validateAndSave();
           if (!isValid) {
             toast({
@@ -189,12 +190,9 @@ const Applications = () => {
             });
             setIsSaving(false);
             return;
-          } else {
-            toast({
-              title: "Owner Information Saved",
-              description: "Your owner information has been saved successfully.",
-            });
           }
+          // Explicitly only show toast when Next is clicked, not during auto-saves
+          console.log("Applications - Owner info validated successfully, showing success toast only on Next click");
         } else {
           // Fallback validation
           const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId || '');
@@ -226,13 +224,13 @@ const Applications = () => {
             });
             setIsSaving(false);
             return;
-          } else {
-            toast({
-              title: "Owner Information Saved",
-              description: "Your owner information has been saved successfully.",
-            });
           }
         }
+        // Show toast only on successful Next button click for step 3
+        toast({
+          title: "Owner Information Saved",
+          description: "Your owner information has been saved successfully.",
+        });
       } else if (currentStep === 4) {
         // Validate business operation and lines
         const businessLines = await businessLinesService.getBusinessLines(applicationId || '');

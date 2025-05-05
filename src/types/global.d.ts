@@ -5,6 +5,7 @@ interface Window {
   };
   ownerInfoHelpers?: {
     validateAndSave: () => Promise<boolean>;
+    silentSave?: () => Promise<boolean>;
   };
   businessOperationHelpers?: {
     validateAndSave: () => Promise<boolean>;
