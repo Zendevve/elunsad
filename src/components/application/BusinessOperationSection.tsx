@@ -89,8 +89,9 @@ const BusinessOperationSection = () => {
         cctv_cameras: cctvCameras
       };
       
+      // Save without showing toasts - this is crucial
       await businessOperationsService.saveBusinessOperations(businessOperationsData);
-      // NEVER show toasts here - they should only be shown by the parent component when Next button is clicked
+      console.log("Business operations saved silently, no toast will be shown");
     } catch (error) {
       console.error("Error saving business operations:", error);
     } finally {
@@ -139,9 +140,9 @@ const BusinessOperationSection = () => {
     setPropertyOwned(checked);
   };
 
-  // Update values and save on input blur - NEVER show toast, explicitly set to false
+  // This is crucial - explicitly pass FALSE to prevent toasts
   const handleInputBlur = () => {
-    // Force the showToast parameter to false to prevent any toast notifications
+    console.log("Input blur - triggering silent save with NO toast");
     handleSaveBusinessOperations(false);
   };
 
@@ -150,14 +151,16 @@ const BusinessOperationSection = () => {
     if (!window.businessOperationHelpers) {
       window.businessOperationHelpers = {
         validateAndSave: async () => {
-          // Only parent should show toast, never here - we're just providing validation
+          console.log("Parent requested validation - performing silent save");
+          // Silent save - no toasts from this component
           await handleSaveBusinessOperations(false);
           return true; // Business operations don't have required fields for now
         }
       };
     } else {
       window.businessOperationHelpers.validateAndSave = async () => {
-        // Only parent should show toast, never here - we're just providing validation
+        console.log("Parent requested validation - performing silent save");
+        // Silent save - no toasts from this component
         await handleSaveBusinessOperations(false);
         return true;
       };

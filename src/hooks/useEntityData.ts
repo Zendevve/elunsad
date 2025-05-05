@@ -36,7 +36,7 @@ export function useEntityData<T extends Record<string, any>>(
         setIsInitialized(true);
       } catch (error) {
         console.error("Error loading data:", error);
-        // No toast notifications on load error - NEVER show toasts automatically
+        // Never show toasts automatically
       } finally {
         setIsLoading(false);
       }
@@ -50,7 +50,7 @@ export function useEntityData<T extends Record<string, any>>(
     setData(current => ({ ...current, ...updatedValues }));
   };
 
-  // Save data manually
+  // Save data manually - Modified to be MORE EXPLICIT about toast suppression
   const saveData = async (showToast = false) => {
     if (!applicationId) {
       console.error("Cannot save data: applicationId is null");
@@ -65,13 +65,15 @@ export function useEntityData<T extends Record<string, any>>(
       if (result) {
         setLastSavedData({ ...data });
         
-        // Only show toast notifications if explicitly requested AND showToast is true
-        // This ensures we control toast visibility from the parent components
+        // Show toast ONLY if showToast is EXACTLY true (strict checking)
         if (showToast === true) {
+          console.log("Toast notification was requested and will be displayed");
           toast({
             title: "Data Saved",
             description: "Your information has been saved successfully.",
           });
+        } else {
+          console.log("Toast notification suppressed - showToast was:", showToast);
         }
         
         if (onSaveSuccess) {
@@ -83,13 +85,16 @@ export function useEntityData<T extends Record<string, any>>(
     } catch (error) {
       console.error("Error saving data:", error);
       
-      // Only show toast notifications if explicitly requested AND showToast is true
+      // Show error toast ONLY if showToast is EXACTLY true (strict checking)
       if (showToast === true) {
+        console.log("Error toast notification was requested and will be displayed");
         toast({
           title: "Save Failed",
           description: "There was an error saving your information. Please ensure all required fields are filled.",
           variant: "destructive",
         });
+      } else {
+        console.log("Error toast notification suppressed - showToast was:", showToast);
       }
       
       return null;
@@ -162,7 +167,7 @@ export function useEntityData<T extends Record<string, any>>(
     const autoSaveTimeout = setTimeout(() => {
       if (hasUnsavedChanges() && checkRequiredFields(data, dataType)) {
         console.log(`Auto-saving data (${dataType}) because changes detected and required fields present`);
-        // ALWAYS pass false to prevent showing toasts on auto-save - never show notifications automatically
+        // Force FALSE to absolutely ensure no toasts on auto-save
         saveData(false);
       }
     }, 1500);
