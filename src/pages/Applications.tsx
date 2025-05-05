@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import {
 } from "@/services/application";
 
 const Applications = () => {
+  
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
   const { toast } = useToast();
@@ -120,6 +120,7 @@ const Applications = () => {
       if (currentStep === 2) {
         // Check if the window helper is available and use it to validate/save
         if (window.businessInfoHelpers?.validateAndSave) {
+          console.log("Applications - Validating business info through helper");
           const isValid = await window.businessInfoHelpers.validateAndSave();
           
           if (!isValid) {
@@ -131,6 +132,8 @@ const Applications = () => {
             setIsSaving(false);
             return; // Stop here if validation fails
           } else {
+            // This is where the toast appears that we want to suppress
+            console.log("Applications - Business info validated, showing success toast");
             toast({
               title: "Business Information Saved",
               description: "Your business information has been saved successfully.",
@@ -249,30 +252,52 @@ const Applications = () => {
         }
       } else if (currentStep === 5) {
         // Validate declaration
-        const declaration = await declarationService.getDeclaration(applicationId || '');
-        if (!declaration || !declaration.signature) {
-          toast({
-            title: "Signature Required",
-            description: "Please sign the declaration before submitting.",
-            variant: "destructive",
-          });
-          setIsSaving(false);
-          return;
-        }
-        
-        if (!isAgreed) {
-          toast({
-            title: "Agreement Required",
-            description: "You must agree to the declaration before submitting.",
-            variant: "destructive",
-          });
-          setIsSaving(false);
-          return;
+        if (window.declarationHelpers?.validateAndSave) {
+          console.log("Applications - Validating declaration through helper");
+          const isValid = await window.declarationHelpers.validateAndSave();
+          
+          if (!isValid) {
+            toast({
+              title: "Incomplete Declaration",
+              description: "Please complete the declaration before proceeding.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          } else {
+            // This is where the toast appears that we want to suppress for Declaration
+            console.log("Applications - Declaration validated, showing success toast");
+            toast({
+              title: "Declaration Confirmed",
+              description: "Your declaration has been confirmed successfully.",
+            });
+          }
         } else {
-          toast({
-            title: "Declaration Confirmed",
-            description: "Your declaration has been confirmed successfully.",
-          });
+          const declaration = await declarationService.getDeclaration(applicationId || '');
+          if (!declaration || !declaration.signature) {
+            toast({
+              title: "Signature Required",
+              description: "Please sign the declaration before submitting.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+          
+          if (!isAgreed) {
+            toast({
+              title: "Agreement Required",
+              description: "You must agree to the declaration before submitting.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          } else {
+            toast({
+              title: "Declaration Confirmed",
+              description: "Your declaration has been confirmed successfully.",
+            });
+          }
         }
       }
       

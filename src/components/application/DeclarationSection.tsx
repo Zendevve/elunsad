@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { declarationService } from "@/services/application";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "./FormSectionWrapper";
 
 interface DeclarationSectionProps {
@@ -48,24 +48,24 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
 
   const handleSaveSignature = async (newSignature: string) => {
     setSignature(newSignature);
-    await saveDeclarationData({ signature: newSignature });
+    await saveDeclarationData({ signature: newSignature }, false);
   };
 
   const handleAgreementChange = async (checked: boolean) => {
     setIsAgreed(checked);
-    await saveDeclarationData({ is_agreed: checked });
+    await saveDeclarationData({ is_agreed: checked }, false);
   };
 
   const handleDesignationChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDesignation = e.target.value;
     setDesignation(newDesignation);
-    await saveDeclarationData({ designation: newDesignation });
+    await saveDeclarationData({ designation: newDesignation }, false);
   };
 
   const handleDeclarationPlaceChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDeclarationPlace = e.target.value;
     setDeclarationPlace(newDeclarationPlace);
-    await saveDeclarationData({ declaration_place: newDeclarationPlace });
+    await saveDeclarationData({ declaration_place: newDeclarationPlace }, false);
   };
 
   const saveDeclarationData = async (updatedData: Partial<{
@@ -73,11 +73,12 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
     is_agreed: boolean;
     designation: string;
     declaration_place: string;
-  }>) => {
+  }>, showToast: boolean = false) => {
     if (!applicationId) return;
     
     try {
       setIsLoading(true);
+      console.log("Declaration - Saving with showToast explicitly set to:", showToast);
       
       const declarationData = {
         application_id: applicationId,
@@ -90,22 +91,59 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       
       await declarationService.saveDeclaration(declarationData);
       
-      toast({
-        title: "Declaration Saved",
-        description: "Your declaration has been saved successfully.",
-        variant: "default",
-      });
+      // Only show toast if explicitly requested with showToast=true
+      if (showToast === true) {
+        console.log("Declaration - Toast will be shown as requested");
+        toast({
+          title: "Declaration Saved",
+          description: "Your declaration has been saved successfully.",
+          variant: "default",
+        });
+      } else {
+        console.log("Declaration - Toast suppressed", { showToast });
+      }
     } catch (error) {
       console.error("Error saving declaration:", error);
-      toast({
-        title: "Save Failed",
-        description: "There was an error saving your declaration.",
-        variant: "destructive",
-      });
+      
+      // Only show error toast if explicitly requested
+      if (showToast === true) {
+        toast({
+          title: "Save Failed",
+          description: "There was an error saving your declaration.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Add validation and save function for parent component
+  useEffect(() => {
+    if (!window.declarationHelpers) {
+      window.declarationHelpers = {
+        validateAndSave: async () => {
+          console.log("Declaration - Parent requested validation - performing silent save");
+          // Explicitly pass false to ensure no toast is shown
+          await saveDeclarationData({}, false);
+          return true;
+        }
+      };
+    } else {
+      window.declarationHelpers.validateAndSave = async () => {
+        console.log("Declaration - Parent requested validation - performing silent save");
+        // Explicitly pass false to ensure no toast is shown
+        await saveDeclarationData({}, false);
+        return true;
+      };
+    }
+    
+    return () => {
+      if (window.declarationHelpers) {
+        delete window.declarationHelpers.validateAndSave;
+      }
+    };
+  }, [signature, isAgreed, designation, declarationPlace, applicationId]);
 
   return (
     <FormSectionWrapper

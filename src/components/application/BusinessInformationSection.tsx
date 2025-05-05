@@ -163,7 +163,7 @@ const BusinessInformationSection = () => {
 
   // This function is still needed for validation checks by the parent component
   const validateAndSave = async () => {
-    console.log("Validation and save triggered with data:", businessInfo);
+    console.log("BusinessInfo - Validation and save triggered with data:", businessInfo);
     
     // Validate all required fields
     const errors: Record<string, string> = {};
@@ -189,7 +189,9 @@ const BusinessInformationSection = () => {
     }
     
     try {
-      const result = await saveData();
+      console.log("BusinessInfo - Silent save during validation, no toast will be shown");
+      // Always pass false here to prevent toasts on validation
+      const result = await saveData(false);
       return !!result;
     } catch (error) {
       console.error("Error in save:", error);
