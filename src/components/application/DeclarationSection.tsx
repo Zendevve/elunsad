@@ -91,9 +91,9 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       
       await declarationService.saveDeclaration(declarationData);
       
-      // Only show toast if explicitly requested with showToast=true
+      // ONLY show toast if explicitly requested with showToast=true parameter
       if (showToast === true) {
-        console.log("Declaration - Toast will be shown as requested");
+        console.log("Declaration - Toast will be shown as explicitly requested");
         toast({
           title: "Declaration Saved",
           description: "Your declaration has been saved successfully.",
@@ -105,13 +105,15 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
     } catch (error) {
       console.error("Error saving declaration:", error);
       
-      // Only show error toast if explicitly requested
+      // ONLY show error toast if explicitly requested with showToast=true parameter
       if (showToast === true) {
         toast({
           title: "Save Failed",
           description: "There was an error saving your declaration.",
           variant: "destructive",
         });
+      } else {
+        console.log("Declaration - Error toast suppressed", { showToast });
       }
     } finally {
       setIsLoading(false);
@@ -126,7 +128,10 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
           console.log("Declaration - Parent requested validation - performing silent save");
           // Explicitly pass false to ensure no toast is shown
           await saveDeclarationData({}, false);
-          return true;
+          
+          // Simple validation - signature is required
+          const isValid = !!signature;
+          return isValid;
         }
       };
     } else {
@@ -134,7 +139,10 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
         console.log("Declaration - Parent requested validation - performing silent save");
         // Explicitly pass false to ensure no toast is shown
         await saveDeclarationData({}, false);
-        return true;
+        
+        // Simple validation - signature is required
+        const isValid = !!signature;
+        return isValid;
       };
     }
     
@@ -145,6 +153,7 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
     };
   }, [signature, isAgreed, designation, declarationPlace, applicationId]);
 
+  // Component JSX
   return (
     <FormSectionWrapper
       title="Declaration"

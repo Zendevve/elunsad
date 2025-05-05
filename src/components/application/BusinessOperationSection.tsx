@@ -67,6 +67,7 @@ const BusinessOperationSection = () => {
     
     try {
       setIsLoading(true);
+      console.log("BusinessOperationSection - Saving with showToast:", showToast);
       
       const businessOperationsData = {
         application_id: applicationId,
@@ -89,9 +90,9 @@ const BusinessOperationSection = () => {
         cctv_cameras: cctvCameras
       };
       
-      // Save without showing toasts - this is crucial
+      // Save without showing toasts unless explicitly requested
       await businessOperationsService.saveBusinessOperations(businessOperationsData);
-      console.log("Business operations saved silently, no toast will be shown");
+      console.log("Business operations saved", showToast ? "with toast" : "silently");
     } catch (error) {
       console.error("Error saving business operations:", error);
     } finally {
@@ -99,7 +100,7 @@ const BusinessOperationSection = () => {
     }
   };
 
-  // Input change handlers
+  // Input change handlers with clearer naming
   const handleBusinessActivityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBusinessActivity(e.target.value);
   };
@@ -142,7 +143,7 @@ const BusinessOperationSection = () => {
 
   // This is crucial - explicitly pass FALSE to prevent toasts
   const handleInputBlur = () => {
-    console.log("Input blur - triggering silent save with NO toast");
+    console.log("BusinessOperationSection - Input blur - triggering silent save with NO toast");
     handleSaveBusinessOperations(false);
   };
 
@@ -151,7 +152,7 @@ const BusinessOperationSection = () => {
     if (!window.businessOperationHelpers) {
       window.businessOperationHelpers = {
         validateAndSave: async () => {
-          console.log("Parent requested validation - performing silent save");
+          console.log("BusinessOperationSection - Parent requested validation - performing silent save");
           // Silent save - no toasts from this component
           await handleSaveBusinessOperations(false);
           return true; // Business operations don't have required fields for now
@@ -159,7 +160,7 @@ const BusinessOperationSection = () => {
       };
     } else {
       window.businessOperationHelpers.validateAndSave = async () => {
-        console.log("Parent requested validation - performing silent save");
+        console.log("BusinessOperationSection - Parent requested validation - performing silent save");
         // Silent save - no toasts from this component
         await handleSaveBusinessOperations(false);
         return true;
@@ -179,6 +180,7 @@ const BusinessOperationSection = () => {
     propertyOwned, vanTruck, motorcycle, cctvCameras
   ]);
 
+  // Component JSX
   return (
     <FormSectionWrapper
       title="Business Operation Details"

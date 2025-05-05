@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { ownerInformationService } from "@/services/application";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "./FormSectionWrapper";
 
 const OwnerInformationSection = () => {
@@ -67,11 +66,12 @@ const OwnerInformationSection = () => {
     loadOwnerInformation();
   }, [applicationId]);
 
-  const handleSaveOwnerInformation = async () => {
+  const handleSaveOwnerInformation = async (showToast = false) => {
     if (!applicationId) return;
     
     try {
       setIsLoading(true);
+      console.log("OwnerInformationSection - Saving with showToast:", showToast);
       
       const ownerData = {
         application_id: applicationId,
@@ -97,28 +97,133 @@ const OwnerInformationSection = () => {
       
       await ownerInformationService.saveOwnerInformation(ownerData);
       
-      toast({
-        title: "Owner Information Saved",
-        description: "Your owner information has been saved successfully.",
-        variant: "default",
-      });
+      // Only show success toast when explicitly requested
+      if (showToast === true) {
+        console.log("OwnerInformationSection - Showing success toast as requested");
+        toast({
+          title: "Owner Information Saved",
+          description: "Your owner information has been saved successfully.",
+          variant: "default",
+        });
+      } else {
+        console.log("OwnerInformationSection - No toast shown: showToast=false");
+      }
     } catch (error) {
       console.error("Error saving owner information:", error);
-      toast({
-        title: "Save Failed",
-        description: "There was an error saving your owner information.",
-        variant: "destructive",
-      });
+      
+      // Only show error toast when explicitly requested
+      if (showToast === true) {
+        console.log("OwnerInformationSection - Showing error toast as requested");
+        toast({
+          title: "Save Failed",
+          description: "There was an error saving your owner information.",
+          variant: "destructive",
+        });
+      } else {
+        console.log("OwnerInformationSection - No error toast shown: showToast=false");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Input blur handler to save data
+  // Input blur handler to save data silently
   const handleInputBlur = () => {
-    handleSaveOwnerInformation();
+    console.log("OwnerInformationSection - Input blur, saving silently");
+    handleSaveOwnerInformation(false);
   };
 
+  // Window helper for parent component
+  useEffect(() => {
+    if (!window.ownerInfoHelpers) {
+      window.ownerInfoHelpers = {
+        validateAndSave: async () => {
+          console.log("OwnerInformationSection - Parent requested validateAndSave (showToast=false)");
+          await handleSaveOwnerInformation(false);
+          
+          // Validation logic for required fields
+          const requiredFields = [
+            surname, 
+            givenName, 
+            age, 
+            sex, 
+            civilStatus, 
+            nationality, 
+            ownerStreet, 
+            ownerBarangay, 
+            ownerCityMunicipality,
+            ownerProvince, 
+            ownerZipCode
+          ];
+          
+          const isValid = requiredFields.every(field => field !== null && field !== undefined && field !== '');
+          return isValid;
+        },
+        silentSave: async () => {
+          console.log("OwnerInformationSection - Parent requested silentSave");
+          await handleSaveOwnerInformation(false);
+          return true;
+        }
+      };
+    } else {
+      window.ownerInfoHelpers.validateAndSave = async () => {
+        console.log("OwnerInformationSection - Parent requested validateAndSave (showToast=false)");
+        await handleSaveOwnerInformation(false);
+        
+        // Validation logic for required fields
+        const requiredFields = [
+          surname, 
+          givenName, 
+          age, 
+          sex, 
+          civilStatus, 
+          nationality, 
+          ownerStreet, 
+          ownerBarangay, 
+          ownerCityMunicipality,
+          ownerProvince, 
+          ownerZipCode
+        ];
+        
+        const isValid = requiredFields.every(field => field !== null && field !== undefined && field !== '');
+        return isValid;
+      };
+      
+      window.ownerInfoHelpers.silentSave = async () => {
+        console.log("OwnerInformationSection - Parent requested silentSave");
+        await handleSaveOwnerInformation(false);
+        return true;
+      };
+    }
+    
+    return () => {
+      if (window.ownerInfoHelpers) {
+        delete window.ownerInfoHelpers.validateAndSave;
+        delete window.ownerInfoHelpers.silentSave;
+      }
+    };
+  }, [
+    surname, 
+    givenName, 
+    middleName, 
+    suffix, 
+    age, 
+    sex, 
+    civilStatus, 
+    nationality,
+    ownerStreet, 
+    ownerBarangay, 
+    ownerCityMunicipality, 
+    ownerProvince, 
+    ownerZipCode,
+    ownerHouseBldgNo, 
+    ownerBuildingName, 
+    ownerBlockNo, 
+    ownerLotNo, 
+    ownerSubdivision
+  ]);
+
+  // Rest of the component's JSX
   return (
     <FormSectionWrapper
       title="Owner Information"

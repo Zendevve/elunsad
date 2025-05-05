@@ -66,10 +66,13 @@ export function useEntityData<T extends Record<string, any>>(
         
         // ONLY show toast if explicitly requested with showToast=true parameter
         if (showToast === true) {
+          console.log("useEntityData - Toast will be shown as explicitly requested");
           toast({
             title: "Data Saved",
             description: "Your information has been saved successfully.",
           });
+        } else {
+          console.log("useEntityData - No toast shown: autoSave=false or showToast=false");
         }
         
         if (onSaveSuccess) {
@@ -83,11 +86,14 @@ export function useEntityData<T extends Record<string, any>>(
       
       // ONLY show error toast if explicitly requested with showToast=true parameter
       if (showToast === true) {
+        console.log("useEntityData - Error toast will be shown as explicitly requested");
         toast({
           title: "Save Failed",
           description: "There was an error saving your information. Please ensure all required fields are filled.",
           variant: "destructive",
         });
+      } else {
+        console.log("useEntityData - No error toast shown: autoSave=false or showToast=false");
       }
       
       return null;
@@ -159,6 +165,7 @@ export function useEntityData<T extends Record<string, any>>(
     
     const autoSaveTimeout = setTimeout(() => {
       if (hasUnsavedChanges() && checkRequiredFields(data, dataType)) {
+        console.log(`useEntityData - Auto-saving ${dataType} silently (showToast=false)`);
         // Auto-save silently without any toast notifications
         saveData(false); // Always pass false to ensure no toasts
       }
