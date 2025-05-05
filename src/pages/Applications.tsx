@@ -29,6 +29,7 @@ const Applications = () => {
   const [applicationType, setApplicationType] = useState("newApplication");
   const [fadeIn, setFadeIn] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false); // Declaration agreement state
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added specific state for submission
   const navigate = useNavigate();
   
   // Get application context
@@ -213,6 +214,7 @@ const Applications = () => {
     if (!isValid) return;
 
     try {
+      setIsSubmitting(true); // Set specific submission state to true
       setIsLoading(true);
       
       // Update application status to submitted
@@ -232,6 +234,8 @@ const Applications = () => {
         description: "There was an error submitting your application. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false); // Reset submission state to false
       setIsLoading(false);
     }
   };
@@ -337,11 +341,15 @@ const Applications = () => {
               <Button 
                 onClick={handleNext}
                 className="px-6 bg-primary group hover:bg-primary/90 transition-all"
-                disabled={isLoading}
+                disabled={isLoading || isSubmitting} // Use both states to properly disable
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <span className="flex items-center">
                     <Loader className="mr-2 h-4 w-4 animate-spin" /> Processing...
+                  </span>
+                ) : isLoading ? (
+                  <span className="flex items-center">
+                    <Loader className="mr-2 h-4 w-4 animate-spin" /> Loading...
                   </span>
                 ) : currentStep === totalSteps ? (
                   "Submit Application"
