@@ -1,145 +1,62 @@
+
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FormSectionWrapper from "./FormSectionWrapper";
-import { FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/form/FormField";
 import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
-import { applicationService } from "@/services/applicationService";
+import { businessInformationService } from "@/services/application";
+import { OwnershipType } from "@/services/application/types";
 import { useToast } from "@/components/ui/use-toast";
+import { useEntityData } from "@/hooks/useEntityData";
 
 const BusinessInformationSection = () => {
-  const { applicationId, isLoading, setIsLoading } = useApplication();
+  const { applicationId, isLoading: isAppLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
-  const [ownershipType, setOwnershipType] = useState<string>("soleProprietorship");
-  const [selectedBarangay, setSelectedBarangay] = useState<string>("");
   
-  // Form fields state
-  const [businessName, setBusinessName] = useState<string>("");
-  const [tradeName, setTradeName] = useState<string>("");
-  const [registrationNumber, setRegistrationNumber] = useState<string>("");
-  const [tinNumber, setTinNumber] = useState<string>("");
-  const [sssNumber, setSssNumber] = useState<string>("");
-  const [ctcNumber, setCtcNumber] = useState<string>("");  // Added CTC number
-  const [ctcDateIssue, setCtcDateIssue] = useState<string>("");  // Added CTC date
-  const [ctcPlaceIssue, setCtcPlaceIssue] = useState<string>("");  // Added CTC place
-  const [houseBldgNo, setHouseBldgNo] = useState<string>("");
-  const [buildingName, setBuildingName] = useState<string>("");
-  const [blockNo, setBlockNo] = useState<string>("");
-  const [lotNo, setLotNo] = useState<string>("");
-  const [street, setStreet] = useState<string>("");
-  const [subdivision, setSubdivision] = useState<string>("");
-  const [cityMunicipality, setCityMunicipality] = useState<string>("Lucena");
-  const [province, setProvince] = useState<string>("Quezon");
-  const [zipCode, setZipCode] = useState<string>("");
-  const [telephoneNo, setTelephoneNo] = useState<string>("");
-  const [mobileNo, setMobileNo] = useState<string>("");
-  const [emailAddress, setEmailAddress] = useState<string>("");
-
-  // Load saved data when component mounts
-  useEffect(() => {
-    const loadBusinessInfo = async () => {
-      if (!applicationId) return;
-      
-      try {
-        const data = await applicationService.getBusinessInformation(applicationId);
-        if (data) {
-          // Populate form fields with saved data
-          setBusinessName(data.business_name || "");
-          setTradeName(data.trade_name || "");
-          setRegistrationNumber(data.registration_number || "");
-          setTinNumber(data.tin_number || "");
-          setSssNumber(data.sss_number || "");
-          setCtcNumber(data.ctc_number || "");  // Set CTC number
-          setCtcDateIssue(data.ctc_date_issue || "");  // Set CTC date
-          setCtcPlaceIssue(data.ctc_place_issue || "");  // Set CTC place
-          setHouseBldgNo(data.house_bldg_no || "");
-          setBuildingName(data.building_name || "");
-          setBlockNo(data.block_no || "");
-          setLotNo(data.lot_no || "");
-          setStreet(data.street || "");
-          setSubdivision(data.subdivision || "");
-          setSelectedBarangay(data.barangay || "");
-          setCityMunicipality(data.city_municipality || "Lucena");
-          setProvince(data.province || "Quezon");
-          setZipCode(data.zip_code || "");
-          setTelephoneNo(data.telephone_no || "");
-          setMobileNo(data.mobile_no || "");
-          setEmailAddress(data.email_address || "");
-        }
-      } catch (error) {
-        console.error("Error loading business information:", error);
-      }
-    };
-    
-    loadBusinessInfo();
-  }, [applicationId]);
-
-  // Save data function
-  const saveBusinessInformation = async () => {
-    if (!applicationId) return;
-    
-    try {
-      setIsLoading(true);
-      
-      await applicationService.saveBusinessInformation({
-        application_id: applicationId,
-        business_name: businessName,
-        trade_name: tradeName,
-        registration_number: registrationNumber,
-        tin_number: tinNumber,
-        sss_number: sssNumber,
-        ctc_number: ctcNumber,  // Save CTC number
-        ctc_date_issue: ctcDateIssue,  // Save CTC date
-        ctc_place_issue: ctcPlaceIssue,  // Save CTC place
-        ownership_type: ownershipType as any,
-        house_bldg_no: houseBldgNo,
-        building_name: buildingName,
-        block_no: blockNo,
-        lot_no: lotNo,
-        street: street,
-        subdivision: subdivision,
-        barangay: selectedBarangay,
-        city_municipality: cityMunicipality,
-        province: province,
-        zip_code: zipCode,
-        telephone_no: telephoneNo,
-        mobile_no: mobileNo,
-        email_address: emailAddress
-      });
-      
-      toast({
-        title: "Information Saved",
-        description: "Your business information has been saved successfully.",
-        variant: "default",
-      });
-    } catch (error) {
-      console.error("Error saving business information:", error);
-      toast({
-        title: "Save Failed",
-        description: "There was an error saving your business information.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  // Define initial state for business information form
+  const initialBusinessInfo = {
+    application_id: applicationId || '',
+    business_name: '',
+    trade_name: '',
+    registration_number: '',
+    tin_number: '',
+    sss_number: '',
+    ctc_number: '',
+    ctc_date_issue: '',
+    ctc_place_issue: '',
+    ownership_type: 'soleProprietorship' as OwnershipType,
+    house_bldg_no: '',
+    building_name: '',
+    block_no: '',
+    lot_no: '',
+    street: '',
+    subdivision: '',
+    barangay: '',
+    city_municipality: 'Lucena',
+    province: 'Quezon',
+    zip_code: '',
+    telephone_no: '',
+    mobile_no: '',
+    email_address: ''
   };
 
-  // Auto-save when important fields change
+  // Use our custom hook for loading, updating, and saving data
+  const {
+    data: businessInfo,
+    updateData,
+    isLoading
+  } = useEntityData(
+    businessInformationService.getBusinessInformation,
+    businessInformationService.saveBusinessInformation,
+    applicationId,
+    initialBusinessInfo
+  );
+
+  // Update loading state in parent context when our loading state changes
   useEffect(() => {
-    // Only save if at least business name and required fields are entered
-    if (applicationId && businessName && tinNumber && street && selectedBarangay) {
-      const saveTimeout = setTimeout(() => {
-        saveBusinessInformation();
-      }, 1500);
-      
-      return () => clearTimeout(saveTimeout);
-    }
-  }, [
-    businessName, tinNumber, ownershipType, street, 
-    selectedBarangay, cityMunicipality, province, 
-    zipCode, mobileNo, emailAddress,
-    ctcNumber, ctcDateIssue, ctcPlaceIssue  // Add CTC fields to the dependency array
-  ]);
+    setIsLoading(isLoading || isAppLoading);
+  }, [isLoading, isAppLoading, setIsLoading]);
 
   // List of barangays in Lucena
   const barangays = [
@@ -206,6 +123,10 @@ const BusinessInformationSection = () => {
     }
   ];
 
+  const handleFieldChange = (field: string, value: any) => {
+    updateData({ [field]: value });
+  };
+
   return (
     <FormSectionWrapper 
       title="Business Information and Registration"
@@ -220,16 +141,16 @@ const BusinessInformationSection = () => {
             <FormField 
               id="businessName" 
               label="Business Name"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
+              value={businessInfo.business_name}
+              onChange={(e) => handleFieldChange('business_name', e.target.value)}
               required
               tooltip="Enter the official registered business name as it appears on your DTI/SEC registration"
             />
             <FormField 
               id="tradeName" 
               label="Trade Name / Franchise"
-              value={tradeName}
-              onChange={(e) => setTradeName(e.target.value)}
+              value={businessInfo.trade_name}
+              onChange={(e) => handleFieldChange('trade_name', e.target.value)}
               helperText="Leave blank if same as business name"
               tooltip="Enter the name you use for your business if different from the registered business name"
             />
@@ -243,15 +164,15 @@ const BusinessInformationSection = () => {
             <FormField 
               id="dtiSecCdaNumber" 
               label="DTI/SEC/CDA Registration No."
-              value={registrationNumber}
-              onChange={(e) => setRegistrationNumber(e.target.value)}
+              value={businessInfo.registration_number}
+              onChange={(e) => handleFieldChange('registration_number', e.target.value)}
               tooltip="Enter your Department of Trade and Industry, Securities and Exchange Commission, or Cooperative Development Authority registration number"
             />
             <FormField 
               id="tinNumber" 
               label="Tax Identification Number"
-              value={tinNumber}
-              onChange={(e) => setTinNumber(e.target.value)}
+              value={businessInfo.tin_number}
+              onChange={(e) => handleFieldChange('tin_number', e.target.value)}
               required
               placeholder="XXX-XXX-XXX-XXX"
               tooltip="Enter your 12-digit Tax Identification Number from BIR"
@@ -259,8 +180,8 @@ const BusinessInformationSection = () => {
             <FormField 
               id="sssNumber" 
               label="SSS Number"
-              value={sssNumber}
-              onChange={(e) => setSssNumber(e.target.value)}
+              value={businessInfo.sss_number}
+              onChange={(e) => handleFieldChange('sss_number', e.target.value)}
               placeholder="XX-XXXXXXX-X"
               tooltip="Enter your Social Security System employer number"
             />
@@ -271,23 +192,23 @@ const BusinessInformationSection = () => {
             <FormField 
               id="ctcNumber" 
               label="CTC Number"
-              value={ctcNumber}
-              onChange={(e) => setCtcNumber(e.target.value)}
+              value={businessInfo.ctc_number}
+              onChange={(e) => handleFieldChange('ctc_number', e.target.value)}
               tooltip="Enter your Community Tax Certificate (CTC) number"
             />
             <FormField 
               id="ctcDateIssue" 
               label="CTC Date of Issue"
-              value={ctcDateIssue}
-              onChange={(e) => setCtcDateIssue(e.target.value)}
+              value={businessInfo.ctc_date_issue}
+              onChange={(e) => handleFieldChange('ctc_date_issue', e.target.value)}
               tooltip="Enter the date when your CTC was issued"
               type="date"
             />
             <FormField 
               id="ctcPlaceIssue" 
               label="CTC Place of Issue"
-              value={ctcPlaceIssue}
-              onChange={(e) => setCtcPlaceIssue(e.target.value)}
+              value={businessInfo.ctc_place_issue}
+              onChange={(e) => handleFieldChange('ctc_place_issue', e.target.value)}
               tooltip="Enter where your CTC was issued"
             />
           </div>
@@ -301,8 +222,8 @@ const BusinessInformationSection = () => {
           <div className="mt-2">
             <EnhancedRadioGroup
               options={ownershipOptions}
-              value={ownershipType}
-              onValueChange={setOwnershipType}
+              value={businessInfo.ownership_type}
+              onValueChange={(value) => handleFieldChange('ownership_type', value)}
               orientation="horizontal"
               name="ownershipType"
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
@@ -318,29 +239,29 @@ const BusinessInformationSection = () => {
             <FormField 
               id="houseBldgNo" 
               label="House/Bldg. No."
-              value={houseBldgNo}
-              onChange={(e) => setHouseBldgNo(e.target.value)}
+              value={businessInfo.house_bldg_no}
+              onChange={(e) => handleFieldChange('house_bldg_no', e.target.value)}
               tooltip="Enter the house or building number of your business address"
             />
             <FormField 
               id="buildingName" 
               label="Building Name"
-              value={buildingName}
-              onChange={(e) => setBuildingName(e.target.value)}
+              value={businessInfo.building_name}
+              onChange={(e) => handleFieldChange('building_name', e.target.value)}
               helperText="If applicable"
             />
             <FormField 
               id="blockNo" 
               label="Block No."
-              value={blockNo}
-              onChange={(e) => setBlockNo(e.target.value)}
+              value={businessInfo.block_no}
+              onChange={(e) => handleFieldChange('block_no', e.target.value)}
               helperText="If applicable"
             />
             <FormField 
               id="lotNo" 
               label="Lot No."
-              value={lotNo}
-              onChange={(e) => setLotNo(e.target.value)}
+              value={businessInfo.lot_no}
+              onChange={(e) => handleFieldChange('lot_no', e.target.value)}
               helperText="If applicable"
             />
           </div>
@@ -349,21 +270,24 @@ const BusinessInformationSection = () => {
             <FormField 
               id="street" 
               label="Street"
-              value={street}
-              onChange={(e) => setStreet(e.target.value)}
+              value={businessInfo.street}
+              onChange={(e) => handleFieldChange('street', e.target.value)}
               required
               tooltip="Enter the street name of your business location"
             />
             <FormField 
               id="subdivision" 
               label="Subdivision"
-              value={subdivision}
-              onChange={(e) => setSubdivision(e.target.value)}
+              value={businessInfo.subdivision}
+              onChange={(e) => handleFieldChange('subdivision', e.target.value)}
               helperText="If applicable"
             />
             <div className="space-y-1.5">
               <div className="relative">
-                <Select value={selectedBarangay} onValueChange={setSelectedBarangay}>
+                <Select 
+                  value={businessInfo.barangay} 
+                  onValueChange={(value) => handleFieldChange('barangay', value)}
+                >
                   <SelectTrigger id="barangay" className="h-14 pt-4">
                     <SelectValue placeholder="Select barangay" />
                   </SelectTrigger>
@@ -386,24 +310,24 @@ const BusinessInformationSection = () => {
             <FormField 
               id="cityMunicipality" 
               label="City/Municipality"
-              value={cityMunicipality}
-              onChange={(e) => setCityMunicipality(e.target.value)}
+              value={businessInfo.city_municipality}
+              onChange={(e) => handleFieldChange('city_municipality', e.target.value)}
               required
               tooltip="Enter the city or municipality of your business location"
             />
             <FormField 
               id="province" 
               label="Province"
-              value={province}
-              onChange={(e) => setProvince(e.target.value)}
+              value={businessInfo.province}
+              onChange={(e) => handleFieldChange('province', e.target.value)}
               required
               tooltip="Enter the province of your business location"
             />
             <FormField 
               id="zipCode" 
               label="Zip Code"
-              value={zipCode}
-              onChange={(e) => setZipCode(e.target.value)}
+              value={businessInfo.zip_code}
+              onChange={(e) => handleFieldChange('zip_code', e.target.value)}
               required
               tooltip="Enter the postal or zip code of your business location"
             />
@@ -417,15 +341,15 @@ const BusinessInformationSection = () => {
             <FormField 
               id="telephoneNo" 
               label="Telephone No."
-              value={telephoneNo}
-              onChange={(e) => setTelephoneNo(e.target.value)}
+              value={businessInfo.telephone_no}
+              onChange={(e) => handleFieldChange('telephone_no', e.target.value)}
               tooltip="Enter your business landline number"
             />
             <FormField 
               id="mobileNo" 
               label="Mobile No."
-              value={mobileNo}
-              onChange={(e) => setMobileNo(e.target.value)}
+              value={businessInfo.mobile_no}
+              onChange={(e) => handleFieldChange('mobile_no', e.target.value)}
               required
               tooltip="Enter a mobile number where you can be contacted"
             />
@@ -433,8 +357,8 @@ const BusinessInformationSection = () => {
               id="emailAddress" 
               type="email" 
               label="Email Address"
-              value={emailAddress}
-              onChange={(e) => setEmailAddress(e.target.value)}
+              value={businessInfo.email_address}
+              onChange={(e) => handleFieldChange('email_address', e.target.value)}
               required
               tooltip="Enter an active email address for communications"
             />
