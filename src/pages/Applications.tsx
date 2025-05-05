@@ -14,7 +14,13 @@ import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { supabase } from "@/integrations/supabase/client";
-import { applicationService } from "@/services/applicationService";
+import { 
+  applicationService, 
+  businessInformationService, 
+  ownerInformationService, 
+  businessLinesService, 
+  declarationService 
+} from "@/services/applicationService";
 
 const Applications = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -143,10 +149,10 @@ const Applications = () => {
 
     try {
       // Check if all required data is present
-      const businessInfo = await applicationService.getBusinessInformation(applicationId);
-      const ownerInfo = await applicationService.getOwnerInformation(applicationId);
-      const businessLines = await applicationService.getBusinessLines(applicationId);
-      const declaration = await applicationService.getDeclaration(applicationId);
+      const businessInfo = await businessInformationService.getBusinessInformation(applicationId);
+      const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId);
+      const businessLines = await businessLinesService.getBusinessLines(applicationId);
+      const declaration = await declarationService.getDeclaration(applicationId);
       
       if (!businessInfo) {
         toast({

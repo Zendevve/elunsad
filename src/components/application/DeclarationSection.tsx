@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -10,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form-field";
 import { useApplication } from "@/contexts/ApplicationContext";
-import { applicationService } from "@/services/applicationService";
+import { declarationService } from "@/services/applicationService";
 import { useToast } from "@/components/ui/use-toast";
 
 interface DeclarationSectionProps {
@@ -33,7 +32,7 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       if (!applicationId) return;
       
       try {
-        const data = await applicationService.getDeclaration(applicationId);
+        const data = await declarationService.getDeclaration(applicationId);
         if (data) {
           // Populate form fields with saved data
           setIsAgreed(data.is_agreed || false);
@@ -63,7 +62,7 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
     try {
       setIsLoading(true);
       
-      await applicationService.saveDeclaration({
+      await declarationService.saveDeclaration({
         application_id: applicationId,
         is_agreed: isAgreed,
         signature,

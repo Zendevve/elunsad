@@ -6,7 +6,7 @@ import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { useApplication } from "@/contexts/ApplicationContext";
-import { applicationService } from "@/services/applicationService";
+import { businessOperationsService } from "@/services/applicationService";
 
 const BusinessOperationSection = () => {
   const [hasTaxIncentives, setHasTaxIncentives] = useState<string | null>(null);
@@ -55,7 +55,7 @@ const BusinessOperationSection = () => {
       
       try {
         setIsLoading(true);
-        const data = await applicationService.getBusinessOperations(applicationId);
+        const data = await businessOperationsService.getBusinessOperations(applicationId);
         
         if (data) {
           setFormData({
@@ -173,7 +173,7 @@ const BusinessOperationSection = () => {
         monthly_rental: formData.monthlyRental ? parseFloat(formData.monthlyRental) : null
       };
       
-      await applicationService.saveBusinessOperations(businessOperationsData);
+      await businessOperationsService.saveBusinessOperations(businessOperationsData);
       console.log("Business operations saved successfully");
     } catch (error) {
       console.error("Error saving business operations:", error);

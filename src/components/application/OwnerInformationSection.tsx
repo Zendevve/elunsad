@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import FormSectionWrapper from "./FormSectionWrapper";
 import { FormField } from "@/components/ui/form-field";
 import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
-import { applicationService } from "@/services/applicationService";
+import { ownerInformationService } from "@/services/applicationService";
 import { useToast } from "@/components/ui/use-toast";
 
 const OwnerInformationSection = () => {
@@ -38,7 +37,7 @@ const OwnerInformationSection = () => {
       if (!applicationId) return;
       
       try {
-        const data = await applicationService.getOwnerInformation(applicationId);
+        const data = await ownerInformationService.getOwnerInformation(applicationId);
         if (data) {
           // Populate form fields with saved data
           setSurname(data.surname || "");
@@ -76,7 +75,7 @@ const OwnerInformationSection = () => {
     try {
       setIsLoading(true);
       
-      await applicationService.saveOwnerInformation({
+      await ownerInformationService.saveOwnerInformation({
         application_id: applicationId,
         surname,
         given_name: givenName,
