@@ -17,20 +17,20 @@ const BusinessOperationSection = () => {
   const [businessActivity, setBusinessActivity] = useState("");
   const [businessArea, setBusinessArea] = useState<number | null>(null);
   const [capitalization, setCapitalization] = useState<number | null>(null);
-  const [totalEmployees, setTotalEmployees] = useState<number | null>(null);
+  const [professionalMale, setProfessionalMale] = useState<number | null>(null);
+  const [professionalFemale, setProfessionalFemale] = useState<number | null>(null);
+  const [nonProfessionalMale, setNonProfessionalMale] = useState<number | null>(null);
+  const [nonProfessionalFemale, setNonProfessionalFemale] = useState<number | null>(null);
   const [employeesInLucena, setEmployeesInLucena] = useState<number | null>(null);
-  const [employeesMale, setEmployeesMale] = useState<number | null>(null);
-  const [employeesFemale, setEmployeesFemale] = useState<number | null>(null);
   const [hasTaxIncentives, setHasTaxIncentives] = useState(false);
+  const [propertyOwned, setPropertyOwned] = useState(false);
 
   // Vehicle counts
-  const [car, setCar] = useState<number | null>(null);
   const [vanTruck, setVanTruck] = useState<number | null>(null);
   const [motorcycle, setMotorcycle] = useState<number | null>(null);
   
   // Security features
   const [cctvCameras, setCctvCameras] = useState<number | null>(null);
-  const [securityGuards, setSecurityGuards] = useState<number | null>(null);
 
   useEffect(() => {
     const loadBusinessOperations = async () => {
@@ -42,20 +42,20 @@ const BusinessOperationSection = () => {
           setBusinessActivity(data.business_activity || "");
           setBusinessArea(data.business_area || null);
           setCapitalization(data.capitalization || null);
-          setTotalEmployees(data.total_employees || null);
+          setProfessionalMale(data.professional_male || null);
+          setProfessionalFemale(data.professional_female || null);
+          setNonProfessionalMale(data.non_professional_male || null);
+          setNonProfessionalFemale(data.non_professional_female || null);
           setEmployeesInLucena(data.employees_in_lucena || null);
-          setEmployeesMale(data.employees_male || null);
-          setEmployeesFemale(data.employees_female || null);
           setHasTaxIncentives(data.has_tax_incentives || false);
+          setPropertyOwned(data.property_owned || false);
           
           // Set vehicle counts
-          setCar(data.car || null);
           setVanTruck(data.van_truck || null);
           setMotorcycle(data.motorcycle || null);
           
           // Set security features
           setCctvCameras(data.cctv_cameras || null);
-          setSecurityGuards(data.security_guards || null);
         }
       } catch (error) {
         console.error("Error loading business operations:", error);
@@ -76,20 +76,20 @@ const BusinessOperationSection = () => {
         business_activity: businessActivity,
         business_area: businessArea,
         capitalization: capitalization,
-        total_employees: totalEmployees,
+        professional_male: professionalMale,
+        professional_female: professionalFemale,
+        non_professional_male: nonProfessionalMale,
+        non_professional_female: nonProfessionalFemale,
         employees_in_lucena: employeesInLucena,
-        employees_male: employeesMale,
-        employees_female: employeesFemale,
         has_tax_incentives: hasTaxIncentives,
+        property_owned: propertyOwned,
         
         // Vehicle counts
-        car: car,
         van_truck: vanTruck,
         motorcycle: motorcycle,
         
         // Security features
-        cctv_cameras: cctvCameras,
-        security_guards: securityGuards,
+        cctv_cameras: cctvCameras
       };
       
       await businessOperationsService.saveBusinessOperations(businessOperationsData);
@@ -124,24 +124,32 @@ const BusinessOperationSection = () => {
     setCapitalization(e.target.value ? Number(e.target.value) : null);
   };
 
-  const handleTotalEmployeesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTotalEmployees(e.target.value ? Number(e.target.value) : null);
+  const handleProfessionalMaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfessionalMale(e.target.value ? Number(e.target.value) : null);
+  };
+
+  const handleProfessionalFemaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfessionalFemale(e.target.value ? Number(e.target.value) : null);
+  };
+
+  const handleNonProfessionalMaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNonProfessionalMale(e.target.value ? Number(e.target.value) : null);
+  };
+
+  const handleNonProfessionalFemaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNonProfessionalFemale(e.target.value ? Number(e.target.value) : null);
   };
 
   const handleEmployeesInLucenaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmployeesInLucena(e.target.value ? Number(e.target.value) : null);
   };
 
-  const handleEmployeesMaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmployeesMale(e.target.value ? Number(e.target.value) : null);
-  };
-
-  const handleEmployeesFemaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmployeesFemale(e.target.value ? Number(e.target.value) : null);
-  };
-
   const handleHasTaxIncentivesChange = (checked: boolean) => {
     setHasTaxIncentives(checked);
+  };
+
+  const handlePropertyOwnedChange = (checked: boolean) => {
+    setPropertyOwned(checked);
   };
 
   // Update values and save on input blur
@@ -200,22 +208,20 @@ const BusinessOperationSection = () => {
             />
             <Label htmlFor="taxIncentives">Has Tax Incentives</Label>
           </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="propertyOwned" 
+              checked={propertyOwned} 
+              onCheckedChange={handlePropertyOwnedChange}
+            />
+            <Label htmlFor="propertyOwned">Property is Owned</Label>
+          </div>
         </div>
 
         <div className="space-y-4">
           <h3 className="text-sm font-medium mb-2">Employee Information</h3>
-          <div>
-            <Label htmlFor="totalEmployees">Total Employees</Label>
-            <Input 
-              id="totalEmployees" 
-              type="number" 
-              placeholder="Enter total number of employees" 
-              value={totalEmployees || ''}
-              onChange={handleTotalEmployeesChange}
-              onBlur={handleInputBlur}
-            />
-          </div>
-
+          
           <div>
             <Label htmlFor="employeesInLucena">Employees from Lucena</Label>
             <Input 
@@ -230,22 +236,45 @@ const BusinessOperationSection = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="employeesMale">Male Employees</Label>
+              <Label htmlFor="professionalMale">Professional Male</Label>
               <Input 
-                id="employeesMale" 
+                id="professionalMale" 
                 type="number" 
-                value={employeesMale || ''}
-                onChange={handleEmployeesMaleChange}
+                value={professionalMale || ''}
+                onChange={handleProfessionalMaleChange}
                 onBlur={handleInputBlur}
               />
             </div>
             <div>
-              <Label htmlFor="employeesFemale">Female Employees</Label>
+              <Label htmlFor="professionalFemale">Professional Female</Label>
               <Input 
-                id="employeesFemale" 
+                id="professionalFemale" 
                 type="number" 
-                value={employeesFemale || ''}
-                onChange={handleEmployeesFemaleChange}
+                value={professionalFemale || ''}
+                onChange={handleProfessionalFemaleChange}
+                onBlur={handleInputBlur}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="nonProfessionalMale">Non-Professional Male</Label>
+              <Input 
+                id="nonProfessionalMale" 
+                type="number" 
+                value={nonProfessionalMale || ''}
+                onChange={handleNonProfessionalMaleChange}
+                onBlur={handleInputBlur}
+              />
+            </div>
+            <div>
+              <Label htmlFor="nonProfessionalFemale">Non-Professional Female</Label>
+              <Input 
+                id="nonProfessionalFemale" 
+                type="number" 
+                value={nonProfessionalFemale || ''}
+                onChange={handleNonProfessionalFemaleChange}
                 onBlur={handleInputBlur}
               />
             </div>

@@ -1,11 +1,8 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { 
-  applicationService, 
-  ApplicationType, 
-  ApplicationStatus
-} from '@/services/applicationService';
+import { ApplicationType, ApplicationStatus } from '@/services/application/types';
+import { applicationService } from '@/services/application';
 import { supabase } from "@/integrations/supabase/client";
 
 interface ApplicationContextType {
