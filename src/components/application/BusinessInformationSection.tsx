@@ -102,7 +102,6 @@ const BusinessInformationSection = () => {
     "Barangay 8 (Poblacion)",
     "Barangay 9 (Poblacion)",
     "Barangay 10 (Poblacion)",
-    "Barangay 11 (Poblacion)",
     "Barra",
     "Bocohan",
     "Cotta",
@@ -201,17 +200,18 @@ const BusinessInformationSection = () => {
   // Expose the validation function for the parent component
   // The parent will call this before allowing navigation to the next step
   useEffect(() => {
-    if (window && !window.businessInfoHelpers) {
-      window.businessInfoHelpers = {};
-    }
-    
-    if (window.businessInfoHelpers) {
+    if (!window.businessInfoHelpers) {
+      window.businessInfoHelpers = {
+        validateAndSave: validateAndSave
+      };
+    } else {
       window.businessInfoHelpers.validateAndSave = validateAndSave;
     }
     
     return () => {
+      // Cleanup when component unmounts
       if (window.businessInfoHelpers) {
-        window.businessInfoHelpers.validateAndSave = undefined;
+        delete window.businessInfoHelpers.validateAndSave;
       }
     };
   }, [businessInfo, hasUnsavedChanges]);
@@ -466,14 +466,5 @@ const BusinessInformationSection = () => {
     </FormSectionWrapper>
   );
 };
-
-// Add global type definition to let TypeScript know about our window extensions
-declare global {
-  interface Window {
-    businessInfoHelpers?: {
-      validateAndSave?: () => Promise<boolean>;
-    }
-  }
-}
 
 export default BusinessInformationSection;
