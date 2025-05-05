@@ -11,7 +11,7 @@ interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
   required?: boolean;
   tooltip?: string;
-  error?: string; // Added error prop
+  error?: string;
 }
 
 export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
@@ -36,7 +36,10 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
               setIsFocused(false);
               setHasValue(!!e.target.value);
             }}
-            onChange={(e) => setHasValue(!!e.target.value)}
+            onChange={(e) => {
+              setHasValue(!!e.target.value);
+              if (props.onChange) props.onChange(e);
+            }}
             required={required}
             aria-describedby={helperText || error ? `${id}-description` : undefined}
             aria-invalid={!!error}

@@ -21,14 +21,17 @@ export function useEntityData<T extends Record<string, any>>(
   // Load data when component mounts
   useEffect(() => {
     const loadData = async () => {
-      if (!applicationId) return;
+      if (!applicationId) {
+        setIsInitialized(true);
+        return;
+      }
       
       setIsLoading(true);
       try {
         const result = await fetchFn(applicationId);
         if (result) {
-          setData(result as T);
-          setLastSavedData(result as T);
+          setData(result);
+          setLastSavedData(result);
         }
         setIsInitialized(true);
       } catch (error) {
@@ -165,6 +168,7 @@ export function useEntityData<T extends Record<string, any>>(
     updateData,
     saveData,
     isLoading: isLoading || isSaving,
+    isSaving,
     isInitialized,
     hasUnsavedChanges
   };

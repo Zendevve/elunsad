@@ -161,6 +161,9 @@ const Applications = () => {
         description: "An error occurred while processing your information. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      // Make sure loading state is reset regardless of outcome
+      setIsLoading(false);
     }
   };
 
@@ -391,7 +394,7 @@ const Applications = () => {
               <Button 
                 onClick={handleNext}
                 className="px-6 bg-primary group hover:bg-primary/90 transition-all"
-                disabled={isLoading || isSubmitting} // Use both states to properly disable
+                disabled={isSubmitting} // Only disable when actually submitting
               >
                 {isSubmitting ? (
                   <span className="flex items-center">

@@ -10,13 +10,14 @@ import { OwnershipType } from "@/services/application/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useEntityData } from "@/hooks/useEntityData";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Check } from "lucide-react";
 
 const BusinessInformationSection = () => {
   const { applicationId, isLoading: isAppLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
-  const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [hasTouchedFields, setHasTouchedFields] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   
   // Define initial state for business information form
   const initialBusinessInfo = {
@@ -51,34 +52,46 @@ const BusinessInformationSection = () => {
     updateData,
     saveData,
     isLoading,
-    hasUnsavedChanges
+    hasUnsavedChanges,
+    isInitialized
   } = useEntityData(
     businessInformationService.getBusinessInformation,
     businessInformationService.saveBusinessInformation,
     applicationId,
     initialBusinessInfo,
-    undefined,
+    () => {
+      // This is the success callback
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      setValidationErrors({});
+    },
     true
   );
 
   // Update loading state in parent context when our loading state changes
   useEffect(() => {
-    setIsLoading(isLoading || isAppLoading);
-  }, [isLoading, isAppLoading, setIsLoading]);
+    // Only set parent loading when we're not initialized yet
+    if (!isInitialized) {
+      setIsLoading(isLoading || isAppLoading);
+    } else {
+      // Once initialized, don't block parent navigation with our loading state
+      setIsLoading(isAppLoading);
+    }
+  }, [isLoading, isAppLoading, setIsLoading, isInitialized]);
 
   // Required fields validation
   useEffect(() => {
     if (!hasTouchedFields) return;
 
-    const errors: Record<string, boolean> = {};
+    const errors: Record<string, string> = {};
 
-    if (!businessInfo.business_name) errors.business_name = true;
-    if (!businessInfo.tin_number) errors.tin_number = true;
-    if (!businessInfo.street) errors.street = true;
-    if (!businessInfo.barangay) errors.barangay = true;
-    if (!businessInfo.zip_code) errors.zip_code = true;
-    if (!businessInfo.mobile_no) errors.mobile_no = true;
-    if (!businessInfo.email_address) errors.email_address = true;
+    if (!businessInfo.business_name) errors.business_name = "Business name is required";
+    if (!businessInfo.tin_number) errors.tin_number = "TIN is required";
+    if (!businessInfo.street) errors.street = "Street is required";
+    if (!businessInfo.barangay) errors.barangay = "Barangay is required";
+    if (!businessInfo.zip_code) errors.zip_code = "Zip code is required";
+    if (!businessInfo.mobile_no) errors.mobile_no = "Mobile number is required";
+    if (!businessInfo.email_address) errors.email_address = "Email address is required";
 
     setValidationErrors(errors);
   }, [businessInfo, hasTouchedFields]);
@@ -159,14 +172,14 @@ const BusinessInformationSection = () => {
     console.log("Manual save triggered with data:", businessInfo);
     
     // Validate all required fields
-    const errors: Record<string, boolean> = {};
-    if (!businessInfo.business_name) errors.business_name = true;
-    if (!businessInfo.tin_number) errors.tin_number = true;
-    if (!businessInfo.street) errors.street = true;
-    if (!businessInfo.barangay) errors.barangay = true;
-    if (!businessInfo.zip_code) errors.zip_code = true;
-    if (!businessInfo.mobile_no) errors.mobile_no = true;
-    if (!businessInfo.email_address) errors.email_address = true;
+    const errors: Record<string, string> = {};
+    if (!businessInfo.business_name) errors.business_name = "Business name is required";
+    if (!businessInfo.tin_number) errors.tin_number = "TIN is required";
+    if (!businessInfo.street) errors.street = "Street is required";
+    if (!businessInfo.barangay) errors.barangay = "Barangay is required";
+    if (!businessInfo.zip_code) errors.zip_code = "Zip code is required";
+    if (!businessInfo.mobile_no) errors.mobile_no = "Mobile number is required";
+    if (!businessInfo.email_address) errors.email_address = "Email address is required";
     
     setValidationErrors(errors);
     
@@ -194,14 +207,22 @@ const BusinessInformationSection = () => {
       stepNumber={2}
     >
       <div className="space-y-8">
-        {/* Save Button at Top */}
+        {/* Save Button at Top with Success State */}
         <div className="flex justify-end">
           <Button 
             onClick={handleManualSave} 
-            className="bg-green-600 hover:bg-green-700" 
-            disabled={isLoading || !hasUnsavedChanges()}
+            className={saveSuccess ? "bg-green-600 hover:bg-green-700" : "bg-primary hover:bg-primary/90"} 
+            disabled={isLoading || (!hasUnsavedChanges() && !saveSuccess)}
           >
-            <Save className="mr-2 h-4 w-4" /> Save Information
+            {saveSuccess ? (
+              <>
+                <Check className="mr-2 h-4 w-4" /> Saved Successfully
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" /> Save Information
+              </>
+            )}
           </Button>
         </div>
       
@@ -216,7 +237,7 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('business_name', e.target.value)}
               required
               tooltip="Enter the official registered business name as it appears on your DTI/SEC registration"
-              error={validationErrors.business_name ? "Business name is required" : undefined}
+              error={validationErrors.business_name}
             />
             <FormField 
               id="tradeName" 
@@ -248,7 +269,7 @@ const BusinessInformationSection = () => {
               required
               placeholder="XXX-XXX-XXX-XXX"
               tooltip="Enter your 12-digit Tax Identification Number from BIR"
-              error={validationErrors.tin_number ? "TIN is required" : undefined}
+              error={validationErrors.tin_number}
             />
             <FormField 
               id="sssNumber" 
@@ -347,7 +368,7 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('street', e.target.value)}
               required
               tooltip="Enter the street name of your business location"
-              error={validationErrors.street ? "Street is required" : undefined}
+              error={validationErrors.street}
             />
             <FormField 
               id="subdivision" 
@@ -407,7 +428,7 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('zip_code', e.target.value)}
               required
               tooltip="Enter the postal or zip code of your business location"
-              error={validationErrors.zip_code ? "Zip code is required" : undefined}
+              error={validationErrors.zip_code}
             />
           </div>
         </div>
@@ -430,7 +451,7 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('mobile_no', e.target.value)}
               required
               tooltip="Enter a mobile number where you can be contacted"
-              error={validationErrors.mobile_no ? "Mobile number is required" : undefined}
+              error={validationErrors.mobile_no}
             />
             <FormField 
               id="emailAddress" 
@@ -440,19 +461,27 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('email_address', e.target.value)}
               required
               tooltip="Enter an active email address for communications"
-              error={validationErrors.email_address ? "Email address is required" : undefined}
+              error={validationErrors.email_address}
             />
           </div>
         </div>
 
-        {/* Bottom Save Button */}
+        {/* Bottom Save Button with Success State */}
         <div className="flex justify-end">
           <Button 
             onClick={handleManualSave} 
-            className="bg-green-600 hover:bg-green-700" 
-            disabled={isLoading || !hasUnsavedChanges()}
+            className={saveSuccess ? "bg-green-600 hover:bg-green-700" : "bg-primary hover:bg-primary/90"} 
+            disabled={isLoading || (!hasUnsavedChanges() && !saveSuccess)}
           >
-            <Save className="mr-2 h-4 w-4" /> Save Information
+            {saveSuccess ? (
+              <>
+                <Check className="mr-2 h-4 w-4" /> Saved Successfully
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" /> Save Information
+              </>
+            )}
           </Button>
         </div>
       </div>
