@@ -10,13 +10,20 @@ export const businessLinesService = {
       
       const applicationId = dataArray[0].application_id;
       
+      console.log("Deleting existing business lines for application:", applicationId);
+      
       // Delete existing business lines for this application
       const { error: deleteError } = await supabase
         .from('business_lines')
         .delete()
         .eq('application_id', applicationId);
       
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting existing business lines:", deleteError);
+        throw deleteError;
+      }
+      
+      console.log("Inserting new business lines:", dataArray);
       
       // Insert all new business lines
       const { data, error: insertError } = await supabase
@@ -24,7 +31,12 @@ export const businessLinesService = {
         .insert(dataArray)
         .select('*');
       
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Error inserting new business lines:", insertError);
+        throw insertError;
+      }
+      
+      console.log("Successfully saved business lines:", data);
       return data;
     } catch (error) {
       console.error('Error saving business lines:', error);
@@ -34,12 +46,19 @@ export const businessLinesService = {
   
   async getBusinessLines(applicationId: string) {
     try {
+      console.log("Fetching business lines for application:", applicationId);
+      
       const { data, error } = await supabase
         .from('business_lines')
         .select('*')
         .eq('application_id', applicationId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching business lines:", error);
+        throw error;
+      }
+      
+      console.log("Retrieved business lines:", data);
       return data || [];
     } catch (error) {
       console.error('Error fetching business lines:', error);

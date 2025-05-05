@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useApplication } from "@/contexts/ApplicationContext";
-import { businessLinesService } from "@/services/applicationService";
+import { businessLinesService } from "@/services/application";
 import { useToast } from "@/components/ui/use-toast";
 
 interface BusinessLine {
@@ -46,6 +47,7 @@ const BusinessLinesSection = () => {
       
       try {
         const data = await businessLinesService.getBusinessLines(applicationId);
+        console.log("Loaded business lines:", data);
         if (data && data.length > 0) {
           // Map database format to component format
           const formattedData = data.map((line, index) => ({
@@ -98,7 +100,9 @@ const BusinessLinesSection = () => {
           gross_sales: line.grossSales || undefined
         }));
         
-        await businessLinesService.saveBusinessLines(dataToSave);
+        console.log("Saving business lines:", dataToSave);
+        const result = await businessLinesService.saveBusinessLines(dataToSave);
+        console.log("Save result:", result);
         
         toast({
           title: "Business Lines Saved",

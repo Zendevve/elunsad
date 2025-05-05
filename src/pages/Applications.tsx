@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,12 @@ import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  applicationService, 
+  applicationService,
   businessInformationService, 
   ownerInformationService, 
   businessLinesService, 
   declarationService 
-} from "@/services/applicationService";
+} from "@/services/application";
 
 const Applications = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -154,6 +155,8 @@ const Applications = () => {
       const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId);
       const businessLines = await businessLinesService.getBusinessLines(applicationId);
       const declaration = await declarationService.getDeclaration(applicationId);
+      
+      console.log("Validation data:", { businessInfo, ownerInfo, businessLines, declaration });
       
       if (!businessInfo) {
         toast({

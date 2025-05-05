@@ -1,32 +1,24 @@
 import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { FormField } from "@/components/ui/form-field";
 import { useApplication } from "@/contexts/ApplicationContext";
-import { declarationService } from "@/services/applicationService";
+import { SignatureCanvas } from "./SignatureCanvas";
+import { declarationService } from "@/services/application";
 import { useToast } from "@/components/ui/use-toast";
+import FormSectionWrapper from "./FormSectionWrapper";
 
 interface DeclarationSectionProps {
-  onAgreementChange?: (isAgreed: boolean) => void;
+  onAgreementChange: (agreed: boolean) => void;
 }
 
-const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
+const DeclarationSection: React.FC<DeclarationSectionProps> = ({ onAgreementChange }) => {
   const { applicationId, isLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
-  
+  const [signature, setSignature] = useState<string | null>(null);
   const [isAgreed, setIsAgreed] = useState(false);
-  const [signature, setSignature] = useState("");
-  const [designation, setDesignation] = useState("");
-  const [verifiedBy, setVerifiedBy] = useState("");  // Added verified by field
-  const [declarationPlace, setDeclarationPlace] = useState("City of Lucena");  // Added configurable declaration place
-  
-  // Load saved data when component mounts
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+
   useEffect(() => {
     const loadDeclaration = async () => {
       if (!applicationId) return;
@@ -34,17 +26,10 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       try {
         const data = await declarationService.getDeclaration(applicationId);
         if (data) {
-          // Populate form fields with saved data
+          setSignature(data.signature || null);
           setIsAgreed(data.is_agreed || false);
-          setSignature(data.signature || "");
-          setDesignation(data.designation || "");
-          setVerifiedBy(data.verified_by || "");  // Load verified by
-          setDeclarationPlace(data.declaration_place || "City of Lucena");  // Load declaration place
-          
-          // Update parent component with agreement state
-          if (onAgreementChange) {
-            onAgreementChange(data.is_agreed || false);
-          }
+          setName(data.name || "");
+          setTitle(data.title || "");
         }
       } catch (error) {
         console.error("Error loading declaration:", error);
@@ -52,24 +37,50 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
     };
     
     loadDeclaration();
-  }, [applicationId, onAgreementChange]);
-  
-  // Save data function
-  const saveDeclaration = async () => {
+  }, [applicationId]);
+
+  useEffect(() => {
+    onAgreementChange(isAgreed);
+  }, [isAgreed, onAgreementChange]);
+
+  const handleSaveSignature = async (newSignature: string | null) => {
+    setSignature(newSignature);
+    await saveDeclarationData({ signature: newSignature });
+  };
+
+  const handleAgreementChange = async (checked: boolean) => {
+    setIsAgreed(checked);
+    await saveDeclarationData({ is_agreed: checked });
+  };
+
+  const handleNameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setName(newName);
+    await saveDeclarationData({ name: newName });
+  };
+
+  const handleTitleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    await saveDeclarationData({ title: newTitle });
+  };
+
+  const saveDeclarationData = async (updatedData: Partial<any>) => {
     if (!applicationId) return;
-    if (!signature && isAgreed) return; // Don't save if agreeing without signature
     
     try {
       setIsLoading(true);
       
-      await declarationService.saveDeclaration({
+      const declarationData = {
         application_id: applicationId,
-        is_agreed: isAgreed,
-        signature,
-        designation,
-        verified_by: verifiedBy,  // Save verified by
-        declaration_place: declarationPlace  // Save declaration place
-      });
+        signature: signature || null,
+        is_agreed: isAgreed || false,
+        name: name || "",
+        title: title || "",
+        ...updatedData,
+      };
+      
+      await declarationService.saveDeclaration(declarationData);
       
       toast({
         title: "Declaration Saved",
@@ -87,110 +98,58 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       setIsLoading(false);
     }
   };
-  
-  // Handle agreement change
-  const handleAgreementChange = (checked: boolean) => {
-    setIsAgreed(checked);
-    
-    // Send agreement state up to parent component
-    if (onAgreementChange) {
-      onAgreementChange(checked);
-    }
-    
-    // Auto-save when agreement changes
-    if (signature) {
-      const saveTimeout = setTimeout(() => {
-        saveDeclaration();
-      }, 500);
-      
-      return () => clearTimeout(saveTimeout);
-    }
-  };
-  
-  // Auto-save when important fields change
-  useEffect(() => {
-    // Only save if signature is provided
-    if (applicationId && signature) {
-      const saveTimeout = setTimeout(() => {
-        saveDeclaration();
-      }, 1500);
-      
-      return () => clearTimeout(saveTimeout);
-    }
-  }, [signature, designation, verifiedBy, declarationPlace]);  // Add new fields to the dependency array
-  
+
   return (
-    <Card className="mt-6 border shadow-sm">
-      <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b pb-4">
-        <CardTitle className="text-lg font-medium">Declaration and Signature</CardTitle>
-        <CardDescription>
-          Review your application and sign the declaration
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6 pt-6">
-        <div className="p-5 bg-gray-50 rounded-md border border-gray-200 text-sm leading-relaxed">
-          <p>
-            I DECLARE UNDER PENALTY OF PERJURY that all information in this application is true and correct based on my personal knowledge and authentic records submitted to the {declarationPlace}. 
-            Any false or misleading information supplied or production of falsified documents shall be grounds for appropriate legal action against me and automatically revoke the permit.
-          </p>
-          <p className="mt-3">
-            I hereby agree that all personal data (as defined under the Data Privacy Law of 2012 and its Implementing Rules and Regulations) and account transaction information or records with the 
-            city/municipal government may be processed, profiled, or shared with requesting parties or for the purpose of any court, legal process, examination, inquiry, audit, or investigation of any 
-            authority.
-          </p>
+    <FormSectionWrapper
+      title="Declaration"
+      description="Please read the declaration carefully, provide your signature, and agree to the terms."
+      stepNumber={5}
+    >
+      <div className="space-y-4">
+        <p className="text-gray-700">
+          I hereby declare that the information provided in this application is true and correct to the best of my knowledge. I understand that any false information or misrepresentation may be grounds for rejection of this application or revocation of any permit issued.
+        </p>
+
+        <div className="border rounded-md p-4">
+          <SignatureCanvas 
+            onSave={handleSaveSignature} 
+            initialSignature={signature} 
+          />
         </div>
 
-        <div className="flex items-start space-x-3 p-4 border border-muted rounded-md bg-muted/30">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Input 
+              type="text" 
+              placeholder="Full Name" 
+              value={name}
+              onChange={handleNameChange}
+              className="focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <Input 
+              type="text" 
+              placeholder="Title/Position" 
+              value={title}
+              onChange={handleTitleChange}
+              className="focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
           <Checkbox 
-            id="agreementCheck" 
+            id="terms" 
             checked={isAgreed}
-            onCheckedChange={(checked) => handleAgreementChange(checked === true)}
-            className="mt-1 h-5 w-5 border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            onCheckedChange={handleAgreementChange}
           />
-          <label htmlFor="agreementCheck" className="text-sm cursor-pointer">
-            I have read and agree to the declaration above. I understand that submitting false information may result in the rejection of my application or revocation of my business permit.
+          <label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+            I agree to the terms and conditions
           </label>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <FormField 
-            id="signature" 
-            label="SIGNATURE OF APPLICANT/ OWNER OVER PRINTED NAME"
-            required
-            tooltip="Type your full name to sign electronically"
-            value={signature}
-            onChange={(e) => setSignature(e.target.value)}
-          />
-          
-          <FormField 
-            id="designation" 
-            label="DESIGNATION / POSITION / TITLE"
-            tooltip="Enter your position or title in the business"
-            value={designation}
-            onChange={(e) => setDesignation(e.target.value)}
-          />
-        </div>
-        
-        {/* Added Verified By field */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField 
-            id="verifiedBy" 
-            label="VERIFIED BY"
-            tooltip="Name of the person verifying this application"
-            value={verifiedBy}
-            onChange={(e) => setVerifiedBy(e.target.value)}
-          />
-          
-          <FormField 
-            id="declarationPlace" 
-            label="DECLARATION PLACE"
-            tooltip="Enter the governing body to which this declaration is submitted"
-            value={declarationPlace}
-            onChange={(e) => setDeclarationPlace(e.target.value)}
-          />
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </FormSectionWrapper>
   );
 };
 
