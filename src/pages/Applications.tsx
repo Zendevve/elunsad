@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import OwnerInformationSection from "@/components/application/OwnerInformationSe
 import BusinessOperationSection from "@/components/application/BusinessOperationSection";
 import BusinessLinesSection from "@/components/application/BusinessLinesSection";
 import DeclarationSection from "@/components/application/DeclarationSection";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
@@ -30,6 +31,7 @@ const Applications = () => {
   const [fadeIn, setFadeIn] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false); // Declaration agreement state
   const [isSubmitting, setIsSubmitting] = useState(false); // Added specific state for submission
+  const [isSaving, setIsSaving] = useState(false); // Added state for saving current step
   const navigate = useNavigate();
   
   // Get application context
@@ -112,39 +114,56 @@ const Applications = () => {
   }, [currentStep]);
 
   const handleNext = async () => {
-    // Save current step data before proceeding
+    setIsSaving(true);
     try {
+      // Save/validate current step data before proceeding
       if (currentStep === 2) {
-        // Validate business information before proceeding
-        const businessInfo = await businessInformationService.getBusinessInformation(applicationId || '');
-        
-        if (!businessInfo) {
-          toast({
-            title: "Incomplete Information",
-            description: "Please complete and save the business information before proceeding.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Validate required fields
-        const requiredBusinessFields = [
-          'business_name', 'tin_number', 'ownership_type', 
-          'street', 'barangay', 'city_municipality', 
-          'province', 'zip_code', 'mobile_no', 'email_address'
-        ];
-        
-        const missingFields = requiredBusinessFields.filter(field => !businessInfo[field as keyof typeof businessInfo]);
-        
-        if (missingFields.length > 0) {
-          toast({
-            title: "Incomplete Information",
-            description: "Please complete all required fields before proceeding.",
-            variant: "destructive",
-          });
-          return;
+        // Check if the window helper is available and use it to validate/save
+        if (window.businessInfoHelpers?.validateAndSave) {
+          const isValid = await window.businessInfoHelpers.validateAndSave();
+          
+          if (!isValid) {
+            setIsSaving(false);
+            return; // Stop here if validation fails
+          }
+        } else {
+          // Fallback validation if helper is not available
+          const businessInfo = await businessInformationService.getBusinessInformation(applicationId || '');
+          
+          if (!businessInfo) {
+            toast({
+              title: "Incomplete Information",
+              description: "Please complete the business information before proceeding.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+          
+          // Validate required fields
+          const requiredBusinessFields = [
+            'business_name', 'tin_number', 'ownership_type', 
+            'street', 'barangay', 'city_municipality', 
+            'province', 'zip_code', 'mobile_no', 'email_address'
+          ];
+          
+          const missingFields = requiredBusinessFields.filter(field => !businessInfo[field as keyof typeof businessInfo]);
+          
+          if (missingFields.length > 0) {
+            toast({
+              title: "Incomplete Information",
+              description: "Please complete all required fields before proceeding.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
         }
       }
+      
+      // Similar validations for other steps can be added here
+      // if (currentStep === 3) { /* validate owner info */ }
+      // if (currentStep === 4) { /* validate business operations */ }
       
       // If everything passed, proceed to next step
       if (currentStep < totalSteps) {
@@ -162,6 +181,7 @@ const Applications = () => {
         variant: "destructive",
       });
     } finally {
+      setIsSaving(false);
       // Make sure loading state is reset regardless of outcome
       setIsLoading(false);
     }
@@ -386,7 +406,7 @@ const Applications = () => {
               <Button 
                 variant="outline" 
                 onClick={handleBack} 
-                disabled={currentStep === 1 || isLoading}
+                disabled={currentStep === 1 || isLoading || isSaving}
                 className="px-6 group"
               >
                 <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back
@@ -394,11 +414,15 @@ const Applications = () => {
               <Button 
                 onClick={handleNext}
                 className="px-6 bg-primary group hover:bg-primary/90 transition-all"
-                disabled={isSubmitting} // Only disable when actually submitting
+                disabled={isSubmitting || isSaving} 
               >
-                {isSubmitting ? (
+                {isSaving ? (
                   <span className="flex items-center">
-                    <Loader className="mr-2 h-4 w-4 animate-spin" /> Processing...
+                    <Loader className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                  </span>
+                ) : isSubmitting ? (
+                  <span className="flex items-center">
+                    <Loader className="mr-2 h-4 w-4 animate-spin" /> Submitting...
                   </span>
                 ) : isLoading ? (
                   <span className="flex items-center">

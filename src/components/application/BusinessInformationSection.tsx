@@ -2,22 +2,19 @@
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FormSectionWrapper from "./FormSectionWrapper";
-import { FormField } from "@/components/form/FormField";
+import { FormField } from "@/components/ui/form-field";
 import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessInformationService } from "@/services/application";
 import { OwnershipType } from "@/services/application/types";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useEntityData } from "@/hooks/useEntityData";
-import { Button } from "@/components/ui/button";
-import { Save, Check } from "lucide-react";
 
 const BusinessInformationSection = () => {
   const { applicationId, isLoading: isAppLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [hasTouchedFields, setHasTouchedFields] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   
   // Define initial state for business information form
   const initialBusinessInfo = {
@@ -61,8 +58,6 @@ const BusinessInformationSection = () => {
     initialBusinessInfo,
     () => {
       // This is the success callback
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
       setValidationErrors({});
     },
     true
@@ -168,8 +163,9 @@ const BusinessInformationSection = () => {
     updateData({ [field]: value });
   };
 
-  const handleManualSave = async () => {
-    console.log("Manual save triggered with data:", businessInfo);
+  // This function is still needed for validation checks by the parent component
+  const validateAndSave = async () => {
+    console.log("Validation and save triggered with data:", businessInfo);
     
     // Validate all required fields
     const errors: Record<string, string> = {};
@@ -182,23 +178,44 @@ const BusinessInformationSection = () => {
     if (!businessInfo.email_address) errors.email_address = "Email address is required";
     
     setValidationErrors(errors);
+    setHasTouchedFields(true);
     
     // If there are validation errors, show a toast and don't save
     if (Object.keys(errors).length > 0) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields before saving.",
+        description: "Please fill in all required fields before proceeding.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
     
     try {
-      await saveData();
+      const result = await saveData();
+      return !!result;
     } catch (error) {
-      console.error("Error in manual save:", error);
+      console.error("Error in save:", error);
+      return false;
     }
   };
+
+  // Expose the validation function for the parent component
+  // The parent will call this before allowing navigation to the next step
+  useEffect(() => {
+    if (window && !window.businessInfoHelpers) {
+      window.businessInfoHelpers = {};
+    }
+    
+    if (window.businessInfoHelpers) {
+      window.businessInfoHelpers.validateAndSave = validateAndSave;
+    }
+    
+    return () => {
+      if (window.businessInfoHelpers) {
+        window.businessInfoHelpers.validateAndSave = undefined;
+      }
+    };
+  }, [businessInfo, hasUnsavedChanges]);
 
   return (
     <FormSectionWrapper 
@@ -207,25 +224,6 @@ const BusinessInformationSection = () => {
       stepNumber={2}
     >
       <div className="space-y-8">
-        {/* Save Button at Top with Success State */}
-        <div className="flex justify-end">
-          <Button 
-            onClick={handleManualSave} 
-            className={saveSuccess ? "bg-green-600 hover:bg-green-700" : "bg-primary hover:bg-primary/90"} 
-            disabled={isLoading || (!hasUnsavedChanges() && !saveSuccess)}
-          >
-            {saveSuccess ? (
-              <>
-                <Check className="mr-2 h-4 w-4" /> Saved Successfully
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" /> Save Information
-              </>
-            )}
-          </Button>
-        </div>
-      
         {/* Business Name and Trade Name */}
         <div>
           <h3 className="font-medium text-base mb-3">Business Identification</h3>
@@ -465,28 +463,18 @@ const BusinessInformationSection = () => {
             />
           </div>
         </div>
-
-        {/* Bottom Save Button with Success State */}
-        <div className="flex justify-end">
-          <Button 
-            onClick={handleManualSave} 
-            className={saveSuccess ? "bg-green-600 hover:bg-green-700" : "bg-primary hover:bg-primary/90"} 
-            disabled={isLoading || (!hasUnsavedChanges() && !saveSuccess)}
-          >
-            {saveSuccess ? (
-              <>
-                <Check className="mr-2 h-4 w-4" /> Saved Successfully
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" /> Save Information
-              </>
-            )}
-          </Button>
-        </div>
       </div>
     </FormSectionWrapper>
   );
 };
+
+// Add global type definition to let TypeScript know about our window extensions
+declare global {
+  interface Window {
+    businessInfoHelpers?: {
+      validateAndSave?: () => Promise<boolean>;
+    }
+  }
+}
 
 export default BusinessInformationSection;
