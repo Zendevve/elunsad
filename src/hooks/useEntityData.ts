@@ -36,11 +36,7 @@ export function useEntityData<T extends Record<string, any>>(
         setIsInitialized(true);
       } catch (error) {
         console.error("Error loading data:", error);
-        toast({
-          title: "Load Failed",
-          description: "There was an error loading the data.",
-          variant: "destructive",
-        });
+        // Removing toast here to only show notifications on explicit user action
       } finally {
         setIsLoading(false);
       }
@@ -55,7 +51,7 @@ export function useEntityData<T extends Record<string, any>>(
   };
 
   // Save data manually
-  const saveData = async () => {
+  const saveData = async (showToast = false) => {
     if (!applicationId) {
       console.error("Cannot save data: applicationId is null");
       return null;
@@ -68,10 +64,14 @@ export function useEntityData<T extends Record<string, any>>(
       
       if (result) {
         setLastSavedData({ ...data });
-        toast({
-          title: "Data Saved",
-          description: "Your information has been saved successfully.",
-        });
+        
+        // Only show toast notifications if explicitly requested
+        if (showToast) {
+          toast({
+            title: "Data Saved",
+            description: "Your information has been saved successfully.",
+          });
+        }
         
         if (onSaveSuccess) {
           onSaveSuccess();
@@ -81,11 +81,16 @@ export function useEntityData<T extends Record<string, any>>(
       return result;
     } catch (error) {
       console.error("Error saving data:", error);
-      toast({
-        title: "Save Failed",
-        description: "There was an error saving your information. Please ensure all required fields are filled.",
-        variant: "destructive",
-      });
+      
+      // Only show toast notifications if explicitly requested
+      if (showToast) {
+        toast({
+          title: "Save Failed",
+          description: "There was an error saving your information. Please ensure all required fields are filled.",
+          variant: "destructive",
+        });
+      }
+      
       return null;
     } finally {
       setIsSaving(false);
@@ -156,7 +161,8 @@ export function useEntityData<T extends Record<string, any>>(
     const autoSaveTimeout = setTimeout(() => {
       if (hasUnsavedChanges() && checkRequiredFields(data, dataType)) {
         console.log(`Auto-saving data (${dataType}) because changes detected and required fields present`);
-        saveData();
+        // Pass false to prevent showing toasts on auto-save
+        saveData(false);
       }
     }, 1500);
     

@@ -1,17 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessOperationsService } from "@/services/application";
-import { useToast } from "@/components/ui/use-toast";
 import FormSectionWrapper from "./FormSectionWrapper";
 
 const BusinessOperationSection = () => {
   const { applicationId, isLoading, setIsLoading } = useApplication();
-  const { toast } = useToast();
   
   // Business operation state
   const [businessActivity, setBusinessActivity] = useState("");
@@ -65,7 +62,7 @@ const BusinessOperationSection = () => {
     loadBusinessOperations();
   }, [applicationId]);
 
-  const handleSaveBusinessOperations = async () => {
+  const handleSaveBusinessOperations = async (showToast = false) => {
     if (!applicationId) return;
     
     try {
@@ -94,18 +91,10 @@ const BusinessOperationSection = () => {
       
       await businessOperationsService.saveBusinessOperations(businessOperationsData);
       
-      toast({
-        title: "Business Operations Saved",
-        description: "Your business operation details have been saved.",
-        variant: "default",
-      });
+      // Only show toast notification if explicitly requested
+      // Toast will now be handled by the Next button in Applications.tsx
     } catch (error) {
       console.error("Error saving business operations:", error);
-      toast({
-        title: "Save Failed",
-        description: "There was an error saving your business operation details.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -152,10 +141,39 @@ const BusinessOperationSection = () => {
     setPropertyOwned(checked);
   };
 
-  // Update values and save on input blur
+  // Update values and save on input blur - but don't show toast
   const handleInputBlur = () => {
-    handleSaveBusinessOperations();
+    handleSaveBusinessOperations(false);
   };
+
+  // Expose validation/save function for parent component
+  useEffect(() => {
+    if (!window.businessOperationHelpers) {
+      window.businessOperationHelpers = {
+        validateAndSave: async () => {
+          await handleSaveBusinessOperations(false);
+          return true; // Business operations don't have required fields for now
+        }
+      };
+    } else {
+      window.businessOperationHelpers.validateAndSave = async () => {
+        await handleSaveBusinessOperations(false);
+        return true;
+      };
+    }
+    
+    return () => {
+      // Cleanup when component unmounts
+      if (window.businessOperationHelpers) {
+        delete window.businessOperationHelpers.validateAndSave;
+      }
+    };
+  }, [
+    businessActivity, businessArea, capitalization, 
+    professionalMale, professionalFemale, nonProfessionalMale, 
+    nonProfessionalFemale, employeesInLucena, hasTaxIncentives,
+    propertyOwned, vanTruck, motorcycle, cctvCameras
+  ]);
 
   return (
     <FormSectionWrapper

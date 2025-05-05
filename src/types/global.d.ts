@@ -50,8 +50,13 @@ interface OwnerInfoHelpers {
   validateAndSave: () => Promise<boolean>;
 }
 
+interface BusinessOperationHelpers {
+  validateAndSave: () => Promise<boolean>;
+}
+
 // Augment the Window interface
 interface Window {
   businessInfoHelpers?: BusinessInfoHelpers;
   ownerInfoHelpers?: OwnerInfoHelpers;
+  businessOperationHelpers?: BusinessOperationHelpers;
 }

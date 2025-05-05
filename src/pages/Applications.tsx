@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -118,12 +119,22 @@ const Applications = () => {
       // Save/validate current step data before proceeding
       if (currentStep === 2) {
         // Check if the window helper is available and use it to validate/save
-        if (typeof window.businessInfoHelpers?.validateAndSave === 'function') {
+        if (window.businessInfoHelpers?.validateAndSave) {
           const isValid = await window.businessInfoHelpers.validateAndSave();
           
           if (!isValid) {
+            toast({
+              title: "Incomplete Information",
+              description: "Please complete all required business information fields before proceeding.",
+              variant: "destructive",
+            });
             setIsSaving(false);
             return; // Stop here if validation fails
+          } else {
+            toast({
+              title: "Business Information Saved",
+              description: "Your business information has been saved successfully.",
+            });
           }
         } else {
           // Fallback validation if helper is not available
@@ -156,15 +167,30 @@ const Applications = () => {
             });
             setIsSaving(false);
             return;
+          } else {
+            toast({
+              title: "Business Information Saved",
+              description: "Your business information has been saved successfully.",
+            });
           }
         }
       } else if (currentStep === 3) {
         // Validate owner information
-        if (typeof window.ownerInfoHelpers?.validateAndSave === 'function') {
+        if (window.ownerInfoHelpers?.validateAndSave) {
           const isValid = await window.ownerInfoHelpers.validateAndSave();
           if (!isValid) {
+            toast({
+              title: "Incomplete Information",
+              description: "Please complete all required owner information fields before proceeding.",
+              variant: "destructive",
+            });
             setIsSaving(false);
             return;
+          } else {
+            toast({
+              title: "Owner Information Saved",
+              description: "Your owner information has been saved successfully.",
+            });
           }
         } else {
           // Fallback validation
@@ -197,6 +223,11 @@ const Applications = () => {
             });
             setIsSaving(false);
             return;
+          } else {
+            toast({
+              title: "Owner Information Saved",
+              description: "Your owner information has been saved successfully.",
+            });
           }
         }
       } else if (currentStep === 4) {
@@ -210,6 +241,11 @@ const Applications = () => {
           });
           setIsSaving(false);
           return;
+        } else {
+          toast({
+            title: "Business Operations Saved",
+            description: "Your business operations and lines have been saved successfully.",
+          });
         }
       } else if (currentStep === 5) {
         // Validate declaration
@@ -232,6 +268,11 @@ const Applications = () => {
           });
           setIsSaving(false);
           return;
+        } else {
+          toast({
+            title: "Declaration Confirmed",
+            description: "Your declaration has been confirmed successfully.",
+          });
         }
       }
       
