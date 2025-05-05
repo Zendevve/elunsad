@@ -158,11 +158,62 @@ const Applications = () => {
             return;
           }
         }
+      } else if (currentStep === 3) {
+        // Validate owner information
+        if (window.ownerInfoHelpers?.validateAndSave) {
+          const isValid = await window.ownerInfoHelpers.validateAndSave();
+          if (!isValid) {
+            setIsSaving(false);
+            return;
+          }
+        } else {
+          // Fallback validation
+          const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId || '');
+          if (!ownerInfo) {
+            toast({
+              title: "Incomplete Information",
+              description: "Please complete the owner information before proceeding.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+        }
+      } else if (currentStep === 4) {
+        // Validate business operation and lines
+        const businessLines = await businessLinesService.getBusinessLines(applicationId || '');
+        if (!businessLines || businessLines.length === 0) {
+          toast({
+            title: "Incomplete Information",
+            description: "Please add at least one line of business before proceeding.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+      } else if (currentStep === 5) {
+        // Validate declaration
+        const declaration = await declarationService.getDeclaration(applicationId || '');
+        if (!declaration || !declaration.signature) {
+          toast({
+            title: "Signature Required",
+            description: "Please sign the declaration before submitting.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+        
+        if (!isAgreed) {
+          toast({
+            title: "Agreement Required",
+            description: "You must agree to the declaration before submitting.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
       }
-      
-      // Similar validations for other steps can be added here
-      // if (currentStep === 3) { /* validate owner info */ }
-      // if (currentStep === 4) { /* validate business operations */ }
       
       // If everything passed, proceed to next step
       if (currentStep < totalSteps) {
