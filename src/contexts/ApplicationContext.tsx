@@ -73,7 +73,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (application) {
         setApplicationId(application.id);
         setApplicationType(application.application_type);
-        setApplicationStatus(application.application_status);
+        setApplicationStatus(application.application_status as ApplicationStatus);
         return application.id;
       }
       return null;
@@ -99,7 +99,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const application = await applicationService.getApplicationById(applicationId);
       if (application) {
         setApplicationType(application.application_type);
-        setApplicationStatus(application.application_status);
+        setApplicationStatus(application.application_status as ApplicationStatus);
       } else {
         // Application not found, reset state
         setApplicationId(null);
@@ -126,7 +126,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       const application = await applicationService.updateApplicationStatus(applicationId, status);
       if (application) {
-        setApplicationStatus(application.application_status);
+        setApplicationStatus(application.application_status as ApplicationStatus);
         
         // Show success message for submission
         if (status === 'submitted') {

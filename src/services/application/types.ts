@@ -1,6 +1,6 @@
 
 export type ApplicationType = 'newApplication' | 'renewalApplication' | 'amendmentApplication';
-export type ApplicationStatus = 'draft' | 'submitted' | 'processing' | 'approved' | 'rejected';
+export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info';
 export type OwnershipType = 'soleProprietorship' | 'onePersonCorp' | 'partnership' | 'corporation' | 'cooperative';
 
 export interface ApplicationData {
@@ -18,8 +18,6 @@ export interface BusinessInformationData {
   application_id: string;
   business_name: string;
   trade_name?: string;
-  business_address?: string;
-  nature_of_business?: string;
   registration_number?: string;
   tin_number: string;
   sss_number?: string;
@@ -40,7 +38,6 @@ export interface BusinessInformationData {
   telephone_no?: string;
   mobile_no: string;
   email_address: string;
-  date_established?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -53,7 +50,7 @@ export interface OwnerInformationData {
   middle_name?: string;
   suffix?: string;
   age: number;
-  sex: 'male' | 'female' | 'other';
+  sex: 'male' | 'female';
   civil_status: 'single' | 'married' | 'widowed' | 'divorced' | 'separated';
   nationality: string;
   owner_house_bldg_no?: string;
@@ -66,8 +63,6 @@ export interface OwnerInformationData {
   owner_city_municipality: string;
   owner_province: string;
   owner_zip_code: string;
-  phone_number?: string;
-  email_address?: string;
   created_at?: string;
   updated_at?: string;
 }

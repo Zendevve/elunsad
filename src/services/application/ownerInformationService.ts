@@ -19,7 +19,26 @@ export const ownerInformationService = {
         // Update existing record
         const { data: updatedData, error: updateError } = await supabase
           .from('owner_information')
-          .update(data)
+          .update({
+            surname: data.surname,
+            given_name: data.given_name,
+            middle_name: data.middle_name,
+            suffix: data.suffix,
+            age: data.age,
+            sex: data.sex,
+            civil_status: data.civil_status,
+            nationality: data.nationality,
+            owner_street: data.owner_street,
+            owner_barangay: data.owner_barangay,
+            owner_city_municipality: data.owner_city_municipality,
+            owner_province: data.owner_province,
+            owner_zip_code: data.owner_zip_code,
+            owner_house_bldg_no: data.owner_house_bldg_no,
+            owner_building_name: data.owner_building_name,
+            owner_block_no: data.owner_block_no,
+            owner_lot_no: data.owner_lot_no,
+            owner_subdivision: data.owner_subdivision
+          })
           .eq('application_id', data.application_id)
           .select('*')
           .single();
@@ -30,7 +49,27 @@ export const ownerInformationService = {
         // Insert new record
         const { data: insertedData, error: insertError } = await supabase
           .from('owner_information')
-          .insert(data)
+          .insert({
+            application_id: data.application_id,
+            surname: data.surname,
+            given_name: data.given_name,
+            middle_name: data.middle_name,
+            suffix: data.suffix,
+            age: data.age,
+            sex: data.sex,
+            civil_status: data.civil_status,
+            nationality: data.nationality,
+            owner_street: data.owner_street,
+            owner_barangay: data.owner_barangay,
+            owner_city_municipality: data.owner_city_municipality,
+            owner_province: data.owner_province,
+            owner_zip_code: data.owner_zip_code,
+            owner_house_bldg_no: data.owner_house_bldg_no,
+            owner_building_name: data.owner_building_name,
+            owner_block_no: data.owner_block_no,
+            owner_lot_no: data.owner_lot_no,
+            owner_subdivision: data.owner_subdivision
+          })
           .select('*')
           .single();
         

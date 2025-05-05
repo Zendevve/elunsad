@@ -18,7 +18,7 @@ const OwnerInformationSection = () => {
   const [middleName, setMiddleName] = useState("");
   const [suffix, setSuffix] = useState("");
   const [age, setAge] = useState<number>(0);
-  const [sex, setSex] = useState<"male" | "female" | "other">("male");
+  const [sex, setSex] = useState<"male" | "female">("male");
   const [civilStatus, setCivilStatus] = useState<"single" | "married" | "widowed" | "divorced" | "separated">("single");
   const [nationality, setNationality] = useState("Filipino");
   const [ownerStreet, setOwnerStreet] = useState("");
@@ -26,8 +26,11 @@ const OwnerInformationSection = () => {
   const [ownerCityMunicipality, setOwnerCityMunicipality] = useState(""); 
   const [ownerProvince, setOwnerProvince] = useState("");
   const [ownerZipCode, setOwnerZipCode] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [ownerHouseBldgNo, setOwnerHouseBldgNo] = useState("");
+  const [ownerBuildingName, setOwnerBuildingName] = useState("");
+  const [ownerBlockNo, setOwnerBlockNo] = useState("");
+  const [ownerLotNo, setOwnerLotNo] = useState("");
+  const [ownerSubdivision, setOwnerSubdivision] = useState("");
 
   useEffect(() => {
     const loadOwnerInformation = async () => {
@@ -50,8 +53,11 @@ const OwnerInformationSection = () => {
           setOwnerCityMunicipality(data.owner_city_municipality || "");
           setOwnerProvince(data.owner_province || "");
           setOwnerZipCode(data.owner_zip_code || "");
-          setPhone(data.phone_number || "");
-          setEmail(data.email_address || "");
+          setOwnerHouseBldgNo(data.owner_house_bldg_no || "");
+          setOwnerBuildingName(data.owner_building_name || "");
+          setOwnerBlockNo(data.owner_block_no || "");
+          setOwnerLotNo(data.owner_lot_no || "");
+          setOwnerSubdivision(data.owner_subdivision || "");
         }
       } catch (error) {
         console.error("Error loading owner information:", error);
@@ -82,8 +88,11 @@ const OwnerInformationSection = () => {
         owner_city_municipality: ownerCityMunicipality,
         owner_province: ownerProvince,
         owner_zip_code: ownerZipCode,
-        phone_number: phone,
-        email_address: email
+        owner_house_bldg_no: ownerHouseBldgNo,
+        owner_building_name: ownerBuildingName,
+        owner_block_no: ownerBlockNo,
+        owner_lot_no: ownerLotNo,
+        owner_subdivision: ownerSubdivision
       };
       
       await ownerInformationService.saveOwnerInformation(ownerData);
@@ -202,7 +211,7 @@ const OwnerInformationSection = () => {
             <Label htmlFor="sex">Sex</Label>
             <Select 
               value={sex} 
-              onValueChange={(value: "male" | "female" | "other") => {
+              onValueChange={(value: "male" | "female") => {
                 setSex(value);
                 setTimeout(handleSaveOwnerInformation, 100);
               }}
@@ -213,7 +222,6 @@ const OwnerInformationSection = () => {
               <SelectContent>
                 <SelectItem value="male">Male</SelectItem>
                 <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -228,36 +236,56 @@ const OwnerInformationSection = () => {
               onBlur={handleInputBlur}
             />
           </div>
-
-          <div>
-            <Label htmlFor="phone">Contact Number</Label>
-            <Input 
-              id="phone" 
-              type="tel" 
-              placeholder="Enter contact number" 
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              onBlur={handleInputBlur}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email Address</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="Enter email address" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={handleInputBlur}
-            />
-          </div>
         </div>
       </div>
       
       <div className="mt-6">
         <h3 className="text-sm font-medium mb-3">Owner Address</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="ownerHouseBldgNo">House/Bldg No.</Label>
+            <Input 
+              id="ownerHouseBldgNo" 
+              placeholder="Enter house/building number" 
+              value={ownerHouseBldgNo}
+              onChange={(e) => setOwnerHouseBldgNo(e.target.value)}
+              onBlur={handleInputBlur}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="ownerBuildingName">Building Name</Label>
+            <Input 
+              id="ownerBuildingName" 
+              placeholder="Enter building name" 
+              value={ownerBuildingName}
+              onChange={(e) => setOwnerBuildingName(e.target.value)}
+              onBlur={handleInputBlur}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="ownerBlockNo">Block No.</Label>
+            <Input 
+              id="ownerBlockNo" 
+              placeholder="Enter block number" 
+              value={ownerBlockNo}
+              onChange={(e) => setOwnerBlockNo(e.target.value)}
+              onBlur={handleInputBlur}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="ownerLotNo">Lot No.</Label>
+            <Input 
+              id="ownerLotNo" 
+              placeholder="Enter lot number" 
+              value={ownerLotNo}
+              onChange={(e) => setOwnerLotNo(e.target.value)}
+              onBlur={handleInputBlur}
+            />
+          </div>
+
           <div>
             <Label htmlFor="ownerStreet">Street</Label>
             <Input 
@@ -268,6 +296,18 @@ const OwnerInformationSection = () => {
               onBlur={handleInputBlur}
             />
           </div>
+          
+          <div>
+            <Label htmlFor="ownerSubdivision">Subdivision</Label>
+            <Input 
+              id="ownerSubdivision" 
+              placeholder="Enter subdivision" 
+              value={ownerSubdivision}
+              onChange={(e) => setOwnerSubdivision(e.target.value)}
+              onBlur={handleInputBlur}
+            />
+          </div>
+          
           <div>
             <Label htmlFor="ownerBarangay">Barangay</Label>
             <Input 
@@ -278,6 +318,7 @@ const OwnerInformationSection = () => {
               onBlur={handleInputBlur}
             />
           </div>
+          
           <div>
             <Label htmlFor="ownerCityMunicipality">City/Municipality</Label>
             <Input 
@@ -288,6 +329,7 @@ const OwnerInformationSection = () => {
               onBlur={handleInputBlur}
             />
           </div>
+          
           <div>
             <Label htmlFor="ownerProvince">Province</Label>
             <Input 
@@ -298,6 +340,7 @@ const OwnerInformationSection = () => {
               onBlur={handleInputBlur}
             />
           </div>
+          
           <div>
             <Label htmlFor="ownerZipCode">Zip Code</Label>
             <Input 
