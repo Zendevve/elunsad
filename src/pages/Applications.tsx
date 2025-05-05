@@ -113,6 +113,7 @@ const Applications = () => {
     return () => clearTimeout(timer);
   }, [currentStep]);
 
+  // Handle next click to navigate forward
   const handleNext = async () => {
     setIsSaving(true);
     try {
@@ -131,13 +132,6 @@ const Applications = () => {
             });
             setIsSaving(false);
             return; // Stop here if validation fails
-          } else {
-            // This is where the toast appears that we want to suppress
-            console.log("Applications - Business info validated, showing success toast");
-            toast({
-              title: "Business Information Saved",
-              description: "Your business information has been saved successfully.",
-            });
           }
         } else {
           // Fallback validation if helper is not available
@@ -170,15 +164,10 @@ const Applications = () => {
             });
             setIsSaving(false);
             return;
-          } else {
-            toast({
-              title: "Business Information Saved",
-              description: "Your business information has been saved successfully.",
-            });
           }
         }
       } else if (currentStep === 3) {
-        // Validate owner information - MODIFIED TO PREVENT UNWANTED TOASTS
+        // Validate owner information - Modified to prevent automatic toasts
         if (window.ownerInfoHelpers?.validateAndSave) {
           console.log("Applications - Validating owner info through helper");
           const isValid = await window.ownerInfoHelpers.validateAndSave();
@@ -191,8 +180,6 @@ const Applications = () => {
             setIsSaving(false);
             return;
           }
-          // Explicitly only show toast when Next is clicked, not during auto-saves
-          console.log("Applications - Owner info validated successfully, showing success toast only on Next click");
         } else {
           // Fallback validation
           const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId || '');
@@ -226,11 +213,6 @@ const Applications = () => {
             return;
           }
         }
-        // Show toast only on successful Next button click for step 3
-        toast({
-          title: "Owner Information Saved",
-          description: "Your owner information has been saved successfully.",
-        });
       } else if (currentStep === 4) {
         // Validate business operation and lines
         const businessLines = await businessLinesService.getBusinessLines(applicationId || '');
@@ -242,11 +224,6 @@ const Applications = () => {
           });
           setIsSaving(false);
           return;
-        } else {
-          toast({
-            title: "Business Operations Saved",
-            description: "Your business operations and lines have been saved successfully.",
-          });
         }
       } else if (currentStep === 5) {
         // Validate declaration
@@ -262,13 +239,6 @@ const Applications = () => {
             });
             setIsSaving(false);
             return;
-          } else {
-            // This is where the toast appears that we want to suppress for Declaration
-            console.log("Applications - Declaration validated, showing success toast");
-            toast({
-              title: "Declaration Confirmed",
-              description: "Your declaration has been confirmed successfully.",
-            });
           }
         } else {
           const declaration = await declarationService.getDeclaration(applicationId || '');
@@ -290,17 +260,35 @@ const Applications = () => {
             });
             setIsSaving(false);
             return;
-          } else {
-            toast({
-              title: "Declaration Confirmed",
-              description: "Your declaration has been confirmed successfully.",
-            });
           }
         }
       }
       
-      // If everything passed, proceed to next step
+      // If everything passed, proceed to next step and show success toast only here
       if (currentStep < totalSteps) {
+        // Only show success toast when explicitly moving to next step
+        if (currentStep === 2) {
+          toast({
+            title: "Business Information Saved",
+            description: "Your business information has been saved successfully.",
+          });
+        } else if (currentStep === 3) {
+          toast({
+            title: "Owner Information Saved",
+            description: "Your owner information has been saved successfully.",
+          });
+        } else if (currentStep === 4) {
+          toast({
+            title: "Business Operations Saved",
+            description: "Your business operations and lines have been saved successfully.",
+          });
+        } else if (currentStep === 5) {
+          toast({
+            title: "Declaration Confirmed",
+            description: "Your declaration has been confirmed successfully.",
+          });
+        }
+        
         setCurrentStep(currentStep + 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
