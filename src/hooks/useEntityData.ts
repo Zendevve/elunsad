@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 // Generic hook for loading and saving entity data
-export function useEntityData<T>(
+export function useEntityData<T extends Record<string, any>>(
   fetchFn: (id: string) => Promise<T | null>, 
   saveFn: (data: T) => Promise<T | null>,
   applicationId: string | null,
@@ -100,7 +100,7 @@ export function useEntityData<T>(
   useEffect(() => {
     if (!applicationId || !autoSaveEnabled || !isInitialized || isSaving) return;
     
-    const checkRequiredFields = (data: any, type: string): boolean => {
+    const checkRequiredFields = (data: Record<string, any>, type: string): boolean => {
       // For BusinessInformationData
       if (type === 'businessInfo') {
         return !!(

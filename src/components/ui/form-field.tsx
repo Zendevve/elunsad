@@ -11,10 +11,11 @@ interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
   required?: boolean;
   tooltip?: string;
+  error?: string; // Added error prop
 }
 
 export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
-  ({ className, label, helperText, required, tooltip, id, ...props }, ref) => {
+  ({ className, label, helperText, required, tooltip, id, error, ...props }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
     const [hasValue, setHasValue] = useState(!!props.value);
 
@@ -26,6 +27,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
             className={cn(
               "pt-6 pb-2 placeholder:text-transparent transition-all h-14",
               (isFocused || hasValue) && "pt-6 pb-2",
+              error && "border-red-500",
               className
             )}
             ref={ref}
@@ -36,7 +38,8 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
             }}
             onChange={(e) => setHasValue(!!e.target.value)}
             required={required}
-            aria-describedby={helperText ? `${id}-description` : undefined}
+            aria-describedby={helperText || error ? `${id}-description` : undefined}
+            aria-invalid={!!error}
             {...props}
           />
           <Label
@@ -45,7 +48,8 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
               "absolute left-3 transition-all duration-200 pointer-events-none",
               isFocused || hasValue
                 ? "top-2 text-xs text-primary"
-                : "top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+                : "top-1/2 -translate-y-1/2 text-sm text-muted-foreground",
+              error && "text-red-500"
             )}
           >
             {label}
@@ -66,7 +70,13 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           )}
         </div>
         
-        {helperText && (
+        {error && (
+          <p id={`${id}-error`} className="text-xs text-red-500">
+            {error}
+          </p>
+        )}
+        
+        {helperText && !error && (
           <p id={`${id}-description`} className="text-xs text-muted-foreground">
             {helperText}
           </p>
