@@ -402,14 +402,22 @@ const Applications = () => {
             )}
 
             <div className="flex justify-between mt-8">
-              <Button 
-                variant="outline" 
-                onClick={handleBack} 
-                disabled={currentStep === 1}
-                className="px-6 group"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back
-              </Button>
+              {/* Only show back button if not on step 1 */}
+              {currentStep > 1 && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleBack}
+                  className="px-6 group"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back
+                </Button>
+              )}
+              
+              {/* If on step 1, push next button to right side */}
+              {currentStep === 1 && (
+                <div className="flex-1"></div>
+              )}
+              
               <Button 
                 onClick={handleNext}
                 className="px-6 bg-primary group hover:bg-primary/90 transition-all"
