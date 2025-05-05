@@ -67,7 +67,7 @@ export function useEntityData<T extends Record<string, any>>(
       const result = await saveFn({ ...data, application_id: applicationId } as T);
       
       if (result) {
-        setLastSavedData({ ...data } as T);
+        setLastSavedData({ ...data });
         toast({
           title: "Data Saved",
           description: "Your information has been saved successfully.",

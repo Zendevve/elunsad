@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -406,7 +405,7 @@ const Applications = () => {
               <Button 
                 variant="outline" 
                 onClick={handleBack} 
-                disabled={currentStep === 1 || isLoading || isSaving}
+                disabled={currentStep === 1}
                 className="px-6 group"
               >
                 <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back
@@ -423,10 +422,6 @@ const Applications = () => {
                 ) : isSubmitting ? (
                   <span className="flex items-center">
                     <Loader className="mr-2 h-4 w-4 animate-spin" /> Submitting...
-                  </span>
-                ) : isLoading ? (
-                  <span className="flex items-center">
-                    <Loader className="mr-2 h-4 w-4 animate-spin" /> Loading...
                   </span>
                 ) : currentStep === totalSteps ? (
                   "Submit Application"
