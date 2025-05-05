@@ -6,6 +6,12 @@ import { DeclarationData } from "./types";
 export const declarationService = {
   async saveDeclaration(data: DeclarationData) {
     try {
+      console.log("Saving declaration data:", data);
+      if (!data.application_id) {
+        console.error("Missing application_id in declaration data");
+        throw new Error("Missing application_id in declaration data");
+      }
+
       // Check if declaration already exists for this application
       const { data: existingData, error: checkError } = await supabase
         .from('declarations')
@@ -13,10 +19,16 @@ export const declarationService = {
         .eq('application_id', data.application_id)
         .maybeSingle();
       
-      if (checkError) throw checkError;
+      if (checkError) {
+        console.error("Error checking for existing declaration:", checkError);
+        throw checkError;
+      }
+      
+      let result;
       
       if (existingData) {
         // Update existing record
+        console.log("Updating existing declaration:", existingData.id);
         const { data: updatedData, error: updateError } = await supabase
           .from('declarations')
           .update(data)
@@ -24,19 +36,32 @@ export const declarationService = {
           .select('*')
           .single();
         
-        if (updateError) throw updateError;
-        return updatedData;
+        if (updateError) {
+          console.error("Error updating declaration:", updateError);
+          throw updateError;
+        }
+        
+        console.log("Declaration updated successfully:", updatedData);
+        result = updatedData;
       } else {
         // Insert new record
+        console.log("Inserting new declaration");
         const { data: insertedData, error: insertError } = await supabase
           .from('declarations')
           .insert(data)
           .select('*')
           .single();
         
-        if (insertError) throw insertError;
-        return insertedData;
+        if (insertError) {
+          console.error("Error inserting declaration:", insertError);
+          throw insertError;
+        }
+        
+        console.log("Declaration inserted successfully:", insertedData);
+        result = insertedData;
       }
+      
+      return result;
     } catch (error) {
       console.error('Error saving declaration:', error);
       throw error;
@@ -45,13 +70,20 @@ export const declarationService = {
   
   async getDeclaration(applicationId: string) {
     try {
+      console.log("Fetching declaration for application:", applicationId);
+      
       const { data, error } = await supabase
         .from('declarations')
         .select('*')
         .eq('application_id', applicationId)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching declaration:", error);
+        throw error;
+      }
+      
+      console.log("Retrieved declaration:", data);
       return data;
     } catch (error) {
       console.error('Error fetching declaration:', error);

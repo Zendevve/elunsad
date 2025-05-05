@@ -17,25 +17,32 @@ export function useEntityData<T extends Record<string, any>>(
   const [isInitialized, setIsInitialized] = useState(false);
   const [lastSavedData, setLastSavedData] = useState<T | null>(null);
   const { toast } = useToast();
+  const [saveError, setSaveError] = useState<Error | null>(null);
 
   // Load data when component mounts
   useEffect(() => {
     const loadData = async () => {
       if (!applicationId) {
+        console.log("No applicationId provided, skipping data load");
         setIsInitialized(true);
         return;
       }
       
       setIsLoading(true);
       try {
+        console.log(`Loading data for application ID: ${applicationId}`);
         const result = await fetchFn(applicationId);
         if (result) {
+          console.log("Data loaded successfully:", result);
           setData(result);
           setLastSavedData(result);
+        } else {
+          console.log("No data found for this application ID");
         }
         setIsInitialized(true);
       } catch (error) {
         console.error("Error loading data:", error);
+        setSaveError(error instanceof Error ? error : new Error(String(error)));
       } finally {
         setIsLoading(false);
       }
@@ -53,15 +60,24 @@ export function useEntityData<T extends Record<string, any>>(
   const saveData = async (showToast = false) => {
     if (!applicationId) {
       console.error("Cannot save data: applicationId is null");
+      if (showToast) {
+        toast({
+          title: "Save Failed",
+          description: "Missing application ID. Please try again or contact support.",
+          variant: "destructive",
+        });
+      }
       return null;
     }
     
     setIsSaving(true);
+    setSaveError(null);
     try {
       console.log("Saving data:", { ...data, application_id: applicationId });
       const result = await saveFn({ ...data, application_id: applicationId } as T);
       
       if (result) {
+        console.log("Data saved successfully:", result);
         setLastSavedData({ ...data });
         
         // ONLY show toast if explicitly requested with showToast=true parameter
@@ -78,11 +94,21 @@ export function useEntityData<T extends Record<string, any>>(
         if (onSaveSuccess) {
           onSaveSuccess();
         }
+      } else {
+        console.error("Save result is null or undefined");
+        if (showToast) {
+          toast({
+            title: "Save Incomplete",
+            description: "Your data may not have been saved completely. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
       
       return result;
     } catch (error) {
       console.error("Error saving data:", error);
+      setSaveError(error instanceof Error ? error : new Error(String(error)));
       
       // ONLY show error toast if explicitly requested with showToast=true parameter
       if (showToast === true) {
@@ -181,6 +207,7 @@ export function useEntityData<T extends Record<string, any>>(
     isLoading: isLoading || isSaving,
     isSaving,
     isInitialized,
-    hasUnsavedChanges
+    hasUnsavedChanges,
+    saveError
   };
 }

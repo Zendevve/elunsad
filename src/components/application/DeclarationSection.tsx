@@ -7,6 +7,7 @@ import { SignatureCanvas } from "./SignatureCanvas";
 import { declarationService } from "@/services/application";
 import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "./FormSectionWrapper";
+import { checkSupabaseConnection, logDatabaseError } from "@/utils/supabaseUtils";
 
 interface DeclarationSectionProps {
   onAgreementChange: (agreed: boolean) => void;
@@ -20,51 +21,107 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
   const [isAgreed, setIsAgreed] = useState(false);
   const [designation, setDesignation] = useState("");
   const [declarationPlace, setDeclarationPlace] = useState("City of Lucena");
+  const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
+
+  // Check Supabase connection on mount
+  useEffect(() => {
+    const checkConnection = async () => {
+      const isConnected = await checkSupabaseConnection();
+      setConnectionStatus(isConnected);
+      
+      if (!isConnected) {
+        toast({
+          title: "Database Connection Issue",
+          description: "We're having trouble connecting to the database. Your changes may not be saved.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    checkConnection();
+  }, [toast]);
 
   useEffect(() => {
     const loadDeclaration = async () => {
       if (!applicationId) return;
       
       try {
+        setIsLoading(true);
+        console.log("Loading declaration for application ID:", applicationId);
         const data = await declarationService.getDeclaration(applicationId);
         
         if (data) {
+          console.log("Declaration data loaded:", data);
           setSignature(data.signature || null);
           setIsAgreed(data.is_agreed || false);
           setDesignation(data.designation || "");
           setDeclarationPlace(data.declaration_place || "City of Lucena");
+        } else {
+          console.log("No declaration data found for this application");
         }
       } catch (error) {
         console.error("Error loading declaration:", error);
+        logDatabaseError("loading declaration", error);
+        toast({
+          title: "Error Loading Declaration",
+          description: "There was a problem loading your declaration. Please try refreshing the page.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
     
     loadDeclaration();
-  }, [applicationId]);
+  }, [applicationId, setIsLoading, toast]);
 
   useEffect(() => {
     onAgreementChange(isAgreed);
   }, [isAgreed, onAgreementChange]);
 
   const handleSaveSignature = async (newSignature: string) => {
+    if (!applicationId) {
+      console.error("Cannot save signature: applicationId is null");
+      return;
+    }
+    
     setSignature(newSignature);
+    console.log("Saving signature...");
     await saveDeclarationData({ signature: newSignature }, false);
   };
 
   const handleAgreementChange = async (checked: boolean) => {
+    if (!applicationId) {
+      console.error("Cannot save agreement: applicationId is null");
+      return;
+    }
+    
     setIsAgreed(checked);
+    console.log("Saving agreement state:", checked);
     await saveDeclarationData({ is_agreed: checked }, false);
   };
 
   const handleDesignationChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!applicationId) {
+      console.error("Cannot save designation: applicationId is null");
+      return;
+    }
+    
     const newDesignation = e.target.value;
     setDesignation(newDesignation);
+    console.log("Designation changed to:", newDesignation);
     await saveDeclarationData({ designation: newDesignation }, false);
   };
 
   const handleDeclarationPlaceChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!applicationId) {
+      console.error("Cannot save declaration place: applicationId is null");
+      return;
+    }
+    
     const newDeclarationPlace = e.target.value;
     setDeclarationPlace(newDeclarationPlace);
+    console.log("Declaration place changed to:", newDeclarationPlace);
     await saveDeclarationData({ declaration_place: newDeclarationPlace }, false);
   };
 
@@ -74,7 +131,10 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
     designation: string;
     declaration_place: string;
   }>, showToast: boolean = false) => {
-    if (!applicationId) return;
+    if (!applicationId) {
+      console.error("Cannot save declaration: applicationId is null");
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -89,7 +149,9 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
         ...updatedData
       };
       
-      await declarationService.saveDeclaration(declarationData);
+      console.log("Saving declaration data:", declarationData);
+      const result = await declarationService.saveDeclaration(declarationData);
+      console.log("Save result:", result);
       
       // ONLY show toast if explicitly requested with showToast=true parameter
       if (showToast === true) {
@@ -104,12 +166,13 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       }
     } catch (error) {
       console.error("Error saving declaration:", error);
+      logDatabaseError("saving declaration", error, updatedData);
       
       // ONLY show error toast if explicitly requested with showToast=true parameter
       if (showToast === true) {
         toast({
           title: "Save Failed",
-          description: "There was an error saving your declaration.",
+          description: "There was an error saving your declaration. Please try again.",
           variant: "destructive",
         });
       } else {
@@ -126,22 +189,24 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       window.declarationHelpers = {
         validateAndSave: async () => {
           console.log("Declaration - Parent requested validation - performing silent save");
-          // Explicitly pass false to ensure no toast is shown
-          await saveDeclarationData({}, false);
+          // Explicitly pass true to ensure save is attempted and any errors are shown
+          await saveDeclarationData({}, true);
           
           // Simple validation - signature is required
           const isValid = !!signature;
+          console.log("Declaration validation result:", isValid ? "valid" : "invalid");
           return isValid;
         }
       };
     } else {
       window.declarationHelpers.validateAndSave = async () => {
         console.log("Declaration - Parent requested validation - performing silent save");
-        // Explicitly pass false to ensure no toast is shown
-        await saveDeclarationData({}, false);
+        // Explicitly pass true to ensure save is attempted and any errors are shown
+        await saveDeclarationData({}, true);
         
         // Simple validation - signature is required
         const isValid = !!signature;
+        console.log("Declaration validation result:", isValid ? "valid" : "invalid");
         return isValid;
       };
     }
@@ -160,6 +225,13 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
       description="Please read the declaration carefully, provide your signature, and agree to the terms."
       stepNumber={5}
     >
+      {connectionStatus === false && (
+        <div className="bg-red-100 border border-red-500 text-red-700 px-4 py-3 rounded mb-4">
+          <p className="font-bold">Database Connection Issue</p>
+          <p>We're having trouble connecting to our database. Your changes may not be saved.</p>
+        </div>
+      )}
+      
       <div className="space-y-4">
         <p className="text-gray-700">
           I hereby declare that the information provided in this application is true and correct to the best of my knowledge.
