@@ -9,10 +9,14 @@ import { businessInformationService } from "@/services/application";
 import { OwnershipType } from "@/services/application/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useEntityData } from "@/hooks/useEntityData";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 const BusinessInformationSection = () => {
   const { applicationId, isLoading: isAppLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
+  const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
+  const [hasTouchedFields, setHasTouchedFields] = useState(false);
   
   // Define initial state for business information form
   const initialBusinessInfo = {
@@ -45,18 +49,39 @@ const BusinessInformationSection = () => {
   const {
     data: businessInfo,
     updateData,
-    isLoading
+    saveData,
+    isLoading,
+    hasUnsavedChanges
   } = useEntityData(
     businessInformationService.getBusinessInformation,
     businessInformationService.saveBusinessInformation,
     applicationId,
-    initialBusinessInfo
+    initialBusinessInfo,
+    undefined,
+    true
   );
 
   // Update loading state in parent context when our loading state changes
   useEffect(() => {
     setIsLoading(isLoading || isAppLoading);
   }, [isLoading, isAppLoading, setIsLoading]);
+
+  // Required fields validation
+  useEffect(() => {
+    if (!hasTouchedFields) return;
+
+    const errors: Record<string, boolean> = {};
+
+    if (!businessInfo.business_name) errors.business_name = true;
+    if (!businessInfo.tin_number) errors.tin_number = true;
+    if (!businessInfo.street) errors.street = true;
+    if (!businessInfo.barangay) errors.barangay = true;
+    if (!businessInfo.zip_code) errors.zip_code = true;
+    if (!businessInfo.mobile_no) errors.mobile_no = true;
+    if (!businessInfo.email_address) errors.email_address = true;
+
+    setValidationErrors(errors);
+  }, [businessInfo, hasTouchedFields]);
 
   // List of barangays in Lucena
   const barangays = [
@@ -124,7 +149,42 @@ const BusinessInformationSection = () => {
   ];
 
   const handleFieldChange = (field: string, value: any) => {
+    if (!hasTouchedFields) {
+      setHasTouchedFields(true);
+    }
     updateData({ [field]: value });
+  };
+
+  const handleManualSave = async () => {
+    console.log("Manual save triggered with data:", businessInfo);
+    
+    // Validate all required fields
+    const errors: Record<string, boolean> = {};
+    if (!businessInfo.business_name) errors.business_name = true;
+    if (!businessInfo.tin_number) errors.tin_number = true;
+    if (!businessInfo.street) errors.street = true;
+    if (!businessInfo.barangay) errors.barangay = true;
+    if (!businessInfo.zip_code) errors.zip_code = true;
+    if (!businessInfo.mobile_no) errors.mobile_no = true;
+    if (!businessInfo.email_address) errors.email_address = true;
+    
+    setValidationErrors(errors);
+    
+    // If there are validation errors, show a toast and don't save
+    if (Object.keys(errors).length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      await saveData();
+    } catch (error) {
+      console.error("Error in manual save:", error);
+    }
   };
 
   return (
@@ -134,6 +194,17 @@ const BusinessInformationSection = () => {
       stepNumber={2}
     >
       <div className="space-y-8">
+        {/* Save Button at Top */}
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleManualSave} 
+            className="bg-green-600 hover:bg-green-700" 
+            disabled={isLoading || !hasUnsavedChanges()}
+          >
+            <Save className="mr-2 h-4 w-4" /> Save Information
+          </Button>
+        </div>
+      
         {/* Business Name and Trade Name */}
         <div>
           <h3 className="font-medium text-base mb-3">Business Identification</h3>
@@ -145,6 +216,7 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('business_name', e.target.value)}
               required
               tooltip="Enter the official registered business name as it appears on your DTI/SEC registration"
+              error={validationErrors.business_name ? "Business name is required" : undefined}
             />
             <FormField 
               id="tradeName" 
@@ -176,6 +248,7 @@ const BusinessInformationSection = () => {
               required
               placeholder="XXX-XXX-XXX-XXX"
               tooltip="Enter your 12-digit Tax Identification Number from BIR"
+              error={validationErrors.tin_number ? "TIN is required" : undefined}
             />
             <FormField 
               id="sssNumber" 
@@ -274,6 +347,7 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('street', e.target.value)}
               required
               tooltip="Enter the street name of your business location"
+              error={validationErrors.street ? "Street is required" : undefined}
             />
             <FormField 
               id="subdivision" 
@@ -288,7 +362,7 @@ const BusinessInformationSection = () => {
                   value={businessInfo.barangay} 
                   onValueChange={(value) => handleFieldChange('barangay', value)}
                 >
-                  <SelectTrigger id="barangay" className="h-14 pt-4">
+                  <SelectTrigger id="barangay" className={`h-14 pt-4 ${validationErrors.barangay ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder="Select barangay" />
                   </SelectTrigger>
                   <SelectContent className="max-h-80">
@@ -302,6 +376,9 @@ const BusinessInformationSection = () => {
                 <label htmlFor="barangay" className="absolute left-3 top-2 text-xs text-primary pointer-events-none">
                   Barangay <span className="text-destructive">*</span>
                 </label>
+                {validationErrors.barangay && (
+                  <p className="text-xs text-red-500 mt-1">Barangay is required</p>
+                )}
               </div>
             </div>
           </div>
@@ -330,6 +407,7 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('zip_code', e.target.value)}
               required
               tooltip="Enter the postal or zip code of your business location"
+              error={validationErrors.zip_code ? "Zip code is required" : undefined}
             />
           </div>
         </div>
@@ -352,6 +430,7 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('mobile_no', e.target.value)}
               required
               tooltip="Enter a mobile number where you can be contacted"
+              error={validationErrors.mobile_no ? "Mobile number is required" : undefined}
             />
             <FormField 
               id="emailAddress" 
@@ -361,8 +440,20 @@ const BusinessInformationSection = () => {
               onChange={(e) => handleFieldChange('email_address', e.target.value)}
               required
               tooltip="Enter an active email address for communications"
+              error={validationErrors.email_address ? "Email address is required" : undefined}
             />
           </div>
+        </div>
+
+        {/* Bottom Save Button */}
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleManualSave} 
+            className="bg-green-600 hover:bg-green-700" 
+            disabled={isLoading || !hasUnsavedChanges()}
+          >
+            <Save className="mr-2 h-4 w-4" /> Save Information
+          </Button>
         </div>
       </div>
     </FormSectionWrapper>

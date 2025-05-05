@@ -111,13 +111,56 @@ const Applications = () => {
     return () => clearTimeout(timer);
   }, [currentStep]);
 
-  const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      // Final step - submit the application
-      handleSubmitApplication();
+  const handleNext = async () => {
+    // Save current step data before proceeding
+    try {
+      if (currentStep === 2) {
+        // Validate business information before proceeding
+        const businessInfo = await businessInformationService.getBusinessInformation(applicationId || '');
+        
+        if (!businessInfo) {
+          toast({
+            title: "Incomplete Information",
+            description: "Please complete and save the business information before proceeding.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Validate required fields
+        const requiredBusinessFields = [
+          'business_name', 'tin_number', 'ownership_type', 
+          'street', 'barangay', 'city_municipality', 
+          'province', 'zip_code', 'mobile_no', 'email_address'
+        ];
+        
+        const missingFields = requiredBusinessFields.filter(field => !businessInfo[field as keyof typeof businessInfo]);
+        
+        if (missingFields.length > 0) {
+          toast({
+            title: "Incomplete Information",
+            description: "Please complete all required fields before proceeding.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // If everything passed, proceed to next step
+      if (currentStep < totalSteps) {
+        setCurrentStep(currentStep + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Final step - submit the application
+        handleSubmitApplication();
+      }
+    } catch (error) {
+      console.error("Error validating before next step:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while processing your information. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
