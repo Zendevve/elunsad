@@ -36,7 +36,7 @@ export function useEntityData<T extends Record<string, any>>(
         setIsInitialized(true);
       } catch (error) {
         console.error("Error loading data:", error);
-        // Removing toast here to only show notifications on explicit user action
+        // No toast notifications on load error
       } finally {
         setIsLoading(false);
       }
@@ -161,7 +161,7 @@ export function useEntityData<T extends Record<string, any>>(
     const autoSaveTimeout = setTimeout(() => {
       if (hasUnsavedChanges() && checkRequiredFields(data, dataType)) {
         console.log(`Auto-saving data (${dataType}) because changes detected and required fields present`);
-        // Pass false to prevent showing toasts on auto-save
+        // Always pass false to prevent showing toasts on auto-save
         saveData(false);
       }
     }, 1500);

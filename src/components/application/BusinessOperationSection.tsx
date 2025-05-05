@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -90,9 +89,7 @@ const BusinessOperationSection = () => {
       };
       
       await businessOperationsService.saveBusinessOperations(businessOperationsData);
-      
-      // Only show toast notification if explicitly requested
-      // Toast will now be handled by the Next button in Applications.tsx
+      // No toasts here - they'll be shown by the parent component when needed
     } catch (error) {
       console.error("Error saving business operations:", error);
     } finally {
@@ -141,7 +138,7 @@ const BusinessOperationSection = () => {
     setPropertyOwned(checked);
   };
 
-  // Update values and save on input blur - but don't show toast
+  // Update values and save on input blur - but never show toast
   const handleInputBlur = () => {
     handleSaveBusinessOperations(false);
   };
