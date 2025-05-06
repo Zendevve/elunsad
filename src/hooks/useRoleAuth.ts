@@ -50,19 +50,10 @@ export function useRoleAuth() {
         
         setRoles(userRoles);
         
-        // Check if admin using security definer function
-        const { data: isAdmin, error: adminError } = await supabase.rpc('check_user_role', {
-          user_id: user.id,
-          role_name: 'office_staff'
-        });
-        
-        if (adminError) {
-          console.error("Error checking admin status:", adminError);
-          throw adminError;
-        }
-        
-        console.log("Admin status determined:", isAdmin);
-        setIsAdminUser(!!isAdmin);
+        // Check if admin using direct query instead of RPC
+        const isAdmin = userRoles.includes('office_staff');
+        console.log("Admin status determined using direct check:", isAdmin);
+        setIsAdminUser(isAdmin);
       } else {
         console.log("No user found, clearing roles");
         setRoles([]);
@@ -116,11 +107,13 @@ export function useRoleAuth() {
     if (!userId) return false;
     
     try {
-      // Use security definer function to check role
-      const { data, error } = await supabase.rpc('check_user_role', {
-        user_id: userId,
-        role_name: role
-      });
+      // Use direct query instead of RPC
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', role)
+        .maybeSingle();
       
       if (error) {
         console.error("Error checking role:", error);

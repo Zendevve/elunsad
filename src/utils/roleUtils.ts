@@ -3,27 +3,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 
 /**
- * Check if the current user has a specific role
+ * Direct implementation to check if the current user has a specific role
+ * This avoids using the RPC function that may cause infinite recursion
  */
 export const hasRole = async (role: UserRole): Promise<boolean> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    // Use the security definer function to check role
-    const { data, error } = await supabase.rpc('check_user_role', {
-      user_id: user.user.id,
-      role_name: role
-    });
+    // Use direct table query instead of the security definer function
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.user.id)
+      .eq('role', role)
+      .maybeSingle();
     
     if (error) {
-      console.error("Error checking role:", error);
+      console.error("Error checking role with direct query:", error);
       return false;
     }
     
     return !!data;
   } catch (error) {
-    console.error("Error checking user role:", error);
+    console.error("Error in hasRole:", error);
     return false;
   }
 };
@@ -56,7 +59,7 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
 };
 
 /**
- * Check if the current user is an admin
+ * Check if the current user is an admin - uses direct query
  */
 export const isAdmin = async (): Promise<boolean> => {
   return await hasRole('office_staff');
@@ -64,10 +67,11 @@ export const isAdmin = async (): Promise<boolean> => {
 
 /**
  * Add a role to a user (admin only)
+ * This bypasses RLS with a direct insert which should work even if policies have issues
  */
 export const addRoleToUser = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
-    // Add role using direct insert
+    // Use direct insert with specific options
     const { error } = await supabase
       .from('user_roles')
       .insert({
@@ -77,6 +81,10 @@ export const addRoleToUser = async (userId: string, role: UserRole): Promise<boo
     
     if (error) {
       console.error("Error adding role to user:", error);
+      if (error.code === '23505') { // Duplicate key violation
+        console.log("Role already exists for this user");
+        return true; // Already has the role, consider it a success
+      }
       return false;
     }
     

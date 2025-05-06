@@ -4,6 +4,7 @@ import { UserRole } from "@/types/auth";
 
 /**
  * Determines the redirect route based on user roles and redirects to the appropriate dashboard
+ * Using direct database query instead of RPC to avoid infinite recursion
  * @param userId The authenticated user ID
  * @returns Promise with the target route
  */
@@ -11,17 +12,20 @@ export const determineUserRoute = async (userId: string): Promise<string> => {
   try {
     console.log("Determining route for user:", userId);
     
-    // Use the security definer function to check admin role
-    const { data: isAdmin, error } = await supabase.rpc('check_user_role', {
-      user_id: userId,
-      role_name: 'office_staff' 
-    });
+    // Use direct query instead of RPC
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'office_staff')
+      .maybeSingle();
     
     if (error) {
       console.error("Error checking user roles:", error);
       return '/dashboard'; // Default to user dashboard on error
     }
     
+    const isAdmin = !!data;
     console.log("User admin status:", isAdmin);
     
     // Return the appropriate route

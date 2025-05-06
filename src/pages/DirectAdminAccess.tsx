@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, AlertTriangle, Code } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getUserRoles, addRoleToUser } from '@/utils/roleUtils';
 
 const DirectAdminAccess: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const DirectAdminAccess: React.FC = () => {
   const [hasAdminRole, setHasAdminRole] = useState(false);
   const [isAddingRole, setIsAddingRole] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSqlCommand, setShowSqlCommand] = useState(false);
   
   // Check if user is logged in and get roles
   useEffect(() => {
@@ -38,19 +40,10 @@ const DirectAdminAccess: React.FC = () => {
         
         // Check admin role using direct query
         try {
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', data.user.id)
-            .eq('role', 'office_staff')
-            .maybeSingle();
-          
-          if (roleError) {
-            console.error("Error checking admin status:", roleError);
-          } else {
-            setHasAdminRole(!!roleData);
-            console.log("User has admin role:", !!roleData);
-          }
+          const roles = await getUserRoles();
+          const isAdmin = roles.includes('office_staff');
+          setHasAdminRole(isAdmin);
+          console.log("User has admin role:", isAdmin);
         } catch (error) {
           console.error("Error in role check:", error);
         }
@@ -79,45 +72,19 @@ const DirectAdminAccess: React.FC = () => {
       setIsAddingRole(true);
       setError(null);
       
-      // Use a more direct SQL-based approach with RPC to avoid recursion issues
-      // Try a different approach - use a service_role key function if available
-      // or direct insert with specific connection settings
-      console.log("Attempting to add admin role for user:", userId);
+      // Use our utility function which handles errors better
+      const success = await addRoleToUser(userId, 'office_staff');
       
-      // First approach: direct insert with specific options
-      const { data, error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: 'office_staff'
-        });
-      
-      if (error) {
-        console.error("Error adding admin role:", error);
+      if (!success) {
+        // Show manual SQL workaround immediately for any error
+        setError("Could not add admin role automatically. This is likely due to the infinite recursion issue in the RLS policies. Please use the SQL workaround below.");
+        setShowSqlCommand(true);
         
-        if (error.message.includes("recursion")) {
-          setError("Recursion error detected. Please use the provided workaround.");
-          
-          toast({
-            title: "Permission Error",
-            description: "There's a recursion issue in the database policy. Try using SQL Editor in Supabase dashboard.",
-            variant: "destructive"
-          });
-        } else if (error.code === '23505') { // Duplicate key violation
-          toast({
-            title: "Role already exists",
-            description: "You already have the admin role",
-            variant: "default"
-          });
-          setHasAdminRole(true);
-        } else {
-          setError(error.message);
-          toast({
-            title: "Error adding role",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
+        toast({
+          title: "Error adding role",
+          description: "Please use the SQL workaround displayed below",
+          variant: "destructive"
+        });
       } else {
         console.log("Admin role added successfully");
         setHasAdminRole(true);
@@ -130,9 +97,13 @@ const DirectAdminAccess: React.FC = () => {
     } catch (error) {
       console.error("Error:", error);
       setError(error instanceof Error ? error.message : "Unknown error occurred");
+      
+      // Show SQL workaround for all errors
+      setShowSqlCommand(true);
+      
       toast({
         title: "Error occurred",
-        description: "Could not add admin role",
+        description: "Could not add admin role automatically. Try the SQL workaround.",
         variant: "destructive"
       });
     } finally {
@@ -140,13 +111,18 @@ const DirectAdminAccess: React.FC = () => {
     }
   };
 
+  // Function to show the SQL workaround
   const showWorkaround = () => {
+    setShowSqlCommand(true);
     setError(
-      `To manually add an admin role, run this SQL in the Supabase SQL Editor:
-      
-INSERT INTO public.user_roles (user_id, role)
-VALUES ('${userId}', 'office_staff');`
+      `To manually add an admin role, run this SQL in the Supabase SQL Editor:`
     );
+  };
+
+  // SQL command text
+  const getSqlCommandText = () => {
+    return `INSERT INTO public.user_roles (user_id, role)
+VALUES ('${userId}', 'office_staff');`;
   };
 
   return (
@@ -187,38 +163,47 @@ VALUES ('${userId}', 'office_staff');`
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>Error Detected</AlertTitle>
                   <AlertDescription>
-                    <div className="space-y-2">
-                      <p>{error}</p>
-                      {error.includes("recursion") && (
-                        <Button 
-                          variant="outline"
-                          size="sm"
-                          onClick={showWorkaround}
-                        >
-                          Show SQL Workaround
-                        </Button>
-                      )}
-                    </div>
+                    <p className="mb-2">{error}</p>
                   </AlertDescription>
                 </Alert>
               )}
               
+              {showSqlCommand && (
+                <div className="bg-black text-green-400 p-4 rounded font-mono text-sm overflow-x-auto">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white text-xs">SQL Command</span>
+                    <Code className="h-4 w-4 text-white" />
+                  </div>
+                  {getSqlCommandText()}
+                </div>
+              )}
+              
               {!hasAdminRole && (
-                <Button 
-                  className="w-full" 
-                  variant="default"
-                  onClick={addAdminRole}
-                  disabled={isAddingRole}
-                >
-                  {isAddingRole ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      <span>Adding Admin Role...</span>
-                    </>
-                  ) : (
-                    'Grant Admin Role to Current User'
-                  )}
-                </Button>
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full" 
+                    variant="default"
+                    onClick={addAdminRole}
+                    disabled={isAddingRole}
+                  >
+                    {isAddingRole ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <span>Adding Admin Role...</span>
+                      </>
+                    ) : (
+                      'Grant Admin Role to Current User'
+                    )}
+                  </Button>
+                  
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    onClick={showWorkaround}
+                  >
+                    Show SQL Workaround
+                  </Button>
+                </div>
               )}
               
               {hasAdminRole && (
