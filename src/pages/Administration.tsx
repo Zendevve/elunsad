@@ -105,6 +105,50 @@ const permitData = [
   },
 ];
 
+// Sample audit logs data
+const auditLogs = [
+  {
+    id: "log-001",
+    action: "Permit Approved",
+    user: "Maria Rodriguez",
+    target: "BP-2023-0892",
+    timestamp: "2023-06-02 14:23:45",
+    details: "Business permit for Sunshine Retail Store was approved after meeting all requirements."
+  },
+  {
+    id: "log-002",
+    action: "User Created",
+    user: "System Admin",
+    target: "john.smith@example.com",
+    timestamp: "2023-06-01 09:12:30",
+    details: "New user account was created with business owner role."
+  },
+  {
+    id: "log-003",
+    action: "Settings Updated",
+    user: "Admin",
+    target: "System Settings",
+    timestamp: "2023-05-30 16:45:22",
+    details: "Email notification frequency changed from immediate to daily digest."
+  },
+  {
+    id: "log-004",
+    action: "Permit Declined",
+    user: "Carlos Mendez",
+    target: "BP-2023-0754",
+    timestamp: "2023-05-29 11:37:18",
+    details: "Business permit for Tech Solutions Inc. was declined due to missing requirements."
+  },
+  {
+    id: "log-005",
+    action: "User Role Changed",
+    user: "System Admin",
+    target: "sarah.williams@example.com",
+    timestamp: "2023-05-28 10:05:59",
+    details: "User role was updated from business owner to administrator."
+  }
+];
+
 // Stats data
 const statsData = {
   totalPermits: 156,

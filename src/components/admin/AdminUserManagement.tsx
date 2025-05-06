@@ -77,12 +77,14 @@ const AdminUserManagement = () => {
       
       // For each user, fetch their roles
       for (const user of usersData) {
-        const { data: rolesData, error: rolesError } = await supabase.rpc('get_user_roles', {
-          _user_id: user.id
-        });
+        // Get roles directly from the user_roles table
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
         
         if (!rolesError && rolesData) {
-          user.roles = rolesData;
+          user.roles = rolesData.map(r => r.role as UserRole);
         }
       }
       
