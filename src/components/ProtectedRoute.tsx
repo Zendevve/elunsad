@@ -12,17 +12,20 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [authError, setAuthError] = useState<Error | null>(null);
   const location = useLocation();
   const { toast } = useToast();
-  const { isAdmin, isLoading } = useRoleAuth();
+  const { isAdmin, isLoading, error: roleError } = useRoleAuth();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
         setIsAuthenticated(!!data.session);
       } catch (error) {
         console.error('Error checking authentication:', error);
+        setAuthError(error instanceof Error ? error : new Error('Authentication error'));
         setIsAuthenticated(false);
       }
     };
@@ -38,12 +41,34 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
     };
   }, []);
 
+  // Handle authentication error 
+  useEffect(() => {
+    if (authError) {
+      toast({
+        title: 'Authentication Error',
+        description: 'There was an issue verifying your authentication status.',
+        variant: 'destructive',
+      });
+    }
+  }, [authError, toast]);
+
+  // Handle role error
+  useEffect(() => {
+    if (roleError) {
+      toast({
+        title: 'Role Verification Error',
+        description: 'There was an issue verifying your permissions. Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  }, [roleError, toast]);
+
   // Show loading while checking authentication and roles
   if (isAuthenticated === null || (isAuthenticated && adminOnly && isLoading)) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <span className="ml-2 text-lg font-medium">Verifying access...</span>
+        <span className="mt-4 text-lg font-medium">Verifying access...</span>
       </div>
     );
   }
@@ -59,7 +84,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
   }
 
   // If admin only and user is not admin, redirect to dashboard
-  if (adminOnly && !isAdmin) {
+  if (adminOnly && !isAdmin && !isLoading) {
     toast({
       title: 'Access Denied',
       description: 'You do not have permission to access this area',

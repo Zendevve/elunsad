@@ -9,10 +9,12 @@ export function useRoleAuth() {
   const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchUserAndRoles = async () => {
       setIsLoading(true);
+      setError(null);
       
       try {
         // Get the current user
@@ -21,11 +23,11 @@ export function useRoleAuth() {
         if (user) {
           setUserId(user.id);
           
-          // Get the user's roles
+          // Get the user's roles with the updated util function
           const userRoles = await getUserRoles();
           setRoles(userRoles);
           
-          // Check if the user is an admin
+          // Check if the user is an admin with the updated util function
           const adminStatus = await isAdmin();
           setIsAdminUser(adminStatus);
         } else {
@@ -34,6 +36,7 @@ export function useRoleAuth() {
         }
       } catch (error) {
         console.error("Error fetching user roles:", error);
+        setError(error instanceof Error ? error : new Error('Unknown error'));
         setRoles([]);
         setIsAdminUser(false);
       } finally {
@@ -63,7 +66,8 @@ export function useRoleAuth() {
     isBusinessOwner: hasRole('business_owner'),
     hasRole,
     isLoading,
-    userId
+    userId,
+    error
   };
 }
 
