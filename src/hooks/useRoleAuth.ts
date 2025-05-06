@@ -50,10 +50,11 @@ export function useRoleAuth() {
         
         setRoles(userRoles);
         
-        // Check if admin using direct query instead of RPC
-        const isAdmin = userRoles.includes('office_staff');
-        console.log("Admin status determined using direct check:", isAdmin);
-        setIsAdminUser(isAdmin);
+        // Check if admin (office_staff role)
+        const adminStatus = userRoles.includes('office_staff');
+        console.log("Admin status determined:", adminStatus);
+        
+        setIsAdminUser(adminStatus);
       } else {
         console.log("No user found, clearing roles");
         setRoles([]);
@@ -73,8 +74,6 @@ export function useRoleAuth() {
   // Initial fetch and auth state change subscription
   useEffect(() => {
     console.log("useRoleAuth hook initialized");
-    
-    // We need to fetch roles immediately
     fetchUserRoles();
 
     // Listen for auth state changes and update roles accordingly
@@ -103,36 +102,11 @@ export function useRoleAuth() {
     return roles.includes(role);
   }, [roles]);
 
-  const checkRoleAsync = useCallback(async (role: UserRole): Promise<boolean> => {
-    if (!userId) return false;
-    
-    try {
-      // Use direct query instead of RPC
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', role)
-        .maybeSingle();
-      
-      if (error) {
-        console.error("Error checking role:", error);
-        return false;
-      }
-      
-      return !!data;
-    } catch (error) {
-      console.error("Error checking role:", error);
-      return false;
-    }
-  }, [userId]);
-
   return {
     roles,
     isAdmin: isAdminUser,
-    isBusinessOwner: roles.includes('business_owner'),
+    isBusinessOwner: hasRole('business_owner'),
     hasRole,
-    checkRoleAsync,
     isLoading,
     userId,
     error,

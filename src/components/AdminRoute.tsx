@@ -1,41 +1,60 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet, useNavigate } from 'react-router-dom';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Navigate, Outlet } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import useRoleAuth from '@/hooks/useRoleAuth';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 const AdminRoute: React.FC = () => {
-  const { isAdmin, isLoading, refetch, error } = useRoleAuth();
-  const [isChecking, setIsChecking] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
-  // Refresh roles check on mount to ensure we have the latest data
+  // Simplified check for admin status
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        await refetch();
-        setIsChecking(false);
-      } catch (err) {
-        console.error("Error checking admin status:", err);
-        setIsChecking(false);
+        // Get current user session
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (!sessionData.session) {
+          console.log("No authenticated user found");
+          setIsAdmin(false);
+          return;
+        }
+        
+        const userId = sessionData.session.user.id;
+        console.log("Checking admin status for user:", userId);
+        
+        // Direct query to check if user has office_staff role
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('role', 'office_staff')
+          .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
+          console.error("Error checking admin role:", error);
+          setIsAdmin(false);
+          return;
+        }
+        
+        // User is admin if data exists
+        const hasAdminRole = !!data;
+        console.log("User admin status:", hasAdminRole);
+        setIsAdmin(hasAdminRole);
+        
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        setIsAdmin(false);
       }
     };
 
     checkAdminStatus();
-  }, [refetch, retryCount]);
-
-  // Handler for manual retry
-  const handleRetry = () => {
-    setIsChecking(true);
-    setRetryCount(prev => prev + 1);
-  };
+  }, []);
 
   // Show loading while checking admin status
-  if (isLoading || isChecking) {
+  if (isAdmin === null) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -44,56 +63,15 @@ const AdminRoute: React.FC = () => {
     );
   }
 
-  // If there was an error checking admin status, show an error message with retry option
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 w-full max-w-md">
-          <div className="flex items-center mb-4">
-            <AlertTriangle className="h-6 w-6 text-red-500 mr-2" />
-            <h2 className="text-xl font-semibold text-red-700">Admin Access Error</h2>
-          </div>
-          <p className="text-gray-700 mb-4">
-            There was an error verifying your admin privileges. This might be due to the 
-            recursion issue in the database policies.
-          </p>
-          <div className="flex flex-col space-y-3">
-            <Button 
-              variant="default"
-              onClick={handleRetry}
-              className="w-full"
-            >
-              Retry Verification
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/admin-helper')}
-              className="w-full"
-            >
-              Go To Admin Helper
-            </Button>
-            <Button 
-              variant="ghost"
-              onClick={() => navigate('/dashboard')}
-              className="w-full"
-            >
-              Return to Dashboard
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
     toast({
       title: 'Access Denied',
-      description: 'You do not have permission to access the admin area. Please use the Admin Helper to grant yourself admin access.',
+      description: 'You do not have permission to access the admin area',
       variant: 'destructive',
     });
     
-    return <Navigate to="/admin-helper" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // User is an admin, render the admin layout and routes
