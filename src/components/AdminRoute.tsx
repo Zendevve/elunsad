@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import useRoleAuth from '@/hooks/useRoleAuth';
@@ -11,6 +11,7 @@ const AdminRoute: React.FC = () => {
   const [isChecking, setIsChecking] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Refresh roles check on mount to ensure we have the latest data
   useEffect(() => {
