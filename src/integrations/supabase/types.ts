@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       applications: {
         Row: {
+          admin_notes: string | null
           application_status: Database["public"]["Enums"]["application_status_enum"]
           application_type: Database["public"]["Enums"]["application_type_enum"]
           created_at: string
@@ -20,6 +21,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
           application_status?: Database["public"]["Enums"]["application_status_enum"]
           application_type: Database["public"]["Enums"]["application_type_enum"]
           created_at?: string
@@ -29,6 +31,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
           application_status?: Database["public"]["Enums"]["application_status_enum"]
           application_type?: Database["public"]["Enums"]["application_type_enum"]
           created_at?: string

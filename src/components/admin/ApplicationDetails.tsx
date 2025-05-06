@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { adminApplicationService } from "@/services/application/adminApplicationService";
@@ -59,6 +60,7 @@ const ApplicationDetails = () => {
       setLoading(true);
       const data = await adminApplicationService.getApplicationDetails(applicationId);
       setApplication(data as DetailedApplicationData);
+      // Check if admin_notes exists before trying to access it
       setAdminNotes(data?.admin_notes || "");
     } catch (error) {
       console.error("Error fetching application details:", error);
@@ -383,6 +385,7 @@ const ApplicationDetails = () => {
           </CardContent>
         </Card>
 
+      {/* Only show admin notes card if application has admin notes */}
       {application.admin_notes && (
         <Card className="col-span-2">
           <CardHeader>
