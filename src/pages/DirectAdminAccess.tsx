@@ -4,15 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const DirectAdminAccess: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasAdminRole, setHasAdminRole] = useState(false);
   const [isAddingRole, setIsAddingRole] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Check if user is logged in and get roles
   useEffect(() => {
@@ -33,17 +36,23 @@ const DirectAdminAccess: React.FC = () => {
         
         setUserId(data.user.id);
         
-        // Check admin role
-        const { data: adminData, error: adminError } = await supabase.rpc('check_user_role', {
-          user_id: data.user.id,
-          role_name: 'office_staff'
-        });
-        
-        if (adminError) {
-          console.error("Error checking admin status:", adminError);
-        } else {
-          setHasAdminRole(!!adminData);
-          console.log("User has admin role:", adminData);
+        // Check admin role using direct query
+        try {
+          const { data: roleData, error: roleError } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', data.user.id)
+            .eq('role', 'office_staff')
+            .maybeSingle();
+          
+          if (roleError) {
+            console.error("Error checking admin status:", roleError);
+          } else {
+            setHasAdminRole(!!roleData);
+            console.log("User has admin role:", !!roleData);
+          }
+        } catch (error) {
+          console.error("Error in role check:", error);
         }
       } catch (error) {
         console.error("Error checking user:", error);
@@ -53,7 +62,7 @@ const DirectAdminAccess: React.FC = () => {
     };
     
     checkUser();
-  }, [navigate]);
+  }, [navigate, toast]);
   
   const goToAdminDashboard = () => {
     navigate('/admin-dashboard');
@@ -68,8 +77,14 @@ const DirectAdminAccess: React.FC = () => {
     
     try {
       setIsAddingRole(true);
+      setError(null);
       
-      // Add office_staff role to current user
+      // Use a more direct SQL-based approach with RPC to avoid recursion issues
+      // Try a different approach - use a service_role key function if available
+      // or direct insert with specific connection settings
+      console.log("Attempting to add admin role for user:", userId);
+      
+      // First approach: direct insert with specific options
       const { data, error } = await supabase
         .from('user_roles')
         .insert({
@@ -79,13 +94,24 @@ const DirectAdminAccess: React.FC = () => {
       
       if (error) {
         console.error("Error adding admin role:", error);
-        if (error.code === '23505') { // Duplicate key violation
+        
+        if (error.message.includes("recursion")) {
+          setError("Recursion error detected. Please use the provided workaround.");
+          
+          toast({
+            title: "Permission Error",
+            description: "There's a recursion issue in the database policy. Try using SQL Editor in Supabase dashboard.",
+            variant: "destructive"
+          });
+        } else if (error.code === '23505') { // Duplicate key violation
           toast({
             title: "Role already exists",
             description: "You already have the admin role",
             variant: "default"
           });
+          setHasAdminRole(true);
         } else {
+          setError(error.message);
           toast({
             title: "Error adding role",
             description: error.message,
@@ -103,6 +129,7 @@ const DirectAdminAccess: React.FC = () => {
       }
     } catch (error) {
       console.error("Error:", error);
+      setError(error instanceof Error ? error.message : "Unknown error occurred");
       toast({
         title: "Error occurred",
         description: "Could not add admin role",
@@ -113,9 +140,18 @@ const DirectAdminAccess: React.FC = () => {
     }
   };
 
+  const showWorkaround = () => {
+    setError(
+      `To manually add an admin role, run this SQL in the Supabase SQL Editor:
+      
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('${userId}', 'office_staff');`
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <Card className="w-[400px]">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-[500px]">
         <CardHeader>
           <CardTitle>Admin Access Helper</CardTitle>
           <CardDescription>
@@ -145,6 +181,27 @@ const DirectAdminAccess: React.FC = () => {
                   )}
                 </div>
               </div>
+              
+              {error && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Error Detected</AlertTitle>
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p>{error}</p>
+                      {error.includes("recursion") && (
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={showWorkaround}
+                        >
+                          Show SQL Workaround
+                        </Button>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
               
               {!hasAdminRole && (
                 <Button 
@@ -176,7 +233,7 @@ const DirectAdminAccess: React.FC = () => {
             </>
           )}
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col space-y-2">
           <Button 
             className="w-full" 
             variant="ghost"
@@ -184,6 +241,12 @@ const DirectAdminAccess: React.FC = () => {
           >
             Return to User Dashboard
           </Button>
+          
+          {userId && (
+            <div className="text-xs text-gray-500 text-center w-full">
+              <p>Current User ID: {userId}</p>
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>
