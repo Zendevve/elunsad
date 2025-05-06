@@ -75,16 +75,13 @@ const AdminUserManagement = () => {
         roles: []
       }));
       
-      // For each user, fetch their roles
+      // For each user, fetch their roles using RPC
       for (const user of usersData) {
-        // Get roles directly from the user_roles table
         const { data: rolesData, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
+          .rpc('get_user_roles', { _user_id: user.id });
         
         if (!rolesError && rolesData) {
-          user.roles = rolesData.map(r => r.role as UserRole);
+          user.roles = rolesData as UserRole[];
         }
       }
       
@@ -340,7 +337,7 @@ const AdminUserManagement = () => {
                           
                           <h3 className="font-medium mb-2">Add Role:</h3>
                           <div className="flex gap-2">
-                            {!selectedUser?.roles.includes('office_staff') && (
+                            {selectedUser && !selectedUser.roles.includes('office_staff') && (
                               <Button 
                                 variant="outline" 
                                 size="sm"
@@ -355,7 +352,7 @@ const AdminUserManagement = () => {
                                 Administrator
                               </Button>
                             )}
-                            {!selectedUser?.roles.includes('business_owner') && (
+                            {selectedUser && !selectedUser.roles.includes('business_owner') && (
                               <Button 
                                 variant="outline" 
                                 size="sm"
