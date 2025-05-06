@@ -74,14 +74,13 @@ const AdminRoute: React.FC = () => {
 
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
-    // Show toast notification when redirecting
-    useEffect(() => {
-      toast({
-        title: 'Access Denied',
-        description: 'You do not have permission to access the admin area',
-        variant: 'destructive',
-      });
-    }, [toast]);
+    // Move the toast notification outside of a useEffect to avoid conditional hook calls
+    // Show toast inline instead
+    toast({
+      title: 'Access Denied',
+      description: 'You do not have permission to access the admin area',
+      variant: 'destructive',
+    });
     
     return <Navigate to="/dashboard" replace />;
   }
