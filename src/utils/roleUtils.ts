@@ -10,12 +10,13 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    // Call the has_role function using RPC
+    // Check if the user has the role using direct query
     const { data, error } = await supabase
-      .rpc('has_role', {
-        _user_id: user.user.id,
-        _role: role
-      });
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', user.user.id)
+      .eq('role', role)
+      .maybeSingle();
     
     if (error) {
       console.error("Error checking role:", error);
@@ -37,11 +38,11 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return [];
     
-    // Get roles using RPC
+    // Get roles using direct query
     const { data, error } = await supabase
-      .rpc('get_user_roles', {
-        _user_id: user.user.id
-      });
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.user.id);
     
     if (error) {
       console.error("Error getting user roles:", error);
@@ -49,7 +50,7 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
     }
     
     // Return the roles
-    return data || [];
+    return data ? data.map(item => item.role as UserRole) : [];
   } catch (error) {
     console.error("Error fetching user roles:", error);
     return [];
@@ -68,11 +69,12 @@ export const isAdmin = async (): Promise<boolean> => {
  */
 export const addRoleToUser = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
-    // Add role using RPC
-    const { data, error } = await supabase
-      .rpc('add_role_to_user', {
-        _user_id: userId,
-        _role: role
+    // Add role using direct insert
+    const { error } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: userId,
+        role: role
       });
     
     if (error) {
@@ -92,12 +94,12 @@ export const addRoleToUser = async (userId: string, role: UserRole): Promise<boo
  */
 export const removeRoleFromUser = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
-    // Remove role using RPC
-    const { data, error } = await supabase
-      .rpc('remove_role_from_user', {
-        _user_id: userId,
-        _role: role
-      });
+    // Remove role using direct delete
+    const { error } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role', role);
     
     if (error) {
       console.error("Error removing role from user:", error);
@@ -116,10 +118,18 @@ export const removeRoleFromUser = async (userId: string, role: UserRole): Promis
  */
 export const makeUserAdmin = async (userId: string): Promise<boolean> => {
   try {
-    // Make user admin using RPC
-    const { data, error } = await supabase
-      .rpc('make_user_admin', {
-        _user_id: userId
+    // First check if this is the first user (check if any user has office_staff role)
+    const { data: adminCount } = await supabase
+      .from('user_roles')
+      .select('id', { count: 'exact' })
+      .eq('role', 'office_staff');
+      
+    // Add admin role using direct insert
+    const { error } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: userId,
+        role: 'office_staff'
       });
     
     if (error) {

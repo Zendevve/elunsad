@@ -4,8 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminUserManagement from "@/components/admin/AdminUserManagement";
 
-// Just a placeholder for now
-const auditLogs = [];
+// Define auditLogs array (empty for now)
+const auditLogs: any[] = [];
 
 const Administration = () => {
   const [activeTab, setActiveTab] = useState("users");
