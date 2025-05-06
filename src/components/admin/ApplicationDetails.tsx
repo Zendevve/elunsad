@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { adminApplicationService } from "@/services/application/adminApplicationService";
@@ -27,12 +26,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ApplicationStatus } from "@/services/application/types";
+import { ApplicationData, ApplicationStatus } from "@/services/application/types";
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
+
+// Define a more comprehensive type for our application data including related entities
+interface DetailedApplicationData extends ApplicationData {
+  business_information?: any;
+  owner_information?: any;
+  business_operations?: any;
+  business_lines?: any[];
+  declarations?: any;
+}
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const [application, setApplication] = useState<any>(null);
+  const [application, setApplication] = useState<DetailedApplicationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingAction, setProcessingAction] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
@@ -50,8 +58,7 @@ const ApplicationDetails = () => {
     try {
       setLoading(true);
       const data = await adminApplicationService.getApplicationDetails(applicationId);
-      setApplication(data);
-      // Check if admin_notes exists before trying to access it
+      setApplication(data as DetailedApplicationData);
       setAdminNotes(data?.admin_notes || "");
     } catch (error) {
       console.error("Error fetching application details:", error);
@@ -376,17 +383,17 @@ const ApplicationDetails = () => {
           </CardContent>
         </Card>
 
-        {/* Only show admin notes if they exist */}
-        {application.admin_notes && (
-          <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle>Admin Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-line">{application.admin_notes}</p>
-            </CardContent>
-          </Card>
-        )}
+      {application.admin_notes && (
+        <Card className="col-span-2">
+          <CardHeader>
+            <CardTitle>Admin Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-line">{application.admin_notes}</p>
+          </CardContent>
+        </Card>
+      )}
+
       </div>
 
       {application.business_information && (
