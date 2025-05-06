@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Status from "./pages/Status";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { ApplicationProvider } from "./contexts/ApplicationContext";
 
 // Placeholder components for routes that haven't been implemented yet
@@ -41,19 +42,29 @@ const App = () => (
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/auth/callback/*" element={<AuthCallback />} />
             
-            {/* Apply Layout to all routes except signin, register and 404 */}
-            <Route element={<Layout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/applications" element={<Applications />} />
-              <Route path="/documents/*" element={<Documents />} />
-              <Route path="/analytics/*" element={<Analytics />} />
-              <Route path="/map" element={<MapView />} />
-              <Route path="/notifications/*" element={<Notifications />} />
-              <Route path="/admin/*" element={<Administration />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/status" element={<Status />} />
+            {/* Public route for landing page */}
+            <Route path="/" element={<Index />} />
+            
+            {/* Protected routes for authenticated users */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<Layout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/applications" element={<Applications />} />
+                <Route path="/documents/*" element={<Documents />} />
+                <Route path="/map" element={<MapView />} />
+                <Route path="/notifications/*" element={<Notifications />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/status" element={<Status />} />
+              </Route>
+            </Route>
+            
+            {/* Admin-only routes */}
+            <Route element={<ProtectedRoute adminOnly={true} />}>
+              <Route element={<Layout />}>
+                <Route path="/admin/*" element={<Administration />} />
+                <Route path="/analytics/*" element={<Analytics />} />
+              </Route>
             </Route>
             
             <Route path="*" element={<NotFound />} />

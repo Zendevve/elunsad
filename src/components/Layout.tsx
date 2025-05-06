@@ -1,28 +1,57 @@
 
-import React, { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Sidebar from "./Sidebar";
 import UserTools from "./UserTools";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import useRoleAuth from "@/hooks/useRoleAuth";
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [userData, setUserData] = useState<any>(null);
   const location = useLocation();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAdmin, isBusinessOwner } = useRoleAuth();
   
   // Determine if we should show the sidebar based on the current path
   const isLandingPage = location.pathname === "/";
   const isAuthPage = location.pathname === "/signin" || location.pathname === "/register";
   const showSidebar = !isLandingPage && !isAuthPage;
 
-  // Mock user data - in a real app, this would come from an auth context
-  const mockUser = {
-    name: "John Doe",
-    avatar: "/placeholder.svg"
-  };
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        setUserData({
+          id: user.id,
+          email: user.email,
+          name: profileData ? `${profileData.firstname} ${profileData.lastname || ''}` : user.email?.split('@')[0],
+          avatar: "/placeholder.svg" // Default avatar
+        });
+      }
+    };
+    
+    fetchUserData();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchUserData();
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
   
   const handleSignOut = async () => {
     try {
@@ -35,7 +64,7 @@ const Layout = () => {
       });
       
       // Navigate to home page after sign out
-      window.location.href = "/";
+      navigate("/");
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
@@ -50,7 +79,12 @@ const Layout = () => {
     <div className="min-h-screen bg-gray-100">
       {/* Sidebar - only show if not on landing page or auth pages */}
       {showSidebar && (
-        <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+        <Sidebar 
+          isSidebarOpen={isSidebarOpen} 
+          setIsSidebarOpen={setIsSidebarOpen} 
+          isAdmin={isAdmin}
+          isBusinessOwner={isBusinessOwner}
+        />
       )}
 
       {/* Main content */}
@@ -71,22 +105,24 @@ const Layout = () => {
               {/* Header actions */}
               <div className="flex items-center space-x-2">
                 {/* Add the UserTools component */}
-                <UserTools 
-                  user={mockUser} 
-                  settings={{
-                    title: "Preferences",
-                    options: [
-                      {
-                        label: "Dark Mode",
-                        action: () => console.log("Toggle dark mode")
-                      },
-                      {
-                        label: "Notifications",
-                        action: () => console.log("Open notification settings")
-                      }
-                    ]
-                  }}
-                />
+                {userData && (
+                  <UserTools 
+                    user={userData} 
+                    settings={{
+                      title: "Preferences",
+                      options: [
+                        {
+                          label: "Dark Mode",
+                          action: () => console.log("Toggle dark mode")
+                        },
+                        {
+                          label: "Notifications",
+                          action: () => console.log("Open notification settings")
+                        }
+                      ]
+                    }}
+                  />
+                )}
                 
                 {/* Sign out button */}
                 <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-gray-600 hover:text-gray-900">

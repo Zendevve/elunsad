@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -55,6 +54,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import AdminUserManagement from "@/components/admin/AdminUserManagement";
 
 // Sample permit data
 const permitData = [
@@ -105,86 +105,6 @@ const permitData = [
   },
 ];
 
-// Sample user data
-const userData = [
-  {
-    id: 1,
-    name: "Jane Cooper",
-    email: "jane.cooper@example.com",
-    role: "Administrator",
-    status: "active",
-    lastActive: "Today, 2:30 PM",
-  },
-  {
-    id: 2,
-    name: "Michael Foster",
-    email: "michael.foster@example.com",
-    role: "Permit Reviewer",
-    status: "active",
-    lastActive: "Today, 11:45 AM",
-  },
-  {
-    id: 3,
-    name: "Dries Vincent",
-    email: "dries.vincent@example.com",
-    role: "Data Analyst",
-    status: "inactive",
-    lastActive: "Yesterday, 4:15 PM",
-  },
-  {
-    id: 4,
-    name: "Lindsay Walton",
-    email: "lindsay.walton@example.com",
-    role: "Support Staff",
-    status: "active",
-    lastActive: "June 8, 10:20 AM",
-  },
-];
-
-// Sample audit logs
-const auditLogs = [
-  {
-    id: 1,
-    action: "Permit Approved",
-    user: "Jane Cooper",
-    target: "BP-2023-0892",
-    timestamp: "Today, 2:30 PM",
-    details: "Approved business permit for Sunshine Retail Store",
-  },
-  {
-    id: 2,
-    action: "User Created",
-    user: "System Admin",
-    target: "Lindsay Walton",
-    timestamp: "June 8, 9:15 AM",
-    details: "Created new user account with Support Staff role",
-  },
-  {
-    id: 3,
-    action: "Settings Changed",
-    user: "Jane Cooper",
-    target: "Notification Settings",
-    timestamp: "June 7, 11:30 AM",
-    details: "Updated email notification frequency to daily",
-  },
-  {
-    id: 4,
-    action: "Permit Declined",
-    user: "Michael Foster",
-    target: "BP-2023-0754",
-    timestamp: "June 7, 9:45 AM",
-    details: "Declined business permit for Tech Solutions Inc. - Missing required documentation",
-  },
-  {
-    id: 5,
-    action: "User Role Changed",
-    user: "Jane Cooper",
-    target: "Michael Foster",
-    timestamp: "June 6, 3:20 PM",
-    details: "Changed role from Support Staff to Permit Reviewer",
-  },
-];
-
 // Stats data
 const statsData = {
   totalPermits: 156,
@@ -195,7 +115,6 @@ const statsData = {
 
 const Administration = () => {
   const [permitFilter, setPermitFilter] = useState("all");
-  const [userFilter, setUserFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Get status badge for permits
@@ -209,18 +128,6 @@ const Administration = () => {
         return <Badge className="bg-destructive">Declined</Badge>;
       case "pending_renewal":
         return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">Pending Renewal</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  // Get status badge for users
-  const getUserStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500">Active</Badge>;
-      case "inactive":
-        return <Badge variant="outline" className="bg-gray-200 text-gray-800">Inactive</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -441,84 +348,10 @@ const Administration = () => {
                       Manage office staff accounts and permissions
                     </CardDescription>
                   </div>
-                  <div>
-                    <Button>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Add User
-                    </Button>
-                  </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex space-x-2">
-                    <Select value={userFilter} onValueChange={setUserFilter}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Roles</SelectItem>
-                        <SelectItem value="administrator">Administrator</SelectItem>
-                        <SelectItem value="reviewer">Permit Reviewer</SelectItem>
-                        <SelectItem value="analyst">Data Analyst</SelectItem>
-                        <SelectItem value="support">Support Staff</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      className="pl-9 w-[300px]" 
-                      placeholder="Search users..." 
-                    />
-                  </div>
-                </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Last Active</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {userData.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.role}</TableCell>
-                        <TableCell>{getUserStatusBadge(user.status)}</TableCell>
-                        <TableCell>{user.lastActive}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="icon">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Lock className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-red-600">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <AdminUserManagement />
               </CardContent>
             </Card>
           </TabsContent>

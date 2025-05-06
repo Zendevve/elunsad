@@ -1,17 +1,21 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, Bell, User, ClipboardList, Settings } from "lucide-react";
+import { 
+  LayoutDashboard, FileText, Bell, User, ClipboardList, Settings,
+  Menu, Users, BarChart4, MapPin
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
+  isAdmin: boolean;
+  isBusinessOwner: boolean;
 }
 
-// Navigation items for both applicants and staff
-const navigation = [
+// Navigation items for business owners
+const businessNavigation = [
   {
     name: 'Dashboard',
     href: '/dashboard',
@@ -45,9 +49,57 @@ const navigation = [
   }
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) => {
+// Navigation items for admin staff
+const adminNavigation = [
+  {
+    name: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard
+  },
+  {
+    name: 'Administration',
+    href: '/admin',
+    icon: Users
+  },
+  {
+    name: 'Analytics',
+    href: '/analytics',
+    icon: BarChart4
+  },
+  {
+    name: 'Map View',
+    href: '/map',
+    icon: MapPin
+  },
+  {
+    name: 'Notifications',
+    href: '/notifications',
+    icon: Bell,
+    badge: 5 // Example for notification count
+  },
+  {
+    name: 'Profile',
+    href: '/profile',
+    icon: User
+  },
+  {
+    name: 'Settings',
+    href: '/settings',
+    icon: Settings
+  }
+];
+
+const Sidebar: React.FC<SidebarProps> = ({ 
+  isSidebarOpen, 
+  setIsSidebarOpen,
+  isAdmin,
+  isBusinessOwner
+}) => {
   const location = useLocation();
   const currentPath = location.pathname;
+  
+  // Choose navigation items based on user role
+  const navigation = isAdmin ? adminNavigation : businessNavigation;
 
   return (
     <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
@@ -91,22 +143,40 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) =>
       </nav>
       
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
-              JD
+        <div className="flex items-center">
+          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+            {isAdmin ? "A" : "U"}
+          </div>
+          <div className="ml-3">
+            <div className="text-sm font-medium">
+              {isAdmin ? "Office Staff" : "Business Owner"}
             </div>
-            <div>
-              <div className="text-sm font-medium">John Doe</div>
-              <div className="text-xs text-gray-500">Business Owner</div>
+            <div className="text-xs text-gray-500">
+              {isAdmin ? "Administrator" : "User"}
             </div>
           </div>
-          <Button variant="ghost" size="sm">
-            <Bell className="h-4 w-4" />
-          </Button>
+          <Badge className="ml-auto" color={isAdmin ? "purple" : "blue"}>
+            {isAdmin ? "Staff" : "User"}
+          </Badge>
         </div>
       </div>
     </div>
+  );
+};
+
+// Simple Badge component
+const Badge = ({ children, color = "blue", className = "" }) => {
+  const colorClasses = {
+    blue: "bg-blue-100 text-blue-800",
+    purple: "bg-purple-100 text-purple-800",
+    green: "bg-green-100 text-green-800",
+    red: "bg-red-100 text-red-800",
+  };
+  
+  return (
+    <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClasses[color]} ${className}`}>
+      {children}
+    </span>
   );
 };
 
