@@ -29,24 +29,32 @@ export function useRoleAuth() {
         
         console.log("Fetching roles for user:", user.id);
         
-        // Check if user is admin using the RPC function
-        const { data: isAdmin, error: adminError } = await supabase.rpc('has_role', {
-          role: 'office_staff'
-        });
-        
-        if (adminError) {
-          console.error("Error checking admin role:", adminError);
-          throw adminError;
+        // Explicitly query user roles from the database
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+          
+        if (roleError) {
+          console.error("Error fetching user roles:", roleError);
+          throw roleError;
         }
         
-        // Set admin status based on RPC result
-        setIsAdminUser(!!isAdmin);
-        console.log("Admin status determined via RPC:", isAdmin);
+        console.log("User role data received:", roleData);
         
-        // For now, we'll set roles based on admin status
-        // In a more complex app, you might want to get all roles
-        const userRoles: UserRole[] = isAdmin ? ['office_staff'] : ['business_owner'];
+        // Extract roles from the data
+        const userRoles: UserRole[] = roleData ? 
+          roleData.map(item => item.role as UserRole) : [];
+          
+        console.log("Parsed user roles:", userRoles);
+        
         setRoles(userRoles);
+        
+        // Check if admin (office_staff role)
+        const adminStatus = userRoles.includes('office_staff');
+        console.log("Admin status determined:", adminStatus);
+        
+        setIsAdminUser(adminStatus);
       } else {
         console.log("No user found, clearing roles");
         setRoles([]);

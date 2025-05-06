@@ -2,14 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
 
-  // Check for admin status
+  // Simplified check for admin status
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
@@ -22,20 +22,24 @@ const AdminRoute: React.FC = () => {
           return;
         }
         
-        console.log("Checking admin status using RPC function");
+        const userId = sessionData.session.user.id;
+        console.log("Checking admin status for user:", userId);
         
-        // Use the RPC function to avoid recursion issues
-        const { data, error } = await supabase.rpc('has_role', {
-          role: 'office_staff'
-        });
+        // Direct query to check if user has office_staff role
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('role', 'office_staff')
+          .single();
         
-        if (error) {
+        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
           console.error("Error checking admin role:", error);
           setIsAdmin(false);
           return;
         }
         
-        // User is admin if data is true
+        // User is admin if data exists
         const hasAdminRole = !!data;
         console.log("User admin status:", hasAdminRole);
         setIsAdmin(hasAdminRole);

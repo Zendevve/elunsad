@@ -3,8 +3,6 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { redirectAfterAuth } from '@/utils/authRedirect';
-import { Loader2 } from 'lucide-react';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -48,9 +46,7 @@ const AuthCallback = () => {
                   title: "Authentication successful",
                   description: "Your email has been confirmed."
                 });
-                
-                // Use central utility to redirect based on role
-                await redirectAfterAuth(navigate);
+                navigate('/dashboard');
               } else {
                 toast({
                   variant: "default",
@@ -64,9 +60,7 @@ const AuthCallback = () => {
                 title: "Authentication successful",
                 description: "Welcome back!"
               });
-              
-              // Use central utility to redirect based on role
-              await redirectAfterAuth(navigate);
+              navigate('/dashboard');
             }
           } else {
             console.log("No session found in callback");
@@ -98,7 +92,6 @@ const AuthCallback = () => {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
         <h2 className="text-2xl font-semibold mb-2">Processing authentication...</h2>
         <p className="text-gray-600">Please wait while we verify your account.</p>
       </div>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -17,7 +18,6 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { redirectAfterAuth } from "@/utils/authRedirect";
 
 // Define validation schema
 const signInSchema = z.object({
@@ -40,8 +40,7 @@ const SignIn = () => {
         const { data } = await supabase.auth.getSession();
         if (data.session) {
           console.log("User already authenticated, determining route");
-          // Using central utility to redirect based on role
-          await redirectAfterAuth(navigate);
+          await determineUserRouteAndRedirect(data.session.user.id);
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
@@ -50,6 +49,43 @@ const SignIn = () => {
     
     checkAuthStatus();
   }, [navigate]);
+
+  // Helper function to determine user route and redirect
+  const determineUserRouteAndRedirect = async (userId: string) => {
+    try {
+      console.log("Checking roles for user:", userId);
+      
+      // Query user roles with explicit logging
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (roleError) {
+        console.error("Error fetching user roles:", roleError);
+        throw roleError;
+      }
+      
+      console.log("Role data received:", roleData);
+      
+      // Check if user has office_staff role
+      const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
+      
+      console.log("Is admin determined to be:", isAdmin);
+      
+      if (isAdmin) {
+        console.log("Redirecting to admin dashboard");
+        navigate('/admin-dashboard');
+      } else {
+        console.log("Redirecting to user dashboard");
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error("Error determining user route:", error);
+      // Default to user dashboard if there's an error
+      navigate('/dashboard');
+    }
+  };
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -96,14 +132,36 @@ const SignIn = () => {
 
       const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
       
-      // Show success message
+      // Check the user's role with explicit query
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authData.user.id);
+      
+      if (roleError) {
+        console.error("Error fetching user roles:", roleError);
+      }
+      
+      // Log the actual role data for debugging
+      console.log("User role data:", roleData);
+      
+      const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
+      console.log("Is user admin?", isAdmin);
+      
+      // Show success message with role information
       toast({
         title: "Sign in successful",
-        description: `Welcome back, ${firstname}!`,
+        description: `Welcome back, ${firstname}! ${isAdmin ? '(Admin Access)' : ''}`,
       });
       
-      // Using central utility to redirect based on role
-      await redirectAfterAuth(navigate);
+      // Redirect based on user role
+      if (isAdmin) {
+        console.log("Redirecting admin to admin dashboard");
+        navigate('/admin-dashboard');
+      } else {
+        console.log("Redirecting user to dashboard");
+        navigate('/dashboard');
+      }
       
     } catch (error) {
       console.error("Sign in error:", error);
