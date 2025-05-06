@@ -11,17 +11,20 @@ export const determineUserRoute = async (userId: string): Promise<string> => {
   try {
     console.log("Determining route for user:", userId);
     
-    // Use the new security definer function to check admin role
-    const { data: isAdmin, error: roleError } = await supabase.rpc('check_user_role', {
-      user_id: userId,
-      role: 'office_staff'
-    });
+    // Check admin role using direct query instead of RPC
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'office_staff')
+      .maybeSingle();
     
-    if (roleError) {
-      console.error("Error checking user roles:", roleError);
+    if (error) {
+      console.error("Error checking user roles:", error);
       return '/dashboard'; // Default to user dashboard on error
     }
     
+    const isAdmin = !!data; // If we got a result, user has admin role
     console.log("User admin status:", isAdmin);
     
     // Return the appropriate route
