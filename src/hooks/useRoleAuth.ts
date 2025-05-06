@@ -18,21 +18,33 @@ export function useRoleAuth() {
     
     try {
       // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        throw userError;
+      }
       
       if (user) {
         setUserId(user.id);
+        
+        console.log("Fetching roles for user:", user.id);
         
         // Get the user's roles with the updated util function
         const userRoles = await getUserRoles();
         setRoles(userRoles);
         
+        console.log("User roles from hook:", userRoles);
+        
         // Check if the user is an admin with the updated util function
         const adminStatus = await checkIsAdmin();
         setIsAdminUser(adminStatus);
+        
+        console.log("Admin status from hook:", adminStatus);
       } else {
+        console.log("No user found, clearing roles");
         setRoles([]);
         setIsAdminUser(false);
+        setUserId(null);
       }
     } catch (error) {
       console.error("Error fetching user roles:", error);
@@ -45,10 +57,12 @@ export function useRoleAuth() {
   }, []);
 
   useEffect(() => {
+    console.log("useRoleAuth hook initialized, fetching user and roles");
     fetchUserAndRoles();
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log("Auth state change detected:", event);
       fetchUserAndRoles();
     });
 
@@ -68,7 +82,8 @@ export function useRoleAuth() {
     hasRole,
     isLoading,
     userId,
-    error
+    error,
+    refetch: fetchUserAndRoles
   };
 }
 

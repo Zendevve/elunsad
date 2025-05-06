@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -33,6 +32,53 @@ const SignIn = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Check if user is already authenticated on page load
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        // User is already authenticated, redirect based on their role
+        determineUserRouteAndRedirect(data.session.user.id);
+      }
+    };
+    
+    checkAuthStatus();
+  }, [navigate]);
+
+  // Helper function to determine user route and redirect
+  const determineUserRouteAndRedirect = async (userId: string) => {
+    try {
+      // Explicitly query user roles to determine if admin
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (roleError) {
+        console.error("Error fetching user roles:", roleError);
+        throw roleError;
+      }
+      
+      // Check if user has office_staff role
+      const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
+      
+      console.log("User roles:", roleData);
+      console.log("Is admin:", isAdmin);
+      
+      if (isAdmin) {
+        console.log("Redirecting to admin dashboard");
+        navigate('/admin-dashboard');
+      } else {
+        console.log("Redirecting to user dashboard");
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error("Error determining user route:", error);
+      // Default to user dashboard if there's an error
+      navigate('/dashboard');
+    }
+  };
+
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -45,6 +91,8 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
+      console.log("Attempting sign in with email:", data.email);
+      
       // Sign in with Supabase Auth
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -52,12 +100,16 @@ const SignIn = () => {
       });
 
       if (error) {
+        console.error("Authentication error:", error);
         throw error;
       }
 
       if (!authData.user) {
+        console.error("No user data returned after sign in");
         throw new Error("No user data returned after sign in");
       }
+      
+      console.log("Successfully signed in user:", authData.user.id);
 
       // Fetch user profile from the profiles table
       const { data: profileData, error: profileError } = await supabase
@@ -72,27 +124,38 @@ const SignIn = () => {
 
       const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
       
-      // Check the user's role
-      const { data: roleData } = await supabase
+      // Check the user's role with explicit query
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', authData.user.id);
       
+      if (roleError) {
+        console.error("Error fetching user roles:", roleError);
+      }
+      
+      // Log the actual role data for debugging
+      console.log("User role data:", roleData);
+      
       const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
+      console.log("Is user admin?", isAdmin);
       
       toast({
         title: "Sign in successful",
-        description: `Welcome back, ${firstname}!`,
+        description: `Welcome back, ${firstname}! ${isAdmin ? '(Admin Access)' : ''}`,
       });
       
       // Redirect based on user role
       if (isAdmin) {
+        console.log("Redirecting admin to admin dashboard");
         navigate('/admin-dashboard');
       } else {
+        console.log("Redirecting user to dashboard");
         navigate('/dashboard');
       }
       
     } catch (error) {
+      console.error("Sign in error:", error);
       toast({
         variant: "destructive",
         title: "Sign in failed",
@@ -103,6 +166,7 @@ const SignIn = () => {
     }
   };
 
+  // Rest of the component remains unchanged
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}

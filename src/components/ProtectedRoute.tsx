@@ -81,7 +81,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
     const authMessage = {
       title: 'Authentication Required',
       description: 'Please sign in to access this page',
-      variant: 'destructive',
+      variant: 'destructive' as const, // Fix TS error by using const assertion
     };
     
     // Show authentication required toast
@@ -98,7 +98,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
     const accessDeniedMessage = {
       title: 'Access Denied',
       description: 'You do not have permission to access this area',
-      variant: 'destructive',
+      variant: 'destructive' as const, // Fix TS error by using const assertion
     };
     
     // Show access denied toast
