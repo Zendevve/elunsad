@@ -3,12 +3,13 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminUserManagement from "@/components/admin/AdminUserManagement";
-
-// Define auditLogs array (empty for now)
-const auditLogs: any[] = [];
+import ApplicationReview from "@/components/admin/ApplicationReview";
 
 const Administration = () => {
   const [activeTab, setActiveTab] = useState("users");
+
+  // Define auditLogs array (empty for now)
+  const auditLogs: any[] = [];
 
   return (
     <div className="p-6 space-y-4 max-w-7xl mx-auto">
@@ -39,7 +40,7 @@ const Administration = () => {
               <CardTitle>Application Management</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Application management tools will be available here.</p>
+              <ApplicationReview />
             </CardContent>
           </Card>
         </TabsContent>

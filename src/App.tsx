@@ -24,6 +24,7 @@ import AuthRoute from "./components/AuthRoute";
 import AdminRoute from "./components/AdminRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import DirectAdminAccess from "./pages/DirectAdminAccess";
+import AdminApplicationDetail from "./pages/AdminApplicationDetail";
 import { ApplicationProvider } from "./contexts/ApplicationContext";
 
 // Placeholder components for routes that haven't been implemented yet
@@ -76,6 +77,13 @@ const App = () => (
             <Route path="/admin/*" element={
               <AdminLayout>
                 <Administration />
+              </AdminLayout>
+            } />
+
+            {/* Add route for admin application detail view */}
+            <Route path="/admin/applications/:id" element={
+              <AdminLayout>
+                <AdminApplicationDetail />
               </AdminLayout>
             } />
             

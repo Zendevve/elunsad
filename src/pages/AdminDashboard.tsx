@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { adminApplicationService } from "@/services/application/adminApplicationService";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -16,6 +17,9 @@ const AdminDashboard = () => {
     expiringPermits: 0,
     approvalRate: 0
   });
+  
+  const [recentApplications, setRecentApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Get current date
   const currentDate = new Date();
@@ -25,6 +29,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setLoading(true);
+        
         // Fetch user count
         const { count: userCount, error: userError } = await supabase
           .from('profiles')
@@ -32,21 +38,41 @@ const AdminDashboard = () => {
         
         if (userError) throw userError;
         
-        // In a real app, you'd fetch these values from your database
+        // Fetch application counts
+        const applicationCounts = await adminApplicationService.getApplicationCounts();
+        
+        // Calculate approval rate
+        const totalProcessed = (applicationCounts.approved || 0) + (applicationCounts.rejected || 0);
+        const approvalRate = totalProcessed > 0 
+          ? Math.round((applicationCounts.approved || 0) / totalProcessed * 100) 
+          : 0;
+        
+        // Set statistics
         setStats({
           totalUsers: userCount || 0,
-          pendingApplications: 15,
-          expiringPermits: 8,
-          approvalRate: 78
+          pendingApplications: (applicationCounts.submitted || 0) + (applicationCounts.under_review || 0),
+          expiringPermits: 8, // Placeholder until we implement permit expiry tracking
+          approvalRate: approvalRate
         });
+        
+        // Fetch recent submitted applications
+        const submittedApps = await adminApplicationService.getSubmittedApplications();
+        setRecentApplications(submittedApps.slice(0, 3)); // Get only the 3 most recent
         
       } catch (error) {
         console.error("Error fetching admin stats:", error);
+      } finally {
+        setLoading(false);
       }
     };
     
     fetchStats();
   }, []);
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
 
   return (
     <div className="space-y-6">
@@ -58,13 +84,17 @@ const AdminDashboard = () => {
           <p className="text-gray-600 mt-2">Welcome to the administrator control panel</p>
         </div>
         <div className="mt-4 md:mt-0 flex space-x-3">
-          <Button className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span>Manage Users</span>
+          <Button className="flex items-center gap-2" asChild>
+            <Link to="/admin/users">
+              <Users className="h-4 w-4" />
+              <span>Manage Users</span>
+            </Link>
           </Button>
-          <Button variant="outline" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span>View Reports</span>
+          <Button variant="outline" className="flex items-center gap-2" asChild>
+            <Link to="/admin/applications">
+              <FileText className="h-4 w-4" />
+              <span>Review Applications</span>
+            </Link>
           </Button>
         </div>
       </div>
@@ -135,40 +165,54 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Applications */}
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Recent Applications</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin/applications">View All</Link>
+          </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-start p-3 border-l-4 border-blue-500 bg-blue-50 rounded">
-              <FileText className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
-              <div>
-                <p className="font-medium">New Application Submitted</p>
-                <p className="text-sm text-gray-600">John Smith submitted a new business permit application</p>
-                <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
-              </div>
+          {loading ? (
+            <p className="text-center py-4">Loading recent applications...</p>
+          ) : recentApplications.length === 0 ? (
+            <p className="text-center py-4">No recent applications found.</p>
+          ) : (
+            <div className="space-y-4">
+              {recentApplications.map(app => (
+                <div key={app.id} className="flex items-start p-3 border-l-4 border-blue-500 bg-blue-50 rounded">
+                  <FileText className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <p className="font-medium">
+                        New Application Submitted: {app.business_information?.business_name || `Application #${app.id.substring(0, 8)}`}
+                      </p>
+                      <Button variant="ghost" size="sm" className="h-6" asChild>
+                        <Link to={`/admin/applications/${app.id}`}>View</Link>
+                      </Button>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      {app.owner_information ? 
+                        `From ${app.owner_information.given_name} ${app.owner_information.surname}` : 
+                        "Unknown applicant"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Submitted on {formatDate(app.submission_date)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              
+              {recentApplications.length > 0 && (
+                <div className="mt-4 text-center">
+                  <Link to="/admin/applications">
+                    <Button variant="ghost" className="w-full">View All Applications</Button>
+                  </Link>
+                </div>
+              )}
             </div>
-            
-            <div className="flex items-start p-3 border-l-4 border-green-500 bg-green-50 rounded">
-              <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5" />
-              <div>
-                <p className="font-medium">Application Approved</p>
-                <p className="text-sm text-gray-600">Maria Rodriguez's business permit was approved by Admin</p>
-                <p className="text-xs text-gray-500 mt-1">Yesterday</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start p-3 border-l-4 border-amber-500 bg-amber-50 rounded">
-              <AlertTriangle className="h-5 w-5 text-amber-500 mr-3 mt-0.5" />
-              <div>
-                <p className="font-medium">Document Flagged</p>
-                <p className="text-sm text-gray-600">Business tax certificate for Downtown Café needs verification</p>
-                <p className="text-xs text-gray-500 mt-1">2 days ago</p>
-              </div>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
