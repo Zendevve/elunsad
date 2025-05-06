@@ -32,6 +32,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
 
     checkAuth();
 
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
     });
@@ -75,21 +76,29 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    toast({
-      title: 'Authentication Required',
-      description: 'Please sign in to access this page',
-      variant: 'destructive',
-    });
+    // Use memoized toast to prevent infinite re-rendering
+    useEffect(() => {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to access this page',
+        variant: 'destructive',
+      });
+    }, [toast]);
+    
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
   // If admin only and user is not admin, redirect to dashboard
   if (adminOnly && !isAdmin && !isLoading) {
-    toast({
-      title: 'Access Denied',
-      description: 'You do not have permission to access this area',
-      variant: 'destructive',
-    });
+    // Use memoized toast to prevent infinite re-rendering
+    useEffect(() => {
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access this area',
+        variant: 'destructive',
+      });
+    }, [toast]);
+    
     return <Navigate to="/dashboard" replace />;
   }
 

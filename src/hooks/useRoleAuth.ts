@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 import { getUserRoles, isAdmin as checkIsAdmin } from "@/utils/roleUtils";
@@ -11,39 +11,40 @@ export function useRoleAuth() {
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchUserAndRoles = async () => {
-      setIsLoading(true);
-      setError(null);
+  // Use useCallback to memoize the function and prevent recreation on each render
+  const fetchUserAndRoles = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
       
-      try {
-        // Get the current user
-        const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
         
-        if (user) {
-          setUserId(user.id);
-          
-          // Get the user's roles with the updated util function
-          const userRoles = await getUserRoles();
-          setRoles(userRoles);
-          
-          // Check if the user is an admin with the updated util function
-          const adminStatus = await checkIsAdmin();
-          setIsAdminUser(adminStatus);
-        } else {
-          setRoles([]);
-          setIsAdminUser(false);
-        }
-      } catch (error) {
-        console.error("Error fetching user roles:", error);
-        setError(error instanceof Error ? error : new Error('Unknown error'));
+        // Get the user's roles with the updated util function
+        const userRoles = await getUserRoles();
+        setRoles(userRoles);
+        
+        // Check if the user is an admin with the updated util function
+        const adminStatus = await checkIsAdmin();
+        setIsAdminUser(adminStatus);
+      } else {
         setRoles([]);
         setIsAdminUser(false);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user roles:", error);
+      setError(error instanceof Error ? error : new Error('Unknown error'));
+      setRoles([]);
+      setIsAdminUser(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
     fetchUserAndRoles();
 
     // Listen for auth state changes
@@ -54,11 +55,11 @@ export function useRoleAuth() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserAndRoles]);
 
-  const hasRole = (role: UserRole): boolean => {
+  const hasRole = useCallback((role: UserRole): boolean => {
     return roles.includes(role);
-  };
+  }, [roles]);
 
   return {
     roles,
