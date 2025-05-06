@@ -10,13 +10,11 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    // Check role using direct query instead of RPC
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.user.id)
-      .eq('role', role)
-      .maybeSingle();
+    // Use the security definer function to check role
+    const { data, error } = await supabase.rpc('check_user_role', {
+      user_id: user.user.id,
+      role_name: role
+    });
     
     if (error) {
       console.error("Error checking role:", error);
@@ -117,23 +115,5 @@ export const removeRoleFromUser = async (userId: string, role: UserRole): Promis
  * Make a user an admin (admin only, or first user)
  */
 export const makeUserAdmin = async (userId: string): Promise<boolean> => {
-  try {
-    // Add admin role using direct insert
-    const { error } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: userId,
-        role: 'office_staff'
-      });
-    
-    if (error) {
-      console.error("Error making user admin:", error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Error making user admin:", error);
-    return false;
-  }
+  return await addRoleToUser(userId, 'office_staff');
 };

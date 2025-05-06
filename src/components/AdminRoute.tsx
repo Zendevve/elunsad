@@ -1,59 +1,32 @@
 
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import useRoleAuth from '@/hooks/useRoleAuth';
 
 const AdminRoute: React.FC = () => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { isAdmin, isLoading, refetch } = useRoleAuth();
   const { toast } = useToast();
+  const [isChecking, setIsChecking] = useState(true);
 
-  // Check admin status on component mount
+  // Refresh roles check on mount to ensure we have the latest data
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        // Get current user session
-        const { data: sessionData } = await supabase.auth.getSession();
-        
-        if (!sessionData.session) {
-          console.log("No authenticated user found");
-          setIsAdmin(false);
-          return;
-        }
-        
-        const userId = sessionData.session.user.id;
-        console.log("Checking admin status for user:", userId);
-        
-        // Check role using direct query instead of RPC
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .eq('role', 'office_staff')
-          .maybeSingle();
-        
-        if (error) {
-          console.error("Error checking admin role:", error);
-          setIsAdmin(false);
-          return;
-        }
-        
-        const hasAdminRole = !!data;
-        console.log("User admin status:", hasAdminRole);
-        setIsAdmin(hasAdminRole);
-        
+        await refetch();
+        setIsChecking(false);
       } catch (error) {
         console.error("Error checking admin status:", error);
-        setIsAdmin(false);
+        setIsChecking(false);
       }
     };
 
     checkAdminStatus();
-  }, []);
+  }, [refetch]);
 
   // Show loading while checking admin status
-  if (isAdmin === null) {
+  if (isLoading || isChecking) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

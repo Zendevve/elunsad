@@ -50,22 +50,19 @@ export function useRoleAuth() {
         
         setRoles(userRoles);
         
-        // Check if admin (office_staff role) using direct query
-        const { data: adminData, error: adminError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'office_staff')
-          .maybeSingle();
+        // Check if admin using security definer function
+        const { data: isAdmin, error: adminError } = await supabase.rpc('check_user_role', {
+          user_id: user.id,
+          role_name: 'office_staff'
+        });
         
         if (adminError) {
           console.error("Error checking admin status:", adminError);
           throw adminError;
         }
         
-        const isAdmin = !!adminData;
         console.log("Admin status determined:", isAdmin);
-        setIsAdminUser(isAdmin);
+        setIsAdminUser(!!isAdmin);
       } else {
         console.log("No user found, clearing roles");
         setRoles([]);
@@ -111,17 +108,19 @@ export function useRoleAuth() {
     };
   }, [fetchUserRoles]);
 
-  const hasRole = useCallback(async (role: UserRole): Promise<boolean> => {
+  const hasRole = useCallback((role: UserRole): boolean => {
+    return roles.includes(role);
+  }, [roles]);
+
+  const checkRoleAsync = useCallback(async (role: UserRole): Promise<boolean> => {
     if (!userId) return false;
     
     try {
-      // Check role using direct query
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', role)
-        .maybeSingle();
+      // Use security definer function to check role
+      const { data, error } = await supabase.rpc('check_user_role', {
+        user_id: userId,
+        role_name: role
+      });
       
       if (error) {
         console.error("Error checking role:", error);
@@ -140,6 +139,7 @@ export function useRoleAuth() {
     isAdmin: isAdminUser,
     isBusinessOwner: roles.includes('business_owner'),
     hasRole,
+    checkRoleAsync,
     isLoading,
     userId,
     error,

@@ -19,12 +19,12 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Status from "./pages/Status";
 import Layout from "./components/Layout";
-import AdminLayout from "./components/AdminLayout";
 import AuthRoute from "./components/AuthRoute";
 import AdminRoute from "./components/AdminRoute";
-import AdminDashboard from "./pages/AdminDashboard";
 import DirectAdminAccess from "./pages/DirectAdminAccess";
 import { ApplicationProvider } from "./contexts/ApplicationContext";
+import SimpleAdminLayout from "./components/SimpleAdminLayout";
+import SimpleAdminDashboard from "./pages/SimpleAdminDashboard";
 
 // Placeholder components for routes that haven't been implemented yet
 const Settings = () => <div className="p-6">Settings Page</div>;
@@ -69,21 +69,21 @@ const App = () => (
             {/* Admin routes under AdminRoute protection */}
             <Route element={<AdminRoute />}>
               <Route path="/admin-dashboard" element={
-                <AdminLayout>
-                  <AdminDashboard />
-                </AdminLayout>
+                <SimpleAdminLayout>
+                  <SimpleAdminDashboard />
+                </SimpleAdminLayout>
               } />
               
               <Route path="/admin/*" element={
-                <AdminLayout>
+                <SimpleAdminLayout>
                   <Administration />
-                </AdminLayout>
+                </SimpleAdminLayout>
               } />
               
               <Route path="/analytics/*" element={
-                <AdminLayout>
+                <SimpleAdminLayout>
                   <Analytics />
-                </AdminLayout>
+                </SimpleAdminLayout>
               } />
             </Route>
             
