@@ -15,8 +15,31 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
   const [authError, setAuthError] = useState<Error | null>(null);
   const location = useLocation();
   const { toast } = useToast();
-  const { isAdmin, isLoading, error: roleError } = useRoleAuth();
+  const { isAdmin, isLoading: roleLoading, error: roleError } = useRoleAuth();
 
+  // Handle authentication error - This is now outside conditional rendering
+  useEffect(() => {
+    if (authError) {
+      toast({
+        title: 'Authentication Error',
+        description: 'There was an issue verifying your authentication status.',
+        variant: 'destructive',
+      });
+    }
+  }, [authError, toast]);
+
+  // Handle role error - This is now outside conditional rendering
+  useEffect(() => {
+    if (roleError) {
+      toast({
+        title: 'Role Verification Error',
+        description: 'There was an issue verifying your permissions. Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  }, [roleError, toast]);
+
+  // Authentication check effect
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -42,30 +65,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
     };
   }, []);
 
-  // Handle authentication error 
-  useEffect(() => {
-    if (authError) {
-      toast({
-        title: 'Authentication Error',
-        description: 'There was an issue verifying your authentication status.',
-        variant: 'destructive',
-      });
-    }
-  }, [authError, toast]);
-
-  // Handle role error
-  useEffect(() => {
-    if (roleError) {
-      toast({
-        title: 'Role Verification Error',
-        description: 'There was an issue verifying your permissions. Please try again later.',
-        variant: 'destructive',
-      });
-    }
-  }, [roleError, toast]);
-
   // Show loading while checking authentication and roles
-  if (isAuthenticated === null || (isAuthenticated && adminOnly && isLoading)) {
+  if (isAuthenticated === null || (isAuthenticated && adminOnly && roleLoading)) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -76,28 +77,34 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ adminOnly = false }) =>
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    // Use memoized toast to prevent infinite re-rendering
+    // Use a local variable for authentication message
+    const authMessage = {
+      title: 'Authentication Required',
+      description: 'Please sign in to access this page',
+      variant: 'destructive',
+    };
+    
+    // Show authentication required toast
     useEffect(() => {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access this page',
-        variant: 'destructive',
-      });
-    }, [toast]);
+      toast(authMessage);
+    }, [toast]); // Dependencies array correctly includes toast
     
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
   // If admin only and user is not admin, redirect to dashboard
-  if (adminOnly && !isAdmin && !isLoading) {
-    // Use memoized toast to prevent infinite re-rendering
+  if (adminOnly && !isAdmin && !roleLoading) {
+    // Use a local variable for access denied message
+    const accessDeniedMessage = {
+      title: 'Access Denied',
+      description: 'You do not have permission to access this area',
+      variant: 'destructive',
+    };
+    
+    // Show access denied toast
     useEffect(() => {
-      toast({
-        title: 'Access Denied',
-        description: 'You do not have permission to access this area',
-        variant: 'destructive',
-      });
-    }, [toast]);
+      toast(accessDeniedMessage);
+    }, [toast]); // Dependencies array correctly includes toast
     
     return <Navigate to="/dashboard" replace />;
   }

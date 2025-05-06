@@ -118,12 +118,6 @@ export const removeRoleFromUser = async (userId: string, role: UserRole): Promis
  */
 export const makeUserAdmin = async (userId: string): Promise<boolean> => {
   try {
-    // First check if this is the first user (check if any user has office_staff role)
-    const { data: adminCount } = await supabase
-      .from('user_roles')
-      .select('id', { count: 'exact' })
-      .eq('role', 'office_staff');
-      
     // Add admin role using direct insert
     const { error } = await supabase
       .from('user_roles')
