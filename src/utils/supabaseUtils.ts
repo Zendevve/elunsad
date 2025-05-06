@@ -41,3 +41,25 @@ export const logDatabaseError = (operation: string, error: any, data?: any) => {
     console.error("Data that caused the error:", data);
   }
 };
+
+/**
+ * Extract file path from Supabase storage URL
+ */
+export const extractFilePathFromUrl = (url: string): { bucket: string, path: string } | null => {
+  try {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/');
+    const publicIndex = pathParts.findIndex(part => part === 'public');
+    
+    if (publicIndex !== -1 && pathParts.length > publicIndex + 1) {
+      const bucket = pathParts[publicIndex + 1];
+      const path = pathParts.slice(publicIndex + 2).join('/');
+      return { bucket, path };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error extracting file path from URL:", error);
+    return null;
+  }
+};

@@ -89,5 +89,40 @@ export const declarationService = {
       console.error('Error fetching declaration:', error);
       throw error;
     }
+  },
+
+  async deleteSignatureFile(signatureUrl: string) {
+    try {
+      // Extract the file path from the URL
+      // The URL format is typically: https://{project-ref}.supabase.co/storage/v1/object/public/{bucket}/{filePath}
+      const url = new URL(signatureUrl);
+      const pathParts = url.pathname.split('/');
+      const bucketIndex = pathParts.indexOf('public') + 1;
+      
+      if (bucketIndex > 0 && bucketIndex < pathParts.length) {
+        const bucket = pathParts[bucketIndex];
+        const filePath = pathParts.slice(bucketIndex + 1).join('/');
+        
+        console.log("Deleting signature file:", { bucket, filePath });
+        
+        const { error } = await supabase.storage
+          .from(bucket)
+          .remove([filePath]);
+        
+        if (error) {
+          console.error("Error deleting signature file:", error);
+          return false;
+        }
+        
+        console.log("Signature file deleted successfully");
+        return true;
+      } else {
+        console.error("Invalid signature URL format:", signatureUrl);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting signature file:', error);
+      return false;
+    }
   }
 };

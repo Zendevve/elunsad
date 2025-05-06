@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useApplication } from "@/contexts/ApplicationContext";
-import { SignatureCanvas } from "./SignatureCanvas";
+import { SignatureUpload } from "./SignatureUpload";
 import { declarationService } from "@/services/application";
 import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "./FormSectionWrapper";
@@ -79,15 +79,25 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
     onAgreementChange(isAgreed);
   }, [isAgreed, onAgreementChange]);
 
-  const handleSaveSignature = async (newSignature: string) => {
+  const handleSaveSignature = async (newSignatureUrl: string) => {
     if (!applicationId) {
       console.error("Cannot save signature: applicationId is null");
       return;
     }
     
-    setSignature(newSignature);
-    console.log("Saving signature...");
-    await saveDeclarationData({ signature: newSignature }, false);
+    // If there was a previous signature and we're replacing it, delete the old file
+    if (signature && signature !== newSignatureUrl && newSignatureUrl) {
+      try {
+        await declarationService.deleteSignatureFile(signature);
+      } catch (error) {
+        console.error("Error deleting old signature file:", error);
+        // Continue anyway, as this is not critical
+      }
+    }
+    
+    setSignature(newSignatureUrl);
+    console.log("Saving signature URL:", newSignatureUrl);
+    await saveDeclarationData({ signature: newSignatureUrl }, false);
   };
 
   const handleAgreementChange = async (checked: boolean) => {
@@ -240,10 +250,17 @@ const DeclarationSection = ({ onAgreementChange }: DeclarationSectionProps) => {
         </p>
         
         <div className="border rounded-md p-4">
-          <SignatureCanvas 
-            onSave={handleSaveSignature} 
-            initialSignature={signature} 
-          />
+          {applicationId ? (
+            <SignatureUpload 
+              onSave={handleSaveSignature} 
+              initialSignatureUrl={signature} 
+              applicationId={applicationId}
+            />
+          ) : (
+            <div className="text-center p-4 text-gray-500">
+              Loading application information...
+            </div>
+          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
