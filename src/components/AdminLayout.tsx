@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { 
@@ -18,18 +17,6 @@ const AdminLayout = () => {
   const { toast } = useToast();
   const { isAdmin } = useRoleAuth();
   
-  // If not an admin, redirect to dashboard
-  useEffect(() => {
-    if (!isAdmin) {
-      toast({
-        title: "Access Restricted",
-        description: "You don't have permission to access the admin area",
-        variant: "destructive"
-      });
-      navigate("/dashboard");
-    }
-  }, [isAdmin, navigate, toast]);
-
   // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {

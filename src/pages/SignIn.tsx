@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -35,10 +36,14 @@ const SignIn = () => {
   // Check if user is already authenticated on page load
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        // User is already authenticated, redirect based on their role
-        determineUserRouteAndRedirect(data.session.user.id);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          console.log("User already authenticated, determining route");
+          await determineUserRouteAndRedirect(data.session.user.id);
+        }
+      } catch (error) {
+        console.error("Error checking auth status:", error);
       }
     };
     
@@ -48,7 +53,9 @@ const SignIn = () => {
   // Helper function to determine user route and redirect
   const determineUserRouteAndRedirect = async (userId: string) => {
     try {
-      // Explicitly query user roles to determine if admin
+      console.log("Checking roles for user:", userId);
+      
+      // Query user roles with explicit logging
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -59,11 +66,12 @@ const SignIn = () => {
         throw roleError;
       }
       
+      console.log("Role data received:", roleData);
+      
       // Check if user has office_staff role
       const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
       
-      console.log("User roles:", roleData);
-      console.log("Is admin:", isAdmin);
+      console.log("Is admin determined to be:", isAdmin);
       
       if (isAdmin) {
         console.log("Redirecting to admin dashboard");
@@ -140,6 +148,7 @@ const SignIn = () => {
       const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
       console.log("Is user admin?", isAdmin);
       
+      // Show success message with role information
       toast({
         title: "Sign in successful",
         description: `Welcome back, ${firstname}! ${isAdmin ? '(Admin Access)' : ''}`,

@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
-import { getUserRoles, isAdmin as checkIsAdmin } from "@/utils/roleUtils";
 
 export function useRoleAuth() {
   const [roles, setRoles] = useState<UserRole[]>([]);
@@ -11,8 +10,8 @@ export function useRoleAuth() {
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  // Use useCallback to memoize the function and prevent recreation on each render
-  const fetchUserAndRoles = useCallback(async () => {
+  // Fetch user roles function that can be called as needed
+  const fetchUserRoles = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -21,6 +20,7 @@ export function useRoleAuth() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError) {
+        console.error("Error getting user:", userError);
         throw userError;
       }
       
@@ -29,17 +29,32 @@ export function useRoleAuth() {
         
         console.log("Fetching roles for user:", user.id);
         
-        // Get the user's roles with the updated util function
-        const userRoles = await getUserRoles();
+        // Explicitly query user roles from the database
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+          
+        if (roleError) {
+          console.error("Error fetching user roles:", roleError);
+          throw roleError;
+        }
+        
+        console.log("User role data received:", roleData);
+        
+        // Extract roles from the data
+        const userRoles: UserRole[] = roleData ? 
+          roleData.map(item => item.role as UserRole) : [];
+          
+        console.log("Parsed user roles:", userRoles);
+        
         setRoles(userRoles);
         
-        console.log("User roles from hook:", userRoles);
+        // Check if admin (office_staff role)
+        const adminStatus = userRoles.includes('office_staff');
+        console.log("Admin status determined:", adminStatus);
         
-        // Check if the user is an admin with the updated util function
-        const adminStatus = await checkIsAdmin();
         setIsAdminUser(adminStatus);
-        
-        console.log("Admin status from hook:", adminStatus);
       } else {
         console.log("No user found, clearing roles");
         setRoles([]);
@@ -47,7 +62,7 @@ export function useRoleAuth() {
         setUserId(null);
       }
     } catch (error) {
-      console.error("Error fetching user roles:", error);
+      console.error("Error in useRoleAuth:", error);
       setError(error instanceof Error ? error : new Error('Unknown error'));
       setRoles([]);
       setIsAdminUser(false);
@@ -56,20 +71,32 @@ export function useRoleAuth() {
     }
   }, []);
 
+  // Initial fetch and auth state change subscription
   useEffect(() => {
-    console.log("useRoleAuth hook initialized, fetching user and roles");
-    fetchUserAndRoles();
+    console.log("useRoleAuth hook initialized");
+    fetchUserRoles();
 
-    // Listen for auth state changes
+    // Listen for auth state changes and update roles accordingly
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       console.log("Auth state change detected:", event);
-      fetchUserAndRoles();
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        console.log("User signed in or token refreshed, fetching roles");
+        // Use setTimeout to avoid potential deadlocks with Supabase client
+        setTimeout(() => fetchUserRoles(), 0);
+      } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out, clearing roles");
+        setRoles([]);
+        setIsAdminUser(false);
+        setUserId(null);
+      }
     });
 
     return () => {
+      console.log("Cleaning up auth subscription in useRoleAuth");
       subscription.unsubscribe();
     };
-  }, [fetchUserAndRoles]);
+  }, [fetchUserRoles]);
 
   const hasRole = useCallback((role: UserRole): boolean => {
     return roles.includes(role);
@@ -83,7 +110,7 @@ export function useRoleAuth() {
     isLoading,
     userId,
     error,
-    refetch: fetchUserAndRoles
+    refetch: fetchUserRoles
   };
 }
 

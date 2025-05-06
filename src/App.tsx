@@ -20,7 +20,8 @@ import Dashboard from "./pages/Dashboard";
 import Status from "./pages/Status";
 import Layout from "./components/Layout";
 import AdminLayout from "./components/AdminLayout";
-import ProtectedRoute from "./components/ProtectedRoute";
+import AuthRoute from "./components/AuthRoute";
+import AdminRoute from "./components/AdminRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import { ApplicationProvider } from "./contexts/ApplicationContext";
 
@@ -48,7 +49,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             
             {/* Protected routes for authenticated users */}
-            <Route element={<ProtectedRoute />}>
+            <Route element={<AuthRoute />}>
               <Route element={<Layout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/applications" element={<Applications />} />
@@ -62,11 +63,13 @@ const App = () => (
             </Route>
             
             {/* Admin routes with AdminLayout */}
-            <Route element={<ProtectedRoute adminOnly={true} />}>
-              <Route element={<AdminLayout />}>
-                <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                <Route path="/admin/*" element={<Administration />} />
-                <Route path="/analytics/*" element={<Analytics />} />
+            <Route element={<AuthRoute />}>
+              <Route element={<AdminRoute />}>
+                <Route element={<AdminLayout />}>
+                  <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                  <Route path="/admin/*" element={<Administration />} />
+                  <Route path="/analytics/*" element={<Analytics />} />
+                </Route>
               </Route>
             </Route>
             
