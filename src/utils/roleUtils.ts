@@ -7,16 +7,10 @@ import { UserRole } from "@/types/auth";
  */
 export const hasRole = async (role: UserRole): Promise<boolean> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return false;
-    
-    // Use a direct query to check user role
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('id')
-      .eq('user_id', user.user.id)
-      .eq('role', role)
-      .maybeSingle();
+    // Use RPC function to safely check role
+    const { data, error } = await supabase.rpc('has_role', {
+      role: role
+    });
     
     if (error) {
       console.error("Error checking role:", error);
@@ -38,19 +32,15 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return [];
     
-    // Use direct query to get roles
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.user.id);
+    // For now, determine roles one by one using RPC
+    // This could be optimized with a single RPC call that returns all roles
+    const isAdmin = await hasRole('office_staff');
     
-    if (error) {
-      console.error("Error getting user roles:", error);
-      return [];
-    }
+    const roles: UserRole[] = [];
+    if (isAdmin) roles.push('office_staff');
+    else roles.push('business_owner');
     
-    // Convert results to UserRole array
-    return Array.isArray(data) ? data.map(item => item.role as UserRole) : [];
+    return roles;
   } catch (error) {
     console.error("Error fetching user roles:", error);
     return [];
@@ -117,23 +107,5 @@ export const removeRoleFromUser = async (userId: string, role: UserRole): Promis
  * Make a user an admin (admin only, or first user)
  */
 export const makeUserAdmin = async (userId: string): Promise<boolean> => {
-  try {
-    // Add admin role using direct insert
-    const { error } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: userId,
-        role: 'office_staff'
-      });
-    
-    if (error) {
-      console.error("Error making user admin:", error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Error making user admin:", error);
-    return false;
-  }
+  return await addRoleToUser(userId, 'office_staff');
 };

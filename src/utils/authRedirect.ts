@@ -18,40 +18,47 @@ export const redirectAfterAuth = async (navigate: NavigateFunction): Promise<voi
     }
     
     const userId = sessionData.session.user.id;
-    console.log('Checking role for user:', userId);
+    console.log('User authenticated:', userId);
     
-    // Check if user has admin role
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'office_staff')
-      .single();
+    try {
+      // Use a direct query with a function call to avoid RLS recursion issues
+      const { data, error } = await supabase.rpc('has_role', {
+        role: 'office_staff'
+      });
       
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error checking admin role:', error);
+      if (error) {
+        console.error('Error checking admin role:', error);
+        throw error;
+      }
+      
+      const isAdmin = !!data;
+      console.log('Admin status determined:', isAdmin);
+      
+      if (isAdmin) {
+        console.log('Admin user detected. Redirecting to admin dashboard.');
+        navigate('/admin-dashboard');
+        
+        toast({
+          title: 'Welcome, Administrator',
+          description: 'You have been redirected to the admin dashboard.',
+        });
+      } else {
+        console.log('Regular user detected. Redirecting to user dashboard.');
+        navigate('/dashboard');
+        
+        toast({
+          title: 'Welcome',
+          description: 'You have been redirected to your dashboard.',
+        });
+      }
+    } catch (error) {
+      console.error('Role check error:', error);
+      // Fallback to user dashboard if role check fails
       toast({
         title: 'Role check failed',
-        description: 'Unable to verify your access level. Redirecting to user dashboard.',
+        description: 'Using fallback navigation to user dashboard.',
         variant: 'destructive',
       });
-      navigate('/dashboard');
-      return;
-    }
-    
-    const isAdmin = !!data;
-    console.log('User admin status determined:', isAdmin);
-    
-    if (isAdmin) {
-      console.log('Admin user detected. Redirecting to admin dashboard.');
-      navigate('/admin-dashboard');
-      
-      toast({
-        title: 'Welcome, Administrator',
-        description: 'You have been redirected to the admin dashboard.',
-      });
-    } else {
-      console.log('Regular user detected. Redirecting to user dashboard.');
       navigate('/dashboard');
     }
   } catch (error) {
