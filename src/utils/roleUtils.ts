@@ -10,13 +10,11 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    // Use a direct query to check user role
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('id')
-      .eq('user_id', user.user.id)
-      .eq('role', role)
-      .maybeSingle();
+    // Use the security definer function to check role
+    const { data, error } = await supabase.rpc('check_user_role', {
+      user_id: user.user.id,
+      role
+    });
     
     if (error) {
       console.error("Error checking role:", error);

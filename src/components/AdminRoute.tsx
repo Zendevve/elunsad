@@ -25,13 +25,11 @@ const AdminRoute: React.FC = () => {
         const userId = sessionData.session.user.id;
         console.log("Checking admin status for user:", userId);
         
-        // Direct query to check if user has office_staff role
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('role', 'office_staff')
-          .maybeSingle();
+        // Use the security definer function to safely check role
+        const { data, error } = await supabase.rpc('check_user_role', {
+          user_id: userId,
+          role: 'office_staff'
+        });
         
         if (error) {
           console.error("Error checking admin role:", error);
@@ -39,10 +37,8 @@ const AdminRoute: React.FC = () => {
           return;
         }
         
-        // User is admin if data exists
-        const hasAdminRole = !!data;
-        console.log("User admin status:", hasAdminRole);
-        setIsAdmin(hasAdminRole);
+        console.log("User admin status:", data);
+        setIsAdmin(!!data);
         
       } catch (error) {
         console.error("Error checking admin status:", error);

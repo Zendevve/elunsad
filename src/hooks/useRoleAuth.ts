@@ -50,11 +50,19 @@ export function useRoleAuth() {
         
         setRoles(userRoles);
         
-        // Check if admin (office_staff role)
-        const adminStatus = userRoles.includes('office_staff');
-        console.log("Admin status determined:", adminStatus);
+        // Check if admin (office_staff role) using the security definer function
+        const { data: isAdmin, error: adminError } = await supabase.rpc('check_user_role', {
+          user_id: user.id,
+          role: 'office_staff'
+        });
         
-        setIsAdminUser(adminStatus);
+        if (adminError) {
+          console.error("Error checking admin status:", adminError);
+          throw adminError;
+        }
+        
+        console.log("Admin status determined:", isAdmin);
+        setIsAdminUser(!!isAdmin);
       } else {
         console.log("No user found, clearing roles");
         setRoles([]);
@@ -74,6 +82,8 @@ export function useRoleAuth() {
   // Initial fetch and auth state change subscription
   useEffect(() => {
     console.log("useRoleAuth hook initialized");
+    
+    // We need to fetch roles immediately
     fetchUserRoles();
 
     // Listen for auth state changes and update roles accordingly
@@ -98,14 +108,31 @@ export function useRoleAuth() {
     };
   }, [fetchUserRoles]);
 
-  const hasRole = useCallback((role: UserRole): boolean => {
-    return roles.includes(role);
-  }, [roles]);
+  const hasRole = useCallback(async (role: UserRole): Promise<boolean> => {
+    if (!userId) return false;
+    
+    try {
+      const { data, error } = await supabase.rpc('check_user_role', {
+        user_id: userId,
+        role
+      });
+      
+      if (error) {
+        console.error("Error checking role:", error);
+        return false;
+      }
+      
+      return !!data;
+    } catch (error) {
+      console.error("Error checking role:", error);
+      return false;
+    }
+  }, [userId]);
 
   return {
     roles,
     isAdmin: isAdminUser,
-    isBusinessOwner: hasRole('business_owner'),
+    isBusinessOwner: roles.includes('business_owner'),
     hasRole,
     isLoading,
     userId,
