@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { redirectToUserDashboard } from '@/utils/authRedirect';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -46,7 +47,9 @@ const AuthCallback = () => {
                   title: "Authentication successful",
                   description: "Your email has been confirmed."
                 });
-                navigate('/dashboard');
+
+                // Use our utility function for role-based redirection
+                await redirectToUserDashboard(user.id, navigate);
               } else {
                 toast({
                   variant: "default",

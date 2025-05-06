@@ -9,7 +9,7 @@ const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
 
-  // Simplified check for admin status
+  // Check admin status on component mount
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
@@ -31,9 +31,9 @@ const AdminRoute: React.FC = () => {
           .select('id')
           .eq('user_id', userId)
           .eq('role', 'office_staff')
-          .single();
+          .maybeSingle();
         
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
+        if (error) {
           console.error("Error checking admin role:", error);
           setIsAdmin(false);
           return;

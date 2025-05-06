@@ -66,24 +66,26 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin routes using AdminLayout as a component wrapper */}
-            <Route path="/admin-dashboard" element={
-              <AdminLayout>
-                <AdminDashboard />
-              </AdminLayout>
-            } />
-            
-            <Route path="/admin/*" element={
-              <AdminLayout>
-                <Administration />
-              </AdminLayout>
-            } />
-            
-            <Route path="/analytics/*" element={
-              <AdminLayout>
-                <Analytics />
-              </AdminLayout>
-            } />
+            {/* Admin routes under AdminRoute protection */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin-dashboard" element={
+                <AdminLayout>
+                  <AdminDashboard />
+                </AdminLayout>
+              } />
+              
+              <Route path="/admin/*" element={
+                <AdminLayout>
+                  <Administration />
+                </AdminLayout>
+              } />
+              
+              <Route path="/analytics/*" element={
+                <AdminLayout>
+                  <Analytics />
+                </AdminLayout>
+              } />
+            </Route>
             
             {/* Redirect /admin to /admin-dashboard */}
             <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
