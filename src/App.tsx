@@ -19,7 +19,9 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Status from "./pages/Status";
 import Layout from "./components/Layout";
+import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminDashboard from "./pages/AdminDashboard";
 import { ApplicationProvider } from "./contexts/ApplicationContext";
 
 // Placeholder components for routes that haven't been implemented yet
@@ -59,13 +61,17 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin-only routes */}
+            {/* Admin routes with AdminLayout */}
             <Route element={<ProtectedRoute adminOnly={true} />}>
-              <Route element={<Layout />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin-dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/*" element={<Administration />} />
                 <Route path="/analytics/*" element={<Analytics />} />
               </Route>
             </Route>
+            
+            {/* Redirect /admin to /admin-dashboard */}
+            <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

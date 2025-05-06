@@ -72,13 +72,25 @@ const SignIn = () => {
 
       const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
       
+      // Check the user's role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authData.user.id);
+      
+      const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
+      
       toast({
         title: "Sign in successful",
         description: `Welcome back, ${firstname}!`,
       });
       
-      // Redirect to dashboard
-      navigate('/dashboard');
+      // Redirect based on user role
+      if (isAdmin) {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
       
     } catch (error) {
       toast({
