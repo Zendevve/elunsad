@@ -10,12 +10,13 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    // Use a direct query with no RLS policy triggering
+    // Use a direct query to check user role
     const { data, error } = await supabase
-      .rpc('has_user_role', { 
-        user_id_param: user.user.id,
-        role_param: role
-      });
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', user.user.id)
+      .eq('role', role)
+      .maybeSingle();
     
     if (error) {
       console.error("Error checking role:", error);
@@ -37,9 +38,11 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return [];
     
-    // Use a stored procedure to get roles without recursive RLS
+    // Use direct query to get roles
     const { data, error } = await supabase
-      .rpc('get_user_roles', { user_id_param: user.user.id });
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.user.id);
     
     if (error) {
       console.error("Error getting user roles:", error);
@@ -47,7 +50,7 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
     }
     
     // Convert results to UserRole array
-    return Array.isArray(data) ? data as UserRole[] : [];
+    return Array.isArray(data) ? data.map(item => item.role as UserRole) : [];
   } catch (error) {
     console.error("Error fetching user roles:", error);
     return [];

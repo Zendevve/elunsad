@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
-import { getUserRoles, isAdmin } from "@/utils/roleUtils";
+import { getUserRoles, isAdmin as checkIsAdmin } from "@/utils/roleUtils";
 
 export function useRoleAuth() {
   const [roles, setRoles] = useState<UserRole[]>([]);
@@ -28,7 +28,7 @@ export function useRoleAuth() {
           setRoles(userRoles);
           
           // Check if the user is an admin with the updated util function
-          const adminStatus = await isAdmin();
+          const adminStatus = await checkIsAdmin();
           setIsAdminUser(adminStatus);
         } else {
           setRoles([]);
