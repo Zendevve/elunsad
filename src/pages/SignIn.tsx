@@ -38,7 +38,6 @@ const SignIn = () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         // User is already authenticated, redirect based on their role
-        console.log("User already has session, checking role for redirection");
         determineUserRouteAndRedirect(data.session.user.id);
       }
     };
@@ -49,8 +48,6 @@ const SignIn = () => {
   // Helper function to determine user route and redirect
   const determineUserRouteAndRedirect = async (userId: string) => {
     try {
-      console.log("Determining user route for user ID:", userId);
-      
       // Explicitly query user roles to determine if admin
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
@@ -65,29 +62,20 @@ const SignIn = () => {
       // Check if user has office_staff role
       const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
       
-      console.log("User roles from database:", roleData);
-      console.log("Is user admin based on roles table:", isAdmin);
+      console.log("User roles:", roleData);
+      console.log("Is admin:", isAdmin);
       
       if (isAdmin) {
-        console.log("Redirecting admin user to admin dashboard");
-        toast({
-          title: "Admin Access",
-          description: "You are now logging in as an administrator",
-        });
-        navigate('/admin-dashboard', { replace: true });
+        console.log("Redirecting to admin dashboard");
+        navigate('/admin-dashboard');
       } else {
-        console.log("Redirecting regular user to user dashboard");
-        navigate('/dashboard', { replace: true });
+        console.log("Redirecting to user dashboard");
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error("Error determining user route:", error);
       // Default to user dashboard if there's an error
-      toast({
-        variant: "destructive",
-        title: "Role verification failed",
-        description: "Could not verify your access level. Redirecting to default dashboard.",
-      });
-      navigate('/dashboard', { replace: true });
+      navigate('/dashboard');
     }
   };
 
@@ -136,7 +124,7 @@ const SignIn = () => {
 
       const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
       
-      // Explicitly check if the user is an admin
+      // Check the user's role with explicit query
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -144,22 +132,27 @@ const SignIn = () => {
       
       if (roleError) {
         console.error("Error fetching user roles:", roleError);
-        throw roleError;
       }
       
       // Log the actual role data for debugging
-      console.log("User roles after login:", roleData);
+      console.log("User role data:", roleData);
       
       const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
-      console.log("Is user admin after checking role table:", isAdmin);
+      console.log("Is user admin?", isAdmin);
       
       toast({
         title: "Sign in successful",
         description: `Welcome back, ${firstname}! ${isAdmin ? '(Admin Access)' : ''}`,
       });
       
-      // Use the dedicated function for redirection
-      determineUserRouteAndRedirect(authData.user.id);
+      // Redirect based on user role
+      if (isAdmin) {
+        console.log("Redirecting admin to admin dashboard");
+        navigate('/admin-dashboard');
+      } else {
+        console.log("Redirecting user to dashboard");
+        navigate('/dashboard');
+      }
       
     } catch (error) {
       console.error("Sign in error:", error);

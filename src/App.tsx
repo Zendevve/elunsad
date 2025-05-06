@@ -61,7 +61,7 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin routes with AdminLayout - Make sure adminOnly is true */}
+            {/* Admin routes with AdminLayout */}
             <Route element={<ProtectedRoute adminOnly={true} />}>
               <Route element={<AdminLayout />}>
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
