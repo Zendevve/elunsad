@@ -66,7 +66,7 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin routes with AdminLayout - using simplified direct access */}
+            {/* Admin routes using AdminLayout as a component wrapper */}
             <Route path="/admin-dashboard" element={
               <AdminLayout>
                 <AdminDashboard />
@@ -84,19 +84,6 @@ const App = () => (
                 <Analytics />
               </AdminLayout>
             } />
-            
-            {/* Original admin routes using AdminRoute (kept for reference) */}
-            {/*
-            <Route element={<AuthRoute />}>
-              <Route element={<AdminRoute />}>
-                <Route element={<AdminLayout />}>
-                  <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                  <Route path="/admin/*" element={<Administration />} />
-                  <Route path="/analytics/*" element={<Analytics />} />
-                </Route>
-              </Route>
-            </Route>
-            */}
             
             {/* Redirect /admin to /admin-dashboard */}
             <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />

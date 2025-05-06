@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { 
   Menu, LogOut, ChevronLeft, Settings, Users, BarChart4, 
@@ -10,7 +10,11 @@ import { useToast } from "@/components/ui/use-toast";
 import useRoleAuth from "@/hooks/useRoleAuth";
 import UserTools from "./UserTools";
 
-const AdminLayout = () => {
+interface AdminLayoutProps {
+  children?: ReactNode;
+}
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const navigate = useNavigate();
@@ -198,7 +202,7 @@ const AdminLayout = () => {
         </header>
 
         <main className="p-6">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>
