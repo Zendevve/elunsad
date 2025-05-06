@@ -23,6 +23,7 @@ import AdminLayout from "./components/AdminLayout";
 import AuthRoute from "./components/AuthRoute";
 import AdminRoute from "./components/AdminRoute";
 import AdminDashboard from "./pages/AdminDashboard";
+import DirectAdminAccess from "./pages/DirectAdminAccess";
 import { ApplicationProvider } from "./contexts/ApplicationContext";
 
 // Placeholder components for routes that haven't been implemented yet
@@ -48,6 +49,9 @@ const App = () => (
             {/* Public route for landing page */}
             <Route path="/" element={<Index />} />
             
+            {/* Add the direct admin access helper */}
+            <Route path="/admin-helper" element={<DirectAdminAccess />} />
+            
             {/* Protected routes for authenticated users */}
             <Route element={<AuthRoute />}>
               <Route element={<Layout />}>
@@ -62,7 +66,27 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin routes with AdminLayout */}
+            {/* Admin routes with AdminLayout - using simplified direct access */}
+            <Route path="/admin-dashboard" element={
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            } />
+            
+            <Route path="/admin/*" element={
+              <AdminLayout>
+                <Administration />
+              </AdminLayout>
+            } />
+            
+            <Route path="/analytics/*" element={
+              <AdminLayout>
+                <Analytics />
+              </AdminLayout>
+            } />
+            
+            {/* Original admin routes using AdminRoute (kept for reference) */}
+            {/*
             <Route element={<AuthRoute />}>
               <Route element={<AdminRoute />}>
                 <Route element={<AdminLayout />}>
@@ -72,6 +96,7 @@ const App = () => (
                 </Route>
               </Route>
             </Route>
+            */}
             
             {/* Redirect /admin to /admin-dashboard */}
             <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />

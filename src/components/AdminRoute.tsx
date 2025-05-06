@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -7,40 +7,41 @@ import { Loader2 } from 'lucide-react';
 
 const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Check if user is an admin
+  // Simplified check for admin status
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        // Get current user
-        const { data: userData, error: userError } = await supabase.auth.getUser();
+        // Get current user session
+        const { data: sessionData } = await supabase.auth.getSession();
         
-        if (userError || !userData.user) {
+        if (!sessionData.session) {
           console.log("No authenticated user found");
           setIsAdmin(false);
           return;
         }
         
-        setUserId(userData.user.id);
-        console.log("Checking admin status for user:", userData.user.id);
+        const userId = sessionData.session.user.id;
+        console.log("Checking admin status for user:", userId);
         
-        // Check if user has office_staff role
-        const { data: roleData, error: roleError } = await supabase
+        // Direct query to check if user has office_staff role
+        const { data, error } = await supabase
           .from('user_roles')
-          .select('role')
-          .eq('user_id', userData.user.id)
-          .eq('role', 'office_staff');
+          .select('id')
+          .eq('user_id', userId)
+          .eq('role', 'office_staff')
+          .single();
         
-        if (roleError) {
-          console.error("Error checking admin role:", roleError);
+        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
+          console.error("Error checking admin role:", error);
           setIsAdmin(false);
           return;
         }
         
-        const hasAdminRole = roleData && roleData.length > 0;
-        console.log("User admin status:", hasAdminRole, "Role data:", roleData);
+        // User is admin if data exists
+        const hasAdminRole = !!data;
+        console.log("User admin status:", hasAdminRole);
         setIsAdmin(hasAdminRole);
         
       } catch (error) {
@@ -50,16 +51,6 @@ const AdminRoute: React.FC = () => {
     };
 
     checkAdminStatus();
-    
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      console.log("Auth state changed, rechecking admin status");
-      checkAdminStatus();
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   // Show loading while checking admin status
@@ -74,8 +65,6 @@ const AdminRoute: React.FC = () => {
 
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
-    // Move the toast notification outside of a useEffect to avoid conditional hook calls
-    // Show toast inline instead
     toast({
       title: 'Access Denied',
       description: 'You do not have permission to access the admin area',
