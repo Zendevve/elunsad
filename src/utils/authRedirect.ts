@@ -52,7 +52,7 @@ export const redirectAfterAuth = async (navigate: NavigateFunction): Promise<voi
         });
       }
     } catch (error) {
-      console.error('Role check error:', error);
+      console.error('Role check failed:', error);
       // Fallback to user dashboard if role check fails
       toast({
         title: 'Role check failed',
