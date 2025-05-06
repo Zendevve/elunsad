@@ -9,6 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -43,7 +51,8 @@ const ApplicationDetails = () => {
       setLoading(true);
       const data = await adminApplicationService.getApplicationDetails(applicationId);
       setApplication(data);
-      setAdminNotes(data.admin_notes || "");
+      // Check if admin_notes exists before trying to access it
+      setAdminNotes(data?.admin_notes || "");
     } catch (error) {
       console.error("Error fetching application details:", error);
       toast({
@@ -367,6 +376,7 @@ const ApplicationDetails = () => {
           </CardContent>
         </Card>
 
+        {/* Only show admin notes if they exist */}
         {application.admin_notes && (
           <Card className="col-span-2">
             <CardHeader>

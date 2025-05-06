@@ -1,4 +1,3 @@
-
 export type ApplicationType = 'newApplication' | 'renewalApplication' | 'amendmentApplication';
 export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info';
 export type OwnershipType = 'soleProprietorship' | 'onePersonCorp' | 'partnership' | 'corporation' | 'cooperative';
@@ -11,6 +10,7 @@ export interface ApplicationData {
   user_id: string;
   created_at?: string;
   updated_at?: string;
+  admin_notes?: string;
 }
 
 export interface BusinessInformationData {
