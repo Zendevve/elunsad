@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/utils/toastCompat';
@@ -11,10 +10,7 @@ import {
   businessLinesService,
   declarationService
 } from '@/services/application';
-
-// Application Status and Type enums
-export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info';
-export type ApplicationType = 'newApplication' | 'renewalApplication' | 'amendmentApplication';
+import { ApplicationStatus, ApplicationType, OwnershipType } from '@/services/application/types';
 
 interface ApplicationContextType {
   applicationId: string | null;

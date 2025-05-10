@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 
+// Main implementation as default export
 export default function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -17,10 +18,8 @@ export default function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// For backward compatibility
-export function useDebounce<T>(initialValue: T) {
-  const [value, setValue] = useState<T>(initialValue);
-  
+// Legacy debounce function with different signature (not named useDebounce to avoid duplicate)
+export function createDebounce<T>(initialValue: T) {
   const debounce = (fn: Function, delay: number) => {
     let timeout: number | undefined;
     return (...args: any[]) => {

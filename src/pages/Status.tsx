@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { applicationService } from "@/services/applicationService";
-import { useToast } from "@/components/ui/use-toast";
+import { applicationService } from "@/services/application/applicationService";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, ArrowRight, FileText, Calendar, Info } from "lucide-react";
 
@@ -30,7 +29,6 @@ const Status = () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
         toast({
-          title: "Authentication Required",
           description: "Please sign in to view your applications.",
           variant: "destructive",
         });
@@ -47,18 +45,25 @@ const Status = () => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const apps = await applicationService.getUserApplications();
-      setApplications(apps || []);
+      const { data, error } = await applicationService.getUserApplications(await getCurrentUserId());
+      if (error) throw error;
+      setApplications(data || []);
     } catch (error) {
       console.error("Error fetching applications:", error);
       toast({
-        title: "Failed to Load Applications",
         description: "There was an error loading your applications. Please try again.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to get current user ID
+  const getCurrentUserId = async (): Promise<string> => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw new Error("User not authenticated");
+    return data.user.id;
   };
 
   const getStatusBadgeColor = (status: string) => {

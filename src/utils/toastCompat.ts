@@ -41,4 +41,11 @@ export function toast(titleOrOptions: string | ToastOptions, options?: ToastOpti
   }
 }
 
+// Add useToast hook for compatibility with existing code
+export const useToast = () => {
+  return {
+    toast
+  };
+};
+
 export default toast;

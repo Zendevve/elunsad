@@ -25,7 +25,7 @@ const OwnerInformationSection = () => {
   const [ownerInfo, setOwnerInfo] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const debounced = useDebounce(ownerInfo, 500);
+  const debouncedOwnerInfo = useDebounce(ownerInfo, 500);
 
   // Fetch owner information on component mount
   useEffect(() => {
@@ -98,36 +98,34 @@ const OwnerInformationSection = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [debounced, isLoading, saveOwnerInfo]);
+  }, [debouncedOwnerInfo, isLoading, saveOwnerInfo]);
 
   // Expose validateAndSave function to the window
   useEffect(() => {
-    if (!window.ownerInfoHelpers) {
-      window.ownerInfoHelpers = {};
-    }
+    window.ownerInfoHelpers = {
+      validateAndSave: async () => {
+        // Validate required fields
+        const requiredFields = [
+          'surname', 'given_name', 'age', 'sex',
+          'civil_status', 'nationality', 'owner_street',
+          'owner_barangay', 'owner_city_municipality',
+          'owner_province', 'owner_zip_code'
+        ];
 
-    window.ownerInfoHelpers.validateAndSave = async () => {
-      // Validate required fields
-      const requiredFields = [
-        'surname', 'given_name', 'age', 'sex',
-        'civil_status', 'nationality', 'owner_street',
-        'owner_barangay', 'owner_city_municipality',
-        'owner_province', 'owner_zip_code'
-      ];
+        const missingFields = requiredFields.filter(field => !ownerInfo[field]);
 
-      const missingFields = requiredFields.filter(field => !ownerInfo[field]);
+        if (missingFields.length > 0) {
+          toast({
+            description: "Please complete all required owner information fields before proceeding.",
+            variant: "destructive",
+          });
+          return false;
+        }
 
-      if (missingFields.length > 0) {
-        toast({
-          description: "Please complete all required owner information fields before proceeding.",
-          variant: "destructive",
-        });
-        return false;
+        // Save the information if validation passes
+        await saveOwnerInfo();
+        return true;
       }
-
-      // Save the information if validation passes
-      await saveOwnerInfo();
-      return true;
     };
 
     return () => {

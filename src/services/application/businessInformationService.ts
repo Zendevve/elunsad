@@ -59,7 +59,10 @@ export const businessInformationService = {
             zip_code: data.zip_code,
             telephone_no: data.telephone_no,
             mobile_no: data.mobile_no,
-            email_address: data.email_address
+            email_address: data.email_address,
+            website_url: data.website_url,
+            fb_page_url: data.fb_page_url,
+            business_description: data.business_description
           })
           .eq('application_id', data.application_id)
           .select('*')
@@ -100,7 +103,10 @@ export const businessInformationService = {
             zip_code: data.zip_code,
             telephone_no: data.telephone_no,
             mobile_no: data.mobile_no,
-            email_address: data.email_address
+            email_address: data.email_address,
+            website_url: data.website_url,
+            fb_page_url: data.fb_page_url,
+            business_description: data.business_description
           })
           .select('*')
           .single();
@@ -118,7 +124,6 @@ export const businessInformationService = {
     } catch (error) {
       console.error('Error saving business information:', error);
       toast({
-        title: "Error Saving Data",
         description: "There was a problem saving your business information. Please try again.",
         variant: "destructive",
       });
