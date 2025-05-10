@@ -1,215 +1,182 @@
-import { useState, useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { applicationService } from "@/services/application/applicationService";
-import { useToast } from "@/hooks/use-toast";
+import { useApplication } from "@/contexts/ApplicationContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ArrowRight, FileText, Calendar, Info } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ApplicationStatus } from "@/services/application/types";
 
-interface Application {
-  id: string;
-  application_type: string;
-  application_status: string;
-  submission_date: string;
-  created_at: string;
-  updated_at: string;
-}
-
+// Status page component
 const Status = () => {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const { toast } = useToast();
+  const { applicationId, applicationStatus } = useApplication();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Check authentication status on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        toast({
-          description: "Please sign in to view your applications.",
-          variant: "destructive",
-        });
-        // Redirect to login page
-        window.location.href = "/auth";
-      } else {
-        fetchApplications();
+      try {
+        const { data } = await supabase.auth.getUser();
+        setIsAuthenticated(!!data.user);
+      } catch (error) {
+        console.error("Error checking auth status:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
+
     checkAuth();
   }, []);
 
-  const fetchApplications = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await applicationService.getUserApplications(await getCurrentUserId());
-      if (error) throw error;
-      setApplications(data || []);
-    } catch (error) {
-      console.error("Error fetching applications:", error);
-      toast({
-        description: "There was an error loading your applications. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Helper function to get current user ID
-  const getCurrentUserId = async (): Promise<string> => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw new Error("User not authenticated");
-    return data.user.id;
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "draft":
-        return "bg-gray-500";
-      case "submitted":
-        return "bg-blue-500";
-      case "under_review":
-        return "bg-amber-500";
-      case "approved":
-        return "bg-green-500";
-      case "rejected":
-        return "bg-red-500";
-      case "requires_additional_info":
-        return "bg-purple-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const getApplicationTypeLabel = (type: string) => {
-    switch (type) {
-      case "newApplication":
-        return "New Business";
-      case "renewalApplication":
-        return "Renewal";
-      case "amendmentApplication":
-        return "Amendment";
-      default:
-        return type;
-    }
-  };
-  
-  const getApplicationsByStatus = (status: string) => {
-    if (status === "all") return applications;
-    return applications.filter(app => app.application_status === status);
-  };
-
-  const displayApplications = getApplicationsByStatus(activeTab);
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <nav className="flex text-sm">
-            <Link to="/" className="text-gray-500 hover:text-gray-700 hover:underline transition-colors">
-              Dashboard
-            </Link>
-            <span className="mx-2 text-gray-400">/</span>
-            <span className="text-gray-900">Application Status</span>
-          </nav>
-        </div>
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
+    );
+  }
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Application Status</h1>
+  // If not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Authentication Required</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-center">You need to be logged in to view application status.</p>
+            <div className="flex justify-center">
+              <Button asChild>
+                <Link to="/signin">Go to Login</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // If no application has been submitted
+  if (!applicationId) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md mt-8">
+        <h1 className="text-2xl font-bold mb-6">Application Status</h1>
+        <div className="bg-gray-50 p-6 rounded-md text-center">
+          <p className="text-lg mb-4">You have not submitted any applications yet.</p>
           <Button asChild>
-            <Link to="/applications" className="flex items-center">
-              <FileText className="mr-2 h-4 w-4" />
-              New Application
-            </Link>
+            <Link to="/applications">Start New Application</Link>
           </Button>
         </div>
-        
-        <Tabs defaultValue="all" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="all">All Applications</TabsTrigger>
-            <TabsTrigger value="draft">Draft</TabsTrigger>
-            <TabsTrigger value="submitted">Submitted</TabsTrigger>
-            <TabsTrigger value="under_review">Under Review</TabsTrigger>
-            <TabsTrigger value="requires_additional_info">Requires Info</TabsTrigger>
-            <TabsTrigger value="approved">Approved</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          </TabsList>
+      </div>
+    );
+  }
 
-          <TabsContent value={activeTab} className="mt-0">
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <p>Loading applications...</p>
-              </div>
-            ) : displayApplications.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-                <Info className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-                <p className="text-gray-500 mb-6">
-                  {activeTab === "all" 
-                    ? "You haven't submitted any applications yet. Start by creating a new application."
-                    : `You don't have any applications with ${activeTab.replace("_", " ")} status.`}
-                </p>
-                <Button asChild>
-                  <Link to="/applications">Start New Application</Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {displayApplications.map((app) => (
-                  <Card key={app.id} className="overflow-hidden">
-                    <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b pb-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg">{getApplicationTypeLabel(app.application_type)}</CardTitle>
-                          <CardDescription>Application #{app.id.substring(0, 8)}</CardDescription>
-                        </div>
-                        <Badge className={getStatusBadgeColor(app.application_status)}>
-                          {app.application_status.replace("_", " ")}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-5">
-                      <div className="space-y-3">
-                        <div className="flex items-center text-sm">
-                          <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                          <span className="text-gray-700">Created: {formatDate(app.created_at)}</span>
-                        </div>
-                        {app.submission_date && (
-                          <div className="flex items-center text-sm">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="text-gray-700">Submitted: {formatDate(app.submission_date)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                    <CardFooter className="bg-gray-50 border-t pt-4">
-                      <div className="w-full flex justify-end">
-                        <Button asChild variant="outline" className="w-full sm:w-auto group">
-                          <Link to={`/application/${app.id}`}>
-                            View Details <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
+  // Get status text and color
+  const getStatusDetails = (status: ApplicationStatus | null) => {
+    if (!status) return { text: 'Unknown', color: 'bg-gray-500', textColor: 'text-gray-500' };
+    
+    switch (status) {
+      case 'draft':
+        return { text: 'Draft', color: 'bg-gray-400', textColor: 'text-gray-500' };
+      case 'submitted':
+        return { text: 'Submitted', color: 'bg-blue-400', textColor: 'text-blue-500' };
+      case 'under_review':
+        return { text: 'Under Review', color: 'bg-yellow-400', textColor: 'text-yellow-600' };
+      case 'approved':
+        return { text: 'Approved', color: 'bg-green-400', textColor: 'text-green-500' };
+      case 'rejected':
+        return { text: 'Rejected', color: 'bg-red-400', textColor: 'text-red-500' };
+      case 'requires_additional_info':
+        return { text: 'Additional Info Required', color: 'bg-orange-400', textColor: 'text-orange-500' };
+      default:
+        return { text: 'Unknown', color: 'bg-gray-500', textColor: 'text-gray-500' };
+    }
+  };
+
+  const { text, color, textColor } = getStatusDetails(applicationStatus);
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md mt-8">
+      <h1 className="text-2xl font-bold mb-6">Application Status</h1>
+      
+      <div className="bg-gray-50 p-6 rounded-md">
+        <div className="flex flex-col md:flex-row justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-medium">Application ID</h2>
+            <p className="text-gray-600">{applicationId}</p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <h2 className="text-lg font-medium">Status</h2>
+            <div className="flex items-center mt-1">
+              <div className={`w-3 h-3 rounded-full ${color} mr-2`}></div>
+              <span className={`font-medium ${textColor}`}>{text}</span>
+            </div>
+          </div>
+        </div>
+        
+        <Separator className="my-4" />
+        
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-medium mb-2">What's Next?</h2>
+            {applicationStatus === 'draft' && (
+              <p className="text-gray-600">Please complete and submit your application.</p>
             )}
-          </TabsContent>
-        </Tabs>
+            {applicationStatus === 'submitted' && (
+              <p className="text-gray-600">Your application has been submitted and is pending initial review. You will be notified once the review process begins.</p>
+            )}
+            {applicationStatus === 'under_review' && (
+              <p className="text-gray-600">Your application is currently being reviewed by our team. You will be notified of the results once the review is complete.</p>
+            )}
+            {applicationStatus === 'requires_additional_info' && (
+              <p className="text-gray-600">Additional information is required to process your application. Please check your notifications for details.</p>
+            )}
+            {applicationStatus === 'approved' && (
+              <p className="text-gray-600">Congratulations! Your application has been approved. You will receive further instructions about how to proceed.</p>
+            )}
+            {applicationStatus === 'rejected' && (
+              <p className="text-gray-600">Unfortunately, your application has been declined. Please check your notifications for more information about why it was declined and how you can appeal.</p>
+            )}
+          </div>
+          
+          <div className="pt-4">
+            <h2 className="text-lg font-medium mb-2">Actions</h2>
+            <div className="flex flex-wrap gap-3">
+              {applicationStatus === 'draft' && (
+                <Button asChild>
+                  <Link to="/applications">Continue Application</Link>
+                </Button>
+              )}
+              
+              {applicationStatus === 'requires_additional_info' && (
+                <Button asChild>
+                  <Link to="/applications">Update Application</Link>
+                </Button>
+              )}
+              
+              {applicationStatus === 'rejected' && (
+                <Button variant="outline" asChild>
+                  <Link to="/applications">Create New Application</Link>
+                </Button>
+              )}
+              
+              <Button variant="outline" asChild>
+                <Link to="/notifications">View Notifications</Link>
+              </Button>
+              
+              {applicationStatus === 'approved' && (
+                <Button variant="outline" asChild>
+                  <Link to="/documents">View Documents</Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
