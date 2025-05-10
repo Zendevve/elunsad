@@ -1,4 +1,5 @@
 
+import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -34,9 +35,10 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <BrowserRouter>
-        <ApplicationProvider>
-          <Sonner />
+      <ApplicationProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
           <Routes>
             <Route path="/signin" element={<SignIn />} />
             <Route path="/register" element={<Register />} />
@@ -65,41 +67,39 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin routes - now properly protected with AdminRoute */}
-            <Route element={<AdminRoute />}>
-              <Route path="/admin-dashboard" element={
-                <AdminLayout>
-                  <AdminDashboard />
-                </AdminLayout>
-              } />
-              
-              <Route path="/admin/*" element={
-                <AdminLayout>
-                  <Administration />
-                </AdminLayout>
-              } />
+            {/* Admin routes using AdminLayout as a component wrapper */}
+            <Route path="/admin-dashboard" element={
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            } />
+            
+            <Route path="/admin/*" element={
+              <AdminLayout>
+                <Administration />
+              </AdminLayout>
+            } />
 
-              {/* Add route for admin application detail view */}
-              <Route path="/admin/applications/:id" element={
-                <AdminLayout>
-                  <AdminApplicationDetail />
-                </AdminLayout>
-              } />
-              
-              <Route path="/analytics/*" element={
-                <AdminLayout>
-                  <Analytics />
-                </AdminLayout>
-              } />
-              
-              {/* Redirect /admin to /admin-dashboard */}
-              <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
-            </Route>
+            {/* Add route for admin application detail view */}
+            <Route path="/admin/applications/:id" element={
+              <AdminLayout>
+                <AdminApplicationDetail />
+              </AdminLayout>
+            } />
+            
+            <Route path="/analytics/*" element={
+              <AdminLayout>
+                <Analytics />
+              </AdminLayout>
+            } />
+            
+            {/* Redirect /admin to /admin-dashboard */}
+            <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </ApplicationProvider>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ApplicationProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

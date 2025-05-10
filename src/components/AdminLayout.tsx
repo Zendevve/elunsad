@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import useRoleAuth from "@/hooks/useRoleAuth";
 import UserTools from "./UserTools";
 
@@ -18,6 +18,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { isAdmin } = useRoleAuth();
   
   // Fetch user data
@@ -56,15 +57,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      toast('Successfully signed out', {
+      toast({
+        title: "Successfully signed out",
         description: "You have been logged out of your account"
       });
       
       navigate("/");
     } catch (error) {
       console.error("Error signing out:", error);
-      toast('Sign out failed', {
-        description: "There was a problem signing you out"
+      toast({
+        title: "Sign out failed",
+        description: "There was a problem signing you out",
+        variant: "destructive"
       });
     }
   };
@@ -81,7 +85,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const handleSwitchToUserView = () => {
     navigate('/dashboard');
-    toast('Switched to User View', {
+    toast({
+      title: "Switched to User View",
       description: "You are now viewing the application as a regular user"
     });
   };

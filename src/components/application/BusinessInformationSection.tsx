@@ -1,575 +1,470 @@
-
-import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import FormSectionWrapper from "@/components/application/FormSectionWrapper";
+import FormSectionWrapper from "./FormSectionWrapper";
+import { FormField } from "@/components/ui/form-field";
+import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessInformationService } from "@/services/application";
 import { OwnershipType } from "@/services/application/types";
-
-// Define the schema for Business Information using Zod
-const businessInformationSchema = z.object({
-  business_name: z.string().min(3, { message: "Business name must be at least 3 characters." }),
-  trade_name: z.string().optional(),
-  registration_number: z.string().optional(),
-  tin_number: z.string().min(9, { message: "TIN number must be at least 9 characters." }).max(12, { message: "TIN number must be at most 12 characters." }),
-  sss_number: z.string().optional(),
-  ctc_number: z.string().optional(),
-  ctc_date_issue: z.string().optional(),
-  ctc_place_issue: z.string().optional(),
-  ownership_type: z.string().min(2, { message: "Ownership type must be selected." }),
-  block_no: z.string().optional(),
-  lot_no: z.string().optional(),
-  house_bldg_no: z.string().optional(),
-  building_name: z.string().optional(),
-  street: z.string().min(3, { message: "Street address must be at least 3 characters." }),
-  subdivision: z.string().optional(),
-  barangay: z.string().min(3, { message: "Barangay must be at least 3 characters." }),
-  city_municipality: z.string().min(3, { message: "City/Municipality must be at least 3 characters." }),
-  province: z.string().min(3, { message: "Province must be at least 3 characters." }),
-  zip_code: z.string().min(4, { message: "Zip code must be at least 4 characters." }).max(4, { message: "Zip code must be at most 4 characters." }),
-  telephone_no: z.string().optional(),
-  mobile_no: z.string().min(11, { message: "Mobile number must be at least 11 characters." }).max(11, { message: "Mobile number must be at most 11 characters." }),
-  email_address: z.string().email({ message: "Invalid email address." })
-});
-
-type BusinessInformationValues = z.infer<typeof businessInformationSchema>;
+import { useToast } from "@/hooks/use-toast";
+import { useEntityData } from "@/hooks/useEntityData";
 
 const BusinessInformationSection = () => {
+  const { applicationId, isLoading: isAppLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
-  const [isSaving, setIsSaving] = useState(false);
-  const { applicationId } = useApplication();
-  const [initialValues, setInitialValues] = useState<BusinessInformationValues | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [hasTouchedFields, setHasTouchedFields] = useState(false);
+  
+  // Define initial state for business information form
+  const initialBusinessInfo = {
+    application_id: applicationId || '',
+    business_name: '',
+    trade_name: '',
+    registration_number: '',
+    tin_number: '',
+    sss_number: '',
+    ctc_number: '',
+    ctc_date_issue: '',
+    ctc_place_issue: '',
+    ownership_type: 'soleProprietorship' as OwnershipType,
+    house_bldg_no: '',
+    building_name: '',
+    block_no: '',
+    lot_no: '',
+    street: '',
+    subdivision: '',
+    barangay: '',
+    city_municipality: 'Lucena',
+    province: 'Quezon',
+    zip_code: '',
+    telephone_no: '',
+    mobile_no: '',
+    email_address: ''
+  };
 
-  // Initialize react-hook-form
-  const form = useForm<BusinessInformationValues>({
-    resolver: zodResolver(businessInformationSchema),
-    defaultValues: {
-      business_name: "",
-      trade_name: "",
-      registration_number: "",
-      tin_number: "",
-      sss_number: "",
-      ctc_number: "",
-      ctc_date_issue: "",
-      ctc_place_issue: "",
-      ownership_type: "",
-      block_no: "",
-      lot_no: "",
-      house_bldg_no: "",
-      building_name: "",
-      street: "",
-      subdivision: "",
-      barangay: "",
-      city_municipality: "",
-      province: "",
-      zip_code: "",
-      telephone_no: "",
-      mobile_no: "",
-      email_address: ""
+  // Use our custom hook for loading, updating, and saving data
+  const {
+    data: businessInfo,
+    updateData,
+    saveData,
+    isLoading,
+    hasUnsavedChanges,
+    isInitialized
+  } = useEntityData(
+    businessInformationService.getBusinessInformation,
+    businessInformationService.saveBusinessInformation,
+    applicationId,
+    initialBusinessInfo,
+    () => {
+      // This is the success callback
+      setValidationErrors({});
     },
-    mode: "onChange", // Validate on change
-  });
+    true
+  );
 
-  // Load initial values from the database
+  // Update loading state in parent context when our loading state changes
   useEffect(() => {
-    const loadInitialValues = async () => {
-      if (applicationId) {
-        try {
-          const data = await businessInformationService.getBusinessInformation(applicationId);
-          if (data) {
-            // Convert the loaded data into the expected form values
-            const formValues: BusinessInformationValues = {
-              business_name: data.business_name || "",
-              trade_name: data.trade_name || "",
-              registration_number: data.registration_number || "",
-              tin_number: data.tin_number || "",
-              sss_number: data.sss_number || "",
-              ctc_number: data.ctc_number || "",
-              ctc_date_issue: data.ctc_date_issue || "",
-              ctc_place_issue: data.ctc_place_issue || "",
-              ownership_type: data.ownership_type || "",
-              block_no: data.block_no || "",
-              lot_no: data.lot_no || "",
-              house_bldg_no: data.house_bldg_no || "",
-              building_name: data.building_name || "",
-              street: data.street || "",
-              subdivision: data.subdivision || "",
-              barangay: data.barangay || "",
-              city_municipality: data.city_municipality || "",
-              province: data.province || "",
-              zip_code: data.zip_code || "",
-              telephone_no: data.telephone_no || "",
-              mobile_no: data.mobile_no || "",
-              email_address: data.email_address || ""
-            };
-            
-            // Set the default values for the form
-            form.reset(formValues);
-            setInitialValues(formValues);
-          }
-        } catch (error) {
-          console.error("Error loading business information:", error);
-          toast({
-            description: "There was a problem loading the business information. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }
-    };
+    // Only set parent loading when we're not initialized yet
+    if (!isInitialized) {
+      setIsLoading(isLoading || isAppLoading);
+    } else {
+      // Once initialized, don't block parent navigation with our loading state
+      setIsLoading(isAppLoading);
+    }
+  }, [isLoading, isAppLoading, setIsLoading, isInitialized]);
 
-    loadInitialValues();
-  }, [applicationId, form, toast]);
+  // Required fields validation
+  useEffect(() => {
+    if (!hasTouchedFields) return;
 
-  // Function to handle form submission
-  const onSubmit = async (values: BusinessInformationValues) => {
-    setIsSaving(true);
-    try {
-      if (!applicationId) {
-        throw new Error("Application ID is missing.");
-      }
+    const errors: Record<string, string> = {};
 
-      // Save the business information to the database
-      await businessInformationService.saveBusinessInformation({
-        application_id: applicationId,
-        business_name: values.business_name,
-        trade_name: values.trade_name,
-        registration_number: values.registration_number,
-        tin_number: values.tin_number,
-        sss_number: values.sss_number,
-        ctc_number: values.ctc_number,
-        ctc_date_issue: values.ctc_date_issue,
-        ctc_place_issue: values.ctc_place_issue,
-        ownership_type: values.ownership_type as OwnershipType,
-        block_no: values.block_no,
-        lot_no: values.lot_no,
-        house_bldg_no: values.house_bldg_no,
-        building_name: values.building_name,
-        street: values.street,
-        subdivision: values.subdivision,
-        barangay: values.barangay,
-        city_municipality: values.city_municipality,
-        province: values.province,
-        zip_code: values.zip_code,
-        telephone_no: values.telephone_no,
-        mobile_no: values.mobile_no,
-        email_address: values.email_address
-      });
+    if (!businessInfo.business_name) errors.business_name = "Business name is required";
+    if (!businessInfo.tin_number) errors.tin_number = "TIN is required";
+    if (!businessInfo.street) errors.street = "Street is required";
+    if (!businessInfo.barangay) errors.barangay = "Barangay is required";
+    if (!businessInfo.zip_code) errors.zip_code = "Zip code is required";
+    if (!businessInfo.mobile_no) errors.mobile_no = "Mobile number is required";
+    if (!businessInfo.email_address) errors.email_address = "Email address is required";
 
+    setValidationErrors(errors);
+  }, [businessInfo, hasTouchedFields]);
+
+  // List of barangays in Lucena
+  const barangays = [
+    "Barangay 1 (Poblacion)",
+    "Barangay 2 (Poblacion)",
+    "Barangay 3 (Poblacion)",
+    "Barangay 4 (Poblacion)",
+    "Barangay 5 (Poblacion)",
+    "Barangay 6 (Poblacion)",
+    "Barangay 7 (Poblacion)",
+    "Barangay 8 (Poblacion)",
+    "Barangay 9 (Poblacion)",
+    "Barangay 10 (Poblacion)",
+    "Barra",
+    "Bocohan",
+    "Cotta",
+    "Gulang-Gulang",
+    "Dalahican",
+    "Domoit",
+    "Ibabang Dupay",
+    "Ibabang Iyam",
+    "Ibabang Talim",
+    "Ilayang Dupay",
+    "Ilayang Iyam",
+    "Ilayang Talim",
+    "Isabang",
+    "Market View",
+    "Mayao Castillo",
+    "Mayao Crossing",
+    "Mayao Kanluran",
+    "Mayao Parada",
+    "Mayao Silangan",
+    "Ransohan",
+    "Salinas",
+    "Talao-Talao"
+  ];
+
+  const ownershipOptions = [
+    {
+      value: "soleProprietorship",
+      label: "Sole Proprietorship",
+      description: "Business owned by one person"
+    },
+    {
+      value: "onePersonCorp",
+      label: "One Person Corp",
+      description: "Corporation with a single stockholder"
+    },
+    {
+      value: "partnership",
+      label: "Partnership",
+      description: "Business owned by two or more individuals"
+    },
+    {
+      value: "corporation",
+      label: "Corporation",
+      description: "Business entity with shareholders"
+    },
+    {
+      value: "cooperative",
+      label: "Cooperative",
+      description: "Business owned and run by its members"
+    }
+  ];
+
+  const handleFieldChange = (field: string, value: any) => {
+    if (!hasTouchedFields) {
+      setHasTouchedFields(true);
+    }
+    updateData({ [field]: value });
+  };
+
+  // This function is still needed for validation checks by the parent component
+  const validateAndSave = async () => {
+    console.log("BusinessInfo - Validation and save triggered with data:", businessInfo);
+    
+    // Validate all required fields
+    const errors: Record<string, string> = {};
+    if (!businessInfo.business_name) errors.business_name = "Business name is required";
+    if (!businessInfo.tin_number) errors.tin_number = "TIN is required";
+    if (!businessInfo.street) errors.street = "Street is required";
+    if (!businessInfo.barangay) errors.barangay = "Barangay is required";
+    if (!businessInfo.zip_code) errors.zip_code = "Zip code is required";
+    if (!businessInfo.mobile_no) errors.mobile_no = "Mobile number is required";
+    if (!businessInfo.email_address) errors.email_address = "Email address is required";
+    
+    setValidationErrors(errors);
+    setHasTouchedFields(true);
+    
+    // If there are validation errors, show a toast and don't save
+    if (Object.keys(errors).length > 0) {
       toast({
-        title: "Business Information Saved",
-        description: "Your business information has been saved successfully.",
-      });
-    } catch (error) {
-      console.error("Error saving business information:", error);
-      toast({
-        title: "Failed to save business information",
-        description: "There was a problem saving the business information. Please try again.",
+        title: "Validation Error",
+        description: "Please fill in all required fields before proceeding.",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
+      return false;
+    }
+    
+    try {
+      console.log("BusinessInfo - Silent save during validation, no toast will be shown");
+      // Always pass false here to prevent toasts on validation
+      const result = await saveData(false);
+      return !!result;
+    } catch (error) {
+      console.error("Error in save:", error);
+      return false;
     }
   };
 
-  // Expose a global function to validate and save the form
+  // Expose the validation function for the parent component
+  // The parent will call this before allowing navigation to the next step
   useEffect(() => {
-    window.businessInfoHelpers = {
-      validateAndSave: async () => {
-        try {
-          // Trigger validation
-          const isValid = await form.trigger();
-          if (!isValid) {
-            console.log("Business Info - Validation failed, form has errors");
-            return false;
-          }
-          
-          // If validation passes, submit the form
-          await onSubmit(form.getValues());
-          return true;
-        } catch (error) {
-          console.error("Business Info - Error during validation and save:", error);
-          return false;
-        }
-      },
-    };
-
+    if (!window.businessInfoHelpers) {
+      window.businessInfoHelpers = {
+        validateAndSave: validateAndSave
+      };
+    } else {
+      window.businessInfoHelpers.validateAndSave = validateAndSave;
+    }
+    
     return () => {
-      delete window.businessInfoHelpers;
+      // Cleanup when component unmounts
+      if (window.businessInfoHelpers) {
+        delete window.businessInfoHelpers.validateAndSave;
+      }
     };
-  }, [form]);
+  }, [businessInfo, hasUnsavedChanges]);
 
   return (
-    <FormSectionWrapper
-      title="Business Information"
-      description="Provide detailed information about your business"
+    <FormSectionWrapper 
+      title="Business Information and Registration"
+      description="Enter your business details and registration information"
       stepNumber={2}
     >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Business Name */}
-            <FormField
-              control={form.control}
-              name="business_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Business Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter business name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+      <div className="space-y-8">
+        {/* Business Name and Trade Name */}
+        <div>
+          <h3 className="font-medium text-base mb-3">Business Identification</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField 
+              id="businessName" 
+              label="Business Name"
+              value={businessInfo.business_name}
+              onChange={(e) => handleFieldChange('business_name', e.target.value)}
+              required
+              tooltip="Enter the official registered business name as it appears on your DTI/SEC registration"
+              error={validationErrors.business_name}
             />
-
-            {/* Trade Name */}
-            <FormField
-              control={form.control}
-              name="trade_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Trade Name / Franchise (if applicable)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter trade name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="tradeName" 
+              label="Trade Name / Franchise"
+              value={businessInfo.trade_name}
+              onChange={(e) => handleFieldChange('trade_name', e.target.value)}
+              helperText="Leave blank if same as business name"
+              tooltip="Enter the name you use for your business if different from the registered business name"
             />
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Registration Number */}
-            <FormField
-              control={form.control}
-              name="registration_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>DTI/SEC/CDA Registration Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter registration number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        {/* Registration Numbers */}
+        <div>
+          <h3 className="font-medium text-base mb-3">Registration Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+            <FormField 
+              id="dtiSecCdaNumber" 
+              label="DTI/SEC/CDA Registration No."
+              value={businessInfo.registration_number}
+              onChange={(e) => handleFieldChange('registration_number', e.target.value)}
+              tooltip="Enter your Department of Trade and Industry, Securities and Exchange Commission, or Cooperative Development Authority registration number"
             />
-
-            {/* TIN Number */}
-            <FormField
-              control={form.control}
-              name="tin_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>TIN Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter TIN number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="tinNumber" 
+              label="Tax Identification Number"
+              value={businessInfo.tin_number}
+              onChange={(e) => handleFieldChange('tin_number', e.target.value)}
+              required
+              placeholder="XXX-XXX-XXX-XXX"
+              tooltip="Enter your 12-digit Tax Identification Number from BIR"
+              error={validationErrors.tin_number}
             />
-
-            {/* SSS Number */}
-            <FormField
-              control={form.control}
-              name="sss_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Social Security System (SSS) Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter SSS number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="sssNumber" 
+              label="SSS Number"
+              value={businessInfo.sss_number}
+              onChange={(e) => handleFieldChange('sss_number', e.target.value)}
+              placeholder="XX-XXXXXXX-X"
+              tooltip="Enter your Social Security System employer number"
             />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* CTC Number */}
-            <FormField
-              control={form.control}
-              name="ctc_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CTC Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter CTC number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          
+          {/* CTC Information - New Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FormField 
+              id="ctcNumber" 
+              label="CTC Number"
+              value={businessInfo.ctc_number}
+              onChange={(e) => handleFieldChange('ctc_number', e.target.value)}
+              tooltip="Enter your Community Tax Certificate (CTC) number"
             />
-
-            {/* CTC Date Issue */}
-            <FormField
-              control={form.control}
-              name="ctc_date_issue"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CTC Date of Issue</FormLabel>
-                  <FormControl>
-                    <Input placeholder="YYYY-MM-DD" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="ctcDateIssue" 
+              label="CTC Date of Issue"
+              value={businessInfo.ctc_date_issue}
+              onChange={(e) => handleFieldChange('ctc_date_issue', e.target.value)}
+              tooltip="Enter the date when your CTC was issued"
+              type="date"
             />
-
-            {/* CTC Place Issue */}
-            <FormField
-              control={form.control}
-              name="ctc_place_issue"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CTC Place of Issue</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter place of issue" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="ctcPlaceIssue" 
+              label="CTC Place of Issue"
+              value={businessInfo.ctc_place_issue}
+              onChange={(e) => handleFieldChange('ctc_place_issue', e.target.value)}
+              tooltip="Enter where your CTC was issued"
             />
           </div>
+        </div>
 
-          {/* Ownership Type */}
-          <FormField
-            control={form.control}
-            name="ownership_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ownership Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select ownership type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="soleProprietorship">Sole Proprietorship</SelectItem>
-                    <SelectItem value="onePersonCorp">One Person Corporation</SelectItem>
-                    <SelectItem value="partnership">Partnership</SelectItem>
-                    <SelectItem value="corporation">Corporation</SelectItem>
-                    <SelectItem value="cooperative">Cooperative</SelectItem>
+        {/* Kind of Ownership */}
+        <div>
+          <h3 className="font-medium text-base mb-3">
+            Ownership Type <span className="text-red-500">*</span>
+          </h3>
+          <div className="mt-2">
+            <EnhancedRadioGroup
+              options={ownershipOptions}
+              value={businessInfo.ownership_type}
+              onValueChange={(value) => handleFieldChange('ownership_type', value)}
+              orientation="horizontal"
+              name="ownershipType"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            />
+          </div>
+        </div>
+
+        {/* Business Address */}
+        <div>
+          <h3 className="font-medium text-base mb-3">Business Address <span className="text-red-500">*</span></h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <FormField 
+              id="houseBldgNo" 
+              label="House/Bldg. No."
+              value={businessInfo.house_bldg_no}
+              onChange={(e) => handleFieldChange('house_bldg_no', e.target.value)}
+              tooltip="Enter the house or building number of your business address"
+            />
+            <FormField 
+              id="buildingName" 
+              label="Building Name"
+              value={businessInfo.building_name}
+              onChange={(e) => handleFieldChange('building_name', e.target.value)}
+              helperText="If applicable"
+            />
+            <FormField 
+              id="blockNo" 
+              label="Block No."
+              value={businessInfo.block_no}
+              onChange={(e) => handleFieldChange('block_no', e.target.value)}
+              helperText="If applicable"
+            />
+            <FormField 
+              id="lotNo" 
+              label="Lot No."
+              value={businessInfo.lot_no}
+              onChange={(e) => handleFieldChange('lot_no', e.target.value)}
+              helperText="If applicable"
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <FormField 
+              id="street" 
+              label="Street"
+              value={businessInfo.street}
+              onChange={(e) => handleFieldChange('street', e.target.value)}
+              required
+              tooltip="Enter the street name of your business location"
+              error={validationErrors.street}
+            />
+            <FormField 
+              id="subdivision" 
+              label="Subdivision"
+              value={businessInfo.subdivision}
+              onChange={(e) => handleFieldChange('subdivision', e.target.value)}
+              helperText="If applicable"
+            />
+            <div className="space-y-1.5">
+              <div className="relative">
+                <Select 
+                  value={businessInfo.barangay} 
+                  onValueChange={(value) => handleFieldChange('barangay', value)}
+                >
+                  <SelectTrigger id="barangay" className={`h-14 pt-4 ${validationErrors.barangay ? 'border-red-500' : ''}`}>
+                    <SelectValue placeholder="Select barangay" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-80">
+                    {barangays.map((barangay) => (
+                      <SelectItem key={barangay} value={barangay}>
+                        {barangay}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Block No */}
-            <FormField
-              control={form.control}
-              name="block_no"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Block No.</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter block number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Lot No */}
-            <FormField
-              control={form.control}
-              name="lot_no"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lot No.</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter lot number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <label htmlFor="barangay" className="absolute left-3 top-2 text-xs text-primary pointer-events-none">
+                  Barangay <span className="text-destructive">*</span>
+                </label>
+                {validationErrors.barangay && (
+                  <p className="text-xs text-red-500 mt-1">Barangay is required</p>
+                )}
+              </div>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* House/Bldg No */}
-            <FormField
-              control={form.control}
-              name="house_bldg_no"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>House/Bldg. No.</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter house/building number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Building Name */}
-            <FormField
-              control={form.control}
-              name="building_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Building Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter building name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Street */}
-            <FormField
-              control={form.control}
-              name="street"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Street</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter street address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="cityMunicipality" 
+              label="City/Municipality"
+              value={businessInfo.city_municipality}
+              onChange={(e) => handleFieldChange('city_municipality', e.target.value)}
+              required
+              tooltip="Enter the city or municipality of your business location"
             />
-
-            {/* Subdivision */}
-            <FormField
-              control={form.control}
-              name="subdivision"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subdivision</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter subdivision" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="province" 
+              label="Province"
+              value={businessInfo.province}
+              onChange={(e) => handleFieldChange('province', e.target.value)}
+              required
+              tooltip="Enter the province of your business location"
             />
-
-            {/* Barangay */}
-            <FormField
-              control={form.control}
-              name="barangay"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Barangay</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter barangay" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="zipCode" 
+              label="Zip Code"
+              value={businessInfo.zip_code}
+              onChange={(e) => handleFieldChange('zip_code', e.target.value)}
+              required
+              tooltip="Enter the postal or zip code of your business location"
+              error={validationErrors.zip_code}
             />
           </div>
+        </div>
 
+        {/* Contact Information */}
+        <div>
+          <h3 className="font-medium text-base mb-3">Contact Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* City/Municipality */}
-            <FormField
-              control={form.control}
-              name="city_municipality"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City/Municipality</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter city/municipality" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="telephoneNo" 
+              label="Telephone No."
+              value={businessInfo.telephone_no}
+              onChange={(e) => handleFieldChange('telephone_no', e.target.value)}
+              tooltip="Enter your business landline number"
             />
-
-            {/* Province */}
-            <FormField
-              control={form.control}
-              name="province"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Province</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter province" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="mobileNo" 
+              label="Mobile No."
+              value={businessInfo.mobile_no}
+              onChange={(e) => handleFieldChange('mobile_no', e.target.value)}
+              required
+              tooltip="Enter a mobile number where you can be contacted"
+              error={validationErrors.mobile_no}
             />
-
-            {/* Zip Code */}
-            <FormField
-              control={form.control}
-              name="zip_code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Zip Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter zip code" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FormField 
+              id="emailAddress" 
+              type="email" 
+              label="Email Address"
+              value={businessInfo.email_address}
+              onChange={(e) => handleFieldChange('email_address', e.target.value)}
+              required
+              tooltip="Enter an active email address for communications"
+              error={validationErrors.email_address}
             />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Telephone Number */}
-            <FormField
-              control={form.control}
-              name="telephone_no"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telephone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter telephone number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Mobile Number */}
-            <FormField
-              control={form.control}
-              name="mobile_no"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mobile Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter mobile number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Email Address */}
-          <FormField
-            control={form.control}
-            name="email_address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email Address</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="Enter email address" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
+        </div>
+      </div>
     </FormSectionWrapper>
   );
 };

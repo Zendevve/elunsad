@@ -18,7 +18,6 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { cleanupAuthState } from "@/utils/authUtils";
 
 // Define validation schema
 const signInSchema = z.object({
@@ -41,7 +40,7 @@ const SignIn = () => {
         const { data } = await supabase.auth.getSession();
         if (data.session) {
           console.log("User already authenticated, determining route");
-          await determineUserRouteAndRedirect();
+          await determineUserRouteAndRedirect(data.session.user.id);
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
@@ -52,22 +51,15 @@ const SignIn = () => {
   }, [navigate]);
 
   // Helper function to determine user route and redirect
-  const determineUserRouteAndRedirect = async () => {
+  const determineUserRouteAndRedirect = async (userId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log("No authenticated user found");
-        return;
-      }
-      
-      console.log("Checking roles for user:", user.id);
+      console.log("Checking roles for user:", userId);
       
       // Query user roles with explicit logging
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
       
       if (roleError) {
         console.error("Error fetching user roles:", roleError);
@@ -108,17 +100,6 @@ const SignIn = () => {
     
     try {
       console.log("Attempting sign in with email:", data.email);
-      
-      // Clean up any existing auth state to prevent conflicts
-      cleanupAuthState();
-      
-      // Try to sign out globally first to clear any existing sessions
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (signOutError) {
-        // Continue even if sign out fails
-        console.warn("Global sign out failed, continuing with sign in:", signOutError);
-      }
       
       // Sign in with Supabase Auth
       const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -194,7 +175,7 @@ const SignIn = () => {
     }
   };
 
-  // Rest of component (form UI)
+  // Rest of the component remains unchanged
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}

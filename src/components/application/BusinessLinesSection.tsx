@@ -1,200 +1,253 @@
 
-import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/utils/toastCompat";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, Trash2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessLinesService } from "@/services/application";
-import FormSectionWrapper from "@/components/application/FormSectionWrapper";
-import { v4 as uuidv4 } from 'uuid';
+import { useToast } from "@/components/ui/use-toast";
 
-// Update the interface to match what's available in the service response
 interface BusinessLine {
-  id: string;
-  application_id: string;
-  line_of_business: string;
-  products_services: string;
-  psic_code?: string;
-  units?: string;
-  gross_sales?: string;
-  created_at?: string;
-  updated_at?: string;
+  id: number;
+  lineOfBusiness: string;
+  psicCode: string; // Philippine Standard Industrial Code
+  productsServices: string;
+  units: string;
+  grossSales: string;
 }
 
 const BusinessLinesSection = () => {
-  const [businessLines, setBusinessLines] = useState<BusinessLine[]>([]);
-  const { applicationId } = useApplication();
-  const [isLoading, setIsLoading] = useState(false);
+  const { applicationId, isLoading, setIsLoading } = useApplication();
+  const { toast } = useToast();
+  const [businessLines, setBusinessLines] = useState<BusinessLine[]>([
+    { id: 1, lineOfBusiness: "", psicCode: "", productsServices: "", units: "", grossSales: "" }
+  ]);
+  const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // Load business lines on component mount
+  // Load saved data when component mounts
   useEffect(() => {
-    if (applicationId) {
-      loadBusinessLines(applicationId);
-    }
+    const loadBusinessLines = async () => {
+      if (!applicationId) return;
+      
+      try {
+        const data = await businessLinesService.getBusinessLines(applicationId);
+        console.log("Loaded business lines:", data);
+        if (data && data.length > 0) {
+          // Map database format to component format
+          const formattedData = data.map((line, index) => ({
+            id: index + 1,
+            lineOfBusiness: line.line_of_business || "",
+            psicCode: line.psic_code || "",
+            productsServices: line.products_services || "",
+            units: line.units || "",
+            grossSales: line.gross_sales || ""
+          }));
+          setBusinessLines(formattedData);
+        }
+      } catch (error) {
+        console.error("Error loading business lines:", error);
+      }
+    };
+    
+    loadBusinessLines();
   }, [applicationId]);
 
-  const loadBusinessLines = async (applicationId: string) => {
-    setIsLoading(true);
-    try {
-      const lines = await businessLinesService.getBusinessLines(applicationId);
-      if (lines && lines.length > 0) {
-        setBusinessLines(lines);
-      } else {
-        // If no business lines exist, initialize with an empty array
-        setBusinessLines([]);
+  // Save data function with debounce
+  const saveBusinessLines = async () => {
+    if (!applicationId) return;
+    
+    // Clear any existing timeout
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    
+    // Set new timeout for debouncing
+    const timeout = setTimeout(async () => {
+      try {
+        setIsLoading(true);
+        
+        // Filter out empty business lines
+        const validLines = businessLines.filter(line => 
+          line.lineOfBusiness.trim() !== '' && 
+          line.productsServices.trim() !== ''
+        );
+        
+        if (validLines.length === 0) return;
+        
+        // Map component format to database format
+        const dataToSave = validLines.map(line => ({
+          application_id: applicationId,
+          line_of_business: line.lineOfBusiness,
+          psic_code: line.psicCode || undefined,
+          products_services: line.productsServices,
+          units: line.units || undefined,
+          gross_sales: line.grossSales || undefined
+        }));
+        
+        console.log("Saving business lines:", dataToSave);
+        const result = await businessLinesService.saveBusinessLines(dataToSave);
+        console.log("Save result:", result);
+        
+        toast({
+          title: "Business Lines Saved",
+          description: "Your business lines have been saved successfully.",
+          variant: "default",
+        });
+      } catch (error) {
+        console.error("Error saving business lines:", error);
+        toast({
+          title: "Save Failed",
+          description: "There was an error saving your business lines.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading business lines:", error);
-      toast("Error loading business lines", {
-        description: "Failed to load business lines. Please try again."
-      });
-    } finally {
-      setIsLoading(false);
+    }, 1500);
+    
+    setSaveTimeout(timeout);
+  };
+
+  const addBusinessLine = () => {
+    const newId = businessLines.length > 0 ? Math.max(...businessLines.map(line => line.id)) + 1 : 1;
+    setBusinessLines([...businessLines, { 
+      id: newId, 
+      lineOfBusiness: "", 
+      psicCode: "", 
+      productsServices: "", 
+      units: "", 
+      grossSales: "" 
+    }]);
+  };
+
+  const removeBusinessLine = (id: number) => {
+    if (businessLines.length > 1) {
+      setBusinessLines(businessLines.filter(line => line.id !== id));
+      
+      // Save after removing a line
+      saveBusinessLines();
     }
   };
 
-  // Function to add a new business line
-  const addBusinessLine = useCallback(() => {
-    const newLine: BusinessLine = {
-      id: uuidv4(), // Generate a unique ID
-      application_id: applicationId || "",
-      line_of_business: "",
-      products_services: "",
-    };
-    setBusinessLines((prevLines) => [...prevLines, newLine]);
-  }, [applicationId]);
-
-  // Function to remove a business line
-  const removeBusinessLine = useCallback(async (id: string) => {
-    setIsLoading(true);
-    try {
-      // Optimistically update the UI
-      setBusinessLines((prevLines) => prevLines.filter((line) => line.id !== id));
-      
-      // Delete from the database by saving only the remaining lines
-      const remainingLines = businessLines.filter(line => line.id !== id);
-      await businessLinesService.saveBusinessLines(remainingLines);
-      
-      toast("Business Line Removed", {
-        description: "The business line has been successfully removed."
-      });
-    } catch (error) {
-      console.error("Error removing business line:", error);
-      toast("Error removing business line", {
-        description: "Failed to remove the business line. Please try again."
-      });
-      
-      // If there's an error, revert the UI update
-      if (applicationId) {
-        loadBusinessLines(applicationId);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [applicationId, businessLines, loadBusinessLines]);
-
-  // Function to update a business line
-  const updateBusinessLine = useCallback(async (id: string, field: string, value: string | number) => {
-    setIsLoading(true);
-    try {
-      // Optimistically update the UI
-      const updatedLines = businessLines.map((line) =>
-        line.id === id ? { ...line, [field]: value } : line
-      );
-      setBusinessLines(updatedLines);
-      
-      // Update in the database with saveBusinessLines
-      await businessLinesService.saveBusinessLines(updatedLines);
-      
-      toast("Business Line Updated", {
-        description: "The business line has been successfully updated."
-      });
-    } catch (error) {
-      console.error("Error updating business line:", error);
-      toast("Error updating business line", {
-        description: "Failed to update the business line. Please try again."
-      });
-      
-      // If there's an error, revert the UI update
-      if (applicationId) {
-        loadBusinessLines(applicationId);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [applicationId, businessLines, loadBusinessLines]);
+  const updateBusinessLine = (id: number, field: keyof BusinessLine, value: string) => {
+    setBusinessLines(businessLines.map(line => 
+      line.id === id ? { ...line, [field]: value } : line
+    ));
+    
+    // Auto-save when fields change
+    saveBusinessLines();
+  };
 
   return (
-    <FormSectionWrapper
-      title="Business Lines"
-      description="Specify the lines of business your company engages in"
-      stepNumber={4}
-    >
-      <Card className="border-0 shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            Lines of Business
-          </CardTitle>
-          <Button variant="outline" size="sm" onClick={addBusinessLine} disabled={isLoading}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Line
-          </Button>
-        </CardHeader>
-        <CardContent className="p-4">
-          {businessLines.map((line, index) => (
-            <div key={line.id} className="grid gap-4 mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor={`line_of_business_${index}`}>
-                    Line of Business
-                  </Label>
-                  <Input
-                    id={`line_of_business_${index}`}
-                    value={line.line_of_business || ""}
-                    onChange={(e) =>
-                      updateBusinessLine(line.id, "line_of_business", e.target.value)
-                    }
-                    disabled={isLoading}
+    <Card className="mt-6 shadow-sm border">
+      <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
+        <CardTitle className="text-lg font-medium">Line of Business</CardTitle>
+        <CardDescription>
+          Enter all business lines, products/services, and gross sales
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              <TableHead className="font-medium">Line of Business</TableHead>
+              <TableHead className="font-medium whitespace-nowrap">
+                PSIC<br />(if available)
+              </TableHead>
+              <TableHead className="font-medium">Products / Services</TableHead>
+              <TableHead className="font-medium">No. of Units</TableHead>
+              <TableHead className="font-medium whitespace-nowrap">Last Year's Gross Sales</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {businessLines.map((line) => (
+              <TableRow key={line.id} className="hover:bg-muted/20 transition-colors">
+                <TableCell>
+                  <Input 
+                    value={line.lineOfBusiness} 
+                    onChange={(e) => updateBusinessLine(line.id, "lineOfBusiness", e.target.value)}
+                    placeholder="Enter line of business"
+                    className="focus:ring-1 focus:ring-primary"
                   />
-                </div>
-                <div>
-                  <Label htmlFor={`products_services_${index}`}>
-                    Products/Services
-                  </Label>
-                  <Input
-                    id={`products_services_${index}`}
-                    value={line.products_services || ""}
-                    onChange={(e) =>
-                      updateBusinessLine(line.id, "products_services", e.target.value)
-                    }
-                    disabled={isLoading}
+                </TableCell>
+                <TableCell>
+                  <Input 
+                    value={line.psicCode} 
+                    onChange={(e) => updateBusinessLine(line.id, "psicCode", e.target.value)}
+                    placeholder="Enter PSIC code"
+                    className="focus:ring-1 focus:ring-primary"
                   />
-                </div>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => removeBusinessLine(line.id)}
-                disabled={isLoading}
-                className="w-full md:w-auto"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Remove
-              </Button>
-            </div>
-          ))}
-          {!businessLines.length && !isLoading && (
-            <div className="text-sm text-gray-500">No business lines added yet.</div>
-          )}
-          {isLoading && (
-            <div className="text-sm text-gray-500">Loading business lines...</div>
-          )}
-        </CardContent>
-      </Card>
-    </FormSectionWrapper>
+                </TableCell>
+                <TableCell>
+                  <Input 
+                    value={line.productsServices} 
+                    onChange={(e) => updateBusinessLine(line.id, "productsServices", e.target.value)}
+                    placeholder="Enter products/services"
+                    className="focus:ring-1 focus:ring-primary"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input 
+                    value={line.units} 
+                    onChange={(e) => updateBusinessLine(line.id, "units", e.target.value)}
+                    placeholder="Enter units"
+                    className="focus:ring-1 focus:ring-primary"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input 
+                    value={line.grossSales} 
+                    onChange={(e) => updateBusinessLine(line.id, "grossSales", e.target.value)}
+                    placeholder="Enter amount"
+                    className="focus:ring-1 focus:ring-primary"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeBusinessLine(line.id)}
+                    disabled={businessLines.length === 1}
+                    className="hover:bg-rose-100 hover:text-rose-600 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+      <CardFooter className="bg-muted/20">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-2 group"
+          onClick={addBusinessLine}
+        >
+          <PlusCircle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+          Add Another Line of Business
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 

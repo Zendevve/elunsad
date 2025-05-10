@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { BusinessInformationData, OwnershipType } from "./types";
-import { toast } from "@/utils/toastCompat";
+import { BusinessInformationData } from "./types";
+import { toast } from "@/hooks/use-toast";
 
 // Business Information service methods
 export const businessInformationService = {
@@ -18,9 +18,6 @@ export const businessInformationService = {
         throw new Error("Missing required fields for business information");
       }
 
-      // Ensure the ownership_type is a valid value from our OwnershipType enum
-      const mappedOwnershipType: OwnershipType = data.ownership_type;
-      
       // Check if business information already exists for this application
       const { data: existingData, error: checkError } = await supabase
         .from('business_information')
@@ -49,7 +46,7 @@ export const businessInformationService = {
             ctc_number: data.ctc_number,
             ctc_date_issue: data.ctc_date_issue,
             ctc_place_issue: data.ctc_place_issue,
-            ownership_type: mappedOwnershipType,
+            ownership_type: data.ownership_type,
             house_bldg_no: data.house_bldg_no,
             building_name: data.building_name,
             block_no: data.block_no,
@@ -90,7 +87,7 @@ export const businessInformationService = {
             ctc_number: data.ctc_number,
             ctc_date_issue: data.ctc_date_issue,
             ctc_place_issue: data.ctc_place_issue,
-            ownership_type: mappedOwnershipType,
+            ownership_type: data.ownership_type,
             house_bldg_no: data.house_bldg_no,
             building_name: data.building_name,
             block_no: data.block_no,
@@ -121,6 +118,7 @@ export const businessInformationService = {
     } catch (error) {
       console.error('Error saving business information:', error);
       toast({
+        title: "Error Saving Data",
         description: "There was a problem saving your business information. Please try again.",
         variant: "destructive",
       });

@@ -1,216 +1,391 @@
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/utils/toastCompat';
+import React, { useState, useEffect } from "react";
+import { 
+  Table, TableHeader, TableRow, TableHead, 
+  TableBody, TableCell 
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, UserPlus, Edit, Trash2, Lock, Check, X, Shield } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { UserRole } from "@/types/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { addRoleToUser, removeRoleFromUser } from "@/utils/roleUtils";
 
 interface User {
   id: string;
   email: string;
   created_at: string;
+  user_metadata: {
+    firstname?: string;
+    lastname?: string;
+  };
+  last_sign_in_at: string | null;
+  roles: UserRole[];
 }
 
-const AdminUserManagement: React.FC = () => {
+const AdminUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const { toast } = useToast();
+  
+  // Fetch users and their roles
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Instead of directly accessing auth.users (which is not available),
-      // use the profiles table and join with auth users if needed
-      // For now, we'll just query profiles and users separately
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      // Fetch all users
+      const { data, error } = await supabase.auth.admin.listUsers();
       
-      if (authError) {
-        console.error("Error fetching users:", authError);
-        toast("Error fetching users", {
-          description: "Failed to retrieve user data. Please try again."
-        });
-        setUsers([]);
-      } else if (authData?.users) {
-        const formattedUsers: User[] = authData.users.map(user => ({
-          id: user.id,
-          email: user.email || '',
-          created_at: user.created_at
-        }));
-        setUsers(formattedUsers);
-      } else {
-        setUsers([]);
+      if (error) {
+        throw error;
       }
+      
+      // Convert to our User interface with empty roles array
+      const usersData: User[] = data.users.map((user) => ({
+        id: user.id,
+        email: user.email || '',
+        created_at: user.created_at || '',
+        user_metadata: user.user_metadata as { firstname?: string; lastname?: string },
+        last_sign_in_at: user.last_sign_in_at,
+        roles: []
+      }));
+      
+      // For each user, fetch their roles
+      for (const user of usersData) {
+        // Get roles using direct query
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        if (!rolesError && rolesData) {
+          user.roles = rolesData.map(item => item.role as UserRole);
+        }
+      }
+      
+      setUsers(usersData);
     } catch (error) {
-      console.error("Unexpected error fetching users:", error);
-      toast("Unexpected error", {
-        description: "An unexpected error occurred while fetching users."
+      console.error("Error fetching users:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load users. Please try again.",
+        variant: "destructive"
       });
-      setUsers([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const handlePromoteToAdmin = async (userId: string) => {
+  
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+  
+  // Handle adding a role to a user
+  const handleAddRole = async (userId: string, role: UserRole) => {
     try {
-      // First, check if the user already has the 'office_staff' role
-      const { data: existingRole, error: roleError } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('role', 'office_staff')
-        .single();
-
-      if (roleError && roleError.code !== 'PGRST116') {
-        // An error occurred other than "no rows found"
-        console.error("Error checking existing role:", roleError);
-        toast('Error promoting user', {
-          description: "Failed to promote user. Please try again."
+      const success = await addRoleToUser(userId, role);
+      
+      if (success) {
+        toast({
+          title: "Role Added",
+          description: `User has been granted ${role} role.`
         });
-        return;
-      }
-
-      if (existingRole) {
-        // User already has the role
-        toast('User is already an admin', {
-          description: "This user already has administrator privileges."
-        });
-        return;
-      }
-
-      // If the user doesn't have the role, proceed to insert it
-      const { error } = await supabase
-        .from('user_roles')
-        .insert([{ user_id: userId, role: 'office_staff' }]);
-
-      if (error) {
-        console.error("Error promoting user:", error);
-        toast('Error promoting user', {
-          description: "Failed to promote user. Please try again."
-        });
+        await fetchUsers(); // Refresh data
       } else {
-        toast('User promoted', {
-          description: "User has been successfully promoted to administrator."
-        });
-        fetchUsers(); // Refresh user list
+        throw new Error("Failed to add role");
       }
     } catch (error) {
-      console.error("Unexpected error promoting user:", error);
-      toast('Unexpected error', {
-        description: "An unexpected error occurred while promoting the user."
+      console.error("Error adding role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add role. Please try again.",
+        variant: "destructive"
       });
     }
   };
-
-  const handleRemoveAdmin = async (userId: string) => {
+  
+  // Handle removing a role from a user
+  const handleRemoveRole = async (userId: string, role: UserRole) => {
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', 'office_staff');
-
-      if (error) {
-        console.error("Error removing admin:", error);
-        toast('Error removing admin', {
-          description: "Failed to remove administrator privileges. Please try again."
+      const success = await removeRoleFromUser(userId, role);
+      
+      if (success) {
+        toast({
+          title: "Role Removed",
+          description: `${role} role has been removed from user.`
         });
+        await fetchUsers(); // Refresh data
       } else {
-        toast('Admin privileges removed', {
-          description: "Administrator privileges have been successfully removed."
-        });
-        fetchUsers(); // Refresh user list
+        throw new Error("Failed to remove role");
       }
     } catch (error) {
-      console.error("Unexpected error removing admin:", error);
-      toast('Unexpected error', {
-        description: "An unexpected error occurred while removing administrator privileges."
+      console.error("Error removing role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove role. Please try again.",
+        variant: "destructive"
       });
     }
   };
-
-  const filteredUsers = users.filter(user =>
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
+  
+  // Filter users based on search query and role filter
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (user.user_metadata.firstname || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.user_metadata.lastname || '').toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesRole = 
+      roleFilter === "all" || 
+      (roleFilter === "office_staff" && user.roles.includes("office_staff")) ||
+      (roleFilter === "business_owner" && user.roles.includes("business_owner"));
+    
+    return matchesSearch && matchesRole;
+  });
+  
+  // Format the user's name
+  const getUserName = (user: User) => {
+    const { firstname, lastname } = user.user_metadata;
+    if (firstname && lastname) {
+      return `${firstname} ${lastname}`;
+    }
+    return user.email.split('@')[0];
+  };
+  
+  // Get role badge
+  const getRoleBadges = (roles: UserRole[]) => {
+    return (
+      <div className="flex flex-wrap gap-1">
+        {roles.includes("office_staff") && (
+          <Badge className="bg-purple-500">Admin</Badge>
+        )}
+        {roles.includes("business_owner") && (
+          <Badge className="bg-blue-500">Business Owner</Badge>
+        )}
+        {roles.length === 0 && (
+          <Badge variant="outline" className="text-gray-500">No Roles</Badge>
+        )}
+      </div>
+    );
+  };
+  
+  // Get active status badge
+  const getActiveStatusBadge = (lastSignIn: string | null) => {
+    if (!lastSignIn) {
+      return <Badge variant="outline" className="bg-gray-100 text-gray-600">Never Signed In</Badge>;
+    }
+    
+    const lastActive = new Date(lastSignIn);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 7) {
+      return <Badge className="bg-green-500">Active</Badge>;
+    } else if (diffDays < 30) {
+      return <Badge className="bg-yellow-500">Inactive</Badge>;
+    } else {
+      return <Badge variant="outline" className="bg-gray-200 text-gray-800">Dormant</Badge>;
+    }
+  };
+  
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+  
   return (
     <div>
-      <div className="mb-4">
-        <Input
-          type="text"
-          placeholder="Search users by email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-      {loading ? (
-        <p>Loading users...</p>
-      ) : (
-        <div className="container mx-auto">
-          <Table>
-            <TableCaption>A list of your registered users.</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">ID</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.id}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handlePromoteToAdmin(user.id)}>
-                          Promote to Admin
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRemoveAdmin(user.id)}>
-                          Remove Admin
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex space-x-2">
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="office_staff">Administrators</SelectItem>
+              <SelectItem value="business_owner">Business Owners</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      )}
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input 
+            className="pl-9 w-[300px]" 
+            placeholder="Search users..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+      
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Roles</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Joined</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-8">
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+                <div className="mt-2 text-sm text-gray-500">Loading users...</div>
+              </TableCell>
+            </TableRow>
+          ) : filteredUsers.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-8">
+                <div className="text-sm text-gray-500">No users found</div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredUsers.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{getUserName(user)}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{getRoleBadges(user.roles)}</TableCell>
+                <TableCell>{getActiveStatusBadge(user.last_sign_in_at)}</TableCell>
+                <TableCell>{formatDate(user.created_at)}</TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={() => setSelectedUser(user)}>
+                          <Shield className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Manage User Roles</DialogTitle>
+                          <DialogDescription>
+                            Add or remove roles for {selectedUser?.email}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                          <h3 className="font-medium mb-2">Current Roles:</h3>
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {selectedUser?.roles.map(role => (
+                              <Badge key={role} className="flex items-center gap-1">
+                                {role === 'office_staff' ? 'Administrator' : 'Business Owner'}
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-4 w-4 p-0 ml-1">
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Remove Role</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to remove the {role} role from this user?
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => {
+                                          if (selectedUser) {
+                                            handleRemoveRole(selectedUser.id, role);
+                                          }
+                                        }}
+                                      >
+                                        Remove
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </Badge>
+                            ))}
+                            {selectedUser?.roles.length === 0 && (
+                              <span className="text-sm text-gray-500">No roles assigned</span>
+                            )}
+                          </div>
+                          
+                          <h3 className="font-medium mb-2">Add Role:</h3>
+                          <div className="flex gap-2">
+                            {selectedUser && !selectedUser.roles.includes('office_staff') && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  if (selectedUser) {
+                                    handleAddRole(selectedUser.id, 'office_staff');
+                                  }
+                                }}
+                                className="flex items-center gap-1"
+                              >
+                                <Shield className="h-4 w-4" />
+                                Administrator
+                              </Button>
+                            )}
+                            {selectedUser && !selectedUser.roles.includes('business_owner') && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  if (selectedUser) {
+                                    handleAddRole(selectedUser.id, 'business_owner');
+                                  }
+                                }}
+                                className="flex items-center gap-1"
+                              >
+                                <UserPlus className="h-4 w-4" />
+                                Business Owner
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setSelectedUser(null)}>
+                            Close
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };
