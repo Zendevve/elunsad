@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { BusinessInformationData } from "./types";
-import { toast } from "@/hooks/use-toast";
+import { BusinessInformationData, OwnershipType } from "./types";
+import { toast } from "@/utils/toastCompat";
 
 // Business Information service methods
 export const businessInformationService = {
@@ -18,6 +18,9 @@ export const businessInformationService = {
         throw new Error("Missing required fields for business information");
       }
 
+      // Map the ownership_type from our app type to database enum value if needed
+      let mappedOwnershipType: string = data.ownership_type;
+      
       // Check if business information already exists for this application
       const { data: existingData, error: checkError } = await supabase
         .from('business_information')
@@ -46,7 +49,7 @@ export const businessInformationService = {
             ctc_number: data.ctc_number,
             ctc_date_issue: data.ctc_date_issue,
             ctc_place_issue: data.ctc_place_issue,
-            ownership_type: data.ownership_type,
+            ownership_type: mappedOwnershipType,
             house_bldg_no: data.house_bldg_no,
             building_name: data.building_name,
             block_no: data.block_no,
@@ -61,8 +64,9 @@ export const businessInformationService = {
             mobile_no: data.mobile_no,
             email_address: data.email_address,
             website_url: data.website_url,
-            fb_page_url: data.fb_page_url,
-            business_description: data.business_description
+            fb_page_url: data.fb_page_url
+            // Add business_description if it's not in the database schema
+            // business_description: data.business_description
           })
           .eq('application_id', data.application_id)
           .select('*')
@@ -90,7 +94,7 @@ export const businessInformationService = {
             ctc_number: data.ctc_number,
             ctc_date_issue: data.ctc_date_issue,
             ctc_place_issue: data.ctc_place_issue,
-            ownership_type: data.ownership_type,
+            ownership_type: mappedOwnershipType,
             house_bldg_no: data.house_bldg_no,
             building_name: data.building_name,
             block_no: data.block_no,
@@ -105,8 +109,9 @@ export const businessInformationService = {
             mobile_no: data.mobile_no,
             email_address: data.email_address,
             website_url: data.website_url,
-            fb_page_url: data.fb_page_url,
-            business_description: data.business_description
+            fb_page_url: data.fb_page_url
+            // Add business_description if it's not in the database schema
+            // business_description: data.business_description
           })
           .select('*')
           .single();

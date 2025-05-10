@@ -2,7 +2,20 @@
 // Application type definitions
 export type ApplicationType = 'newApplication' | 'renewalApplication' | 'amendmentApplication';
 export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info';
-export type OwnershipType = 'sole_proprietorship' | 'partnership' | 'corporation' | 'cooperative';
+export type OwnershipType = 'soleProprietorship' | 'partnership' | 'corporation' | 'cooperative' | 'onePersonCorp';
+export type SexType = 'male' | 'female';
+
+// Application data interface
+export interface ApplicationData {
+  id: string;
+  application_type: ApplicationType;
+  application_status: ApplicationStatus;
+  submission_date: string | null;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+}
 
 export interface BusinessInformationData {
   application_id: string;
@@ -40,7 +53,7 @@ export interface OwnerInformationData {
   middle_name?: string;
   suffix?: string;
   age: number;
-  sex: 'male' | 'female' | 'other';
+  sex: SexType;
   civil_status: 'single' | 'married' | 'widowed' | 'divorced' | 'separated';
   nationality: string;
   owner_street: string;

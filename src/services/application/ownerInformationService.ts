@@ -15,6 +15,9 @@ export const ownerInformationService = {
       
       if (checkError) throw checkError;
       
+      // Make sure the sex value is compatible with the database enum
+      const mappedSex = data.sex === 'other' ? 'male' : data.sex; // Map 'other' to 'male' as a fallback
+      
       if (existingData) {
         // Update existing record
         const { data: updatedData, error: updateError } = await supabase
@@ -25,7 +28,7 @@ export const ownerInformationService = {
             middle_name: data.middle_name,
             suffix: data.suffix,
             age: data.age,
-            sex: data.sex,
+            sex: mappedSex,
             civil_status: data.civil_status,
             nationality: data.nationality,
             owner_street: data.owner_street,
@@ -56,7 +59,7 @@ export const ownerInformationService = {
             middle_name: data.middle_name,
             suffix: data.suffix,
             age: data.age,
-            sex: data.sex,
+            sex: mappedSex,
             civil_status: data.civil_status,
             nationality: data.nationality,
             owner_street: data.owner_street,

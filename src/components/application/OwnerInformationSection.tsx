@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -66,7 +67,7 @@ const OwnerInformationSection = () => {
         description: "Could not find application to save. Please try again.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     setIsSaving(true);
@@ -78,12 +79,14 @@ const OwnerInformationSection = () => {
       toast({
         description: "Your owner information has been saved successfully.",
       });
+      return true;
     } catch (error) {
       console.error("Error saving owner information:", error);
       toast({
         description: "An error occurred while saving owner information. Please try again.",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -102,30 +105,35 @@ const OwnerInformationSection = () => {
 
   // Expose validateAndSave function to the window
   useEffect(() => {
-    window.ownerInfoHelpers = {
-      validateAndSave: async () => {
-        // Validate required fields
-        const requiredFields = [
-          'surname', 'given_name', 'age', 'sex',
-          'civil_status', 'nationality', 'owner_street',
-          'owner_barangay', 'owner_city_municipality',
-          'owner_province', 'owner_zip_code'
-        ];
+    // Initialize the helper object if it doesn't exist
+    if (!window.ownerInfoHelpers) {
+      window.ownerInfoHelpers = {
+        validateAndSave: async () => false
+      };
+    }
+    
+    // Update the validateAndSave function
+    window.ownerInfoHelpers.validateAndSave = async () => {
+      // Validate required fields
+      const requiredFields = [
+        'surname', 'given_name', 'age', 'sex',
+        'civil_status', 'nationality', 'owner_street',
+        'owner_barangay', 'owner_city_municipality',
+        'owner_province', 'owner_zip_code'
+      ];
 
-        const missingFields = requiredFields.filter(field => !ownerInfo[field]);
+      const missingFields = requiredFields.filter(field => !ownerInfo[field]);
 
-        if (missingFields.length > 0) {
-          toast({
-            description: "Please complete all required owner information fields before proceeding.",
-            variant: "destructive",
-          });
-          return false;
-        }
-
-        // Save the information if validation passes
-        await saveOwnerInfo();
-        return true;
+      if (missingFields.length > 0) {
+        toast({
+          description: "Please complete all required owner information fields before proceeding.",
+          variant: "destructive",
+        });
+        return false;
       }
+
+      // Save the information if validation passes
+      return await saveOwnerInfo();
     };
 
     return () => {

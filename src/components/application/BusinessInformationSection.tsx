@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,8 +24,8 @@ const businessInformationSchema = z.object({
   zip_code: z.string().min(4, { message: "Zip code must be at least 4 characters." }).max(4, { message: "Zip code must be at most 4 characters." }),
   mobile_no: z.string().min(11, { message: "Mobile number must be at least 11 characters." }).max(11, { message: "Mobile number must be at most 11 characters." }),
   email_address: z.string().email({ message: "Invalid email address." }),
-  website_url: z.string().url({ message: "Invalid website URL." }).optional(),
-  fb_page_url: z.string().url({ message: "Invalid Facebook page URL." }).optional(),
+  website_url: z.string().url({ message: "Invalid website URL." }).optional().or(z.literal('')),
+  fb_page_url: z.string().url({ message: "Invalid Facebook page URL." }).optional().or(z.literal('')),
   business_description: z.string().optional(),
 });
 
@@ -76,9 +77,9 @@ const BusinessInformationSection = () => {
               zip_code: data.zip_code || "",
               mobile_no: data.mobile_no || "",
               email_address: data.email_address || "",
-              website_url: data.website_url || "",
-              fb_page_url: data.fb_page_url || "",
-              business_description: data.business_description || "",
+              website_url: "",  // Default empty as may not exist in database
+              fb_page_url: "",  // Default empty as may not exist in database
+              business_description: "", // Default empty as may not exist in database
             };
             
             // Set the default values for the form
@@ -107,7 +108,10 @@ const BusinessInformationSection = () => {
       }
 
       // Save the business information to the database
-      await businessInformationService.updateBusinessInformation(applicationId, values);
+      await businessInformationService.saveBusinessInformation({
+        ...values,
+        application_id: applicationId,
+      });
 
       toast("Business Information Saved", {
         description: "Your business information has been saved successfully.",
