@@ -1,172 +1,198 @@
 
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/utils/toastCompat';
 import { v4 as uuidv4 } from 'uuid';
-import { toast } from "@/utils/toastCompat";
 import { 
   applicationService,
   businessInformationService, 
   ownerInformationService, 
-  businessLinesService, 
-  declarationService 
-} from "@/services/application";
-import { ApplicationData, ApplicationType, ApplicationStatus } from '@/services/application/types';
+  businessOperationsService,
+  businessLinesService,
+  declarationService
+} from '@/services/application';
 
-interface ApplicationContextProps {
+// Application Status and Type enums
+export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info';
+export type ApplicationType = 'newApplication' | 'renewalApplication' | 'amendmentApplication';
+
+interface ApplicationContextType {
   applicationId: string | null;
-  applicationType: ApplicationType | null;
   applicationStatus: ApplicationStatus | null;
-  createNewApplication: (type: ApplicationType) => Promise<void>;
-  updateStatus: (status: ApplicationStatus) => Promise<void>;
+  applicationType: ApplicationType | null;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  createNewApplication: (applicationType: ApplicationType) => Promise<string | null>;
+  updateStatus: (status: ApplicationStatus) => Promise<boolean>;
 }
 
-const ApplicationContext = createContext<ApplicationContextProps>({
-  applicationId: null,
-  applicationType: null,
-  applicationStatus: null,
-  createNewApplication: async () => {},
-  updateStatus: async () => {},
-  isLoading: false,
-  setIsLoading: () => {},
-});
+const ApplicationContext = createContext<ApplicationContextType | undefined>(undefined);
 
-interface ApplicationProviderProps {
-  children: React.ReactNode;
-}
+export const useApplication = (): ApplicationContextType => {
+  const context = useContext(ApplicationContext);
+  if (context === undefined) {
+    throw new Error('useApplication must be used within an ApplicationProvider');
+  }
+  return context;
+};
 
-export const ApplicationProvider: React.FC<ApplicationProviderProps> = ({ children }) => {
+export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [applicationId, setApplicationId] = useState<string | null>(null);
-  const [applicationType, setApplicationType] = useState<ApplicationType | null>(null);
   const [applicationStatus, setApplicationStatus] = useState<ApplicationStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [applicationType, setApplicationType] = useState<ApplicationType | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Create a new application
-  const createNewApplication = useCallback(async (type: ApplicationType) => {
+  const createNewApplication = async (appType: ApplicationType): Promise<string | null> => {
     setIsLoading(true);
     try {
-      const newApplicationId = uuidv4();
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        toast({
+          description: "Please sign in to create an application."
+        });
+        return null;
+      }
+
+      // Create the application record
+      const newApplication = {
+        application_type: appType,
+        user_id: user.id
+      };
       
-      // Create application record
-      await applicationService.createApplication({
-        id: newApplicationId,
-        application_type: type,
-        application_status: 'draft' as ApplicationStatus,
-        submission_date: null,
-        admin_notes: null,
-        created_at: new Date().toISOString(),
-        user_id: '',  // This will be set by the backend
+      const { data: appData, error: appError } = await applicationService.createApplication(newApplication);
+      
+      if (appError || !appData) {
+        console.error("Error creating application:", appError);
+        toast({
+          description: "Failed to create application. Please try again."
+        });
+        return null;
+      }
+      
+      // Initialize related records
+      try {
+        // These might now be handled differently based on updates
+        await businessInformationService.saveBusinessInformation({
+          application_id: appData.id,
+          business_name: '',
+          tin_number: '',
+          ownership_type: 'sole_proprietorship',
+          street: '',
+          barangay: '',
+          city_municipality: '',
+          province: '',
+          zip_code: '',
+          mobile_no: '',
+          email_address: '',
+        });
+        
+        await ownerInformationService.saveOwnerInformation({
+          application_id: appData.id,
+          surname: '',
+          given_name: '',
+          age: 18,
+          sex: 'male',
+          civil_status: 'single',
+          nationality: '',
+          owner_street: '',
+          owner_barangay: '',
+          owner_city_municipality: '',
+          owner_province: '',
+          owner_zip_code: '',
+        });
+        
+        await declarationService.saveDeclaration({
+          application_id: appData.id,
+          signature: '',
+          is_agreed: false,
+        });
+      } catch (error) {
+        console.error("Error initializing application data:", error);
+        // Continue anyway since the main application was created
+      }
+
+      // Set state once everything is done
+      setApplicationId(appData.id);
+      setApplicationStatus(appData.application_status);
+      setApplicationType(appData.application_type);
+      
+      toast({
+        description: "Application created successfully."
       });
       
-      // Initialize business information
-      await businessInformationService.saveBusinessInformation({
-        application_id: newApplicationId,
-        business_name: '',
-        tin_number: '',
-        ownership_type: 'soleProprietorship',
-        street: '',
-        barangay: '',
-        city_municipality: '',
-        province: '',
-        zip_code: '',
-        mobile_no: '',
-        email_address: '',
-      });
-      
-      // Initialize owner information
-      await ownerInformationService.saveOwnerInformation({
-        application_id: newApplicationId,
-        surname: '',
-        given_name: '',
-        age: 0,
-        sex: 'male',
-        civil_status: 'single',
-        nationality: '',
-        owner_street: '',
-        owner_barangay: '',
-        owner_city_municipality: '',
-        owner_province: '',
-        owner_zip_code: '',
-      });
-      
-      // Initialize declaration
-      await declarationService.saveDeclaration({
-        application_id: newApplicationId,
-        signature: '',
-        is_agreed: false,
-        declaration_place: 'City of Lucena',
-      });
-      
-      // Set context values
-      setApplicationId(newApplicationId);
-      setApplicationType(type);
-      setApplicationStatus('draft');
-      
-      toast("Application Started", {
-        description: `New ${type.replace("Application", "")} application has been started.`
-      });
+      return appData.id;
     } catch (error) {
-      console.error("Error creating application:", error);
-      toast("Application Failed", {
-        description: "Failed to start a new application. Please try again."
+      console.error("Unexpected error creating application:", error);
+      toast({
+        description: "An unexpected error occurred. Please try again."
       });
+      return null;
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  // Update application status
-  const updateStatus = useCallback(async (status: ApplicationStatus) => {
-    setIsLoading(true);
-    if (!applicationId) {
-      toast("Missing Application", {
-        description: "No application ID found. Cannot update status."
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Update application status in database
-      await applicationService.createApplication({
-        id: applicationId,
-        application_status: status,
-        submission_date: status === 'submitted' ? new Date().toISOString() : null,
-        application_type: applicationType as ApplicationType,
-        user_id: '',  // This will be ignored by the backend for updates
-      });
-
-      // Update context value
-      setApplicationStatus(status);
-      
-      toast("Application Updated", {
-        description: `Application status updated to ${status}.`
-      });
-    } catch (error) {
-      console.error("Error updating application status:", error);
-      toast("Update Failed", {
-        description: "Failed to update application status. Please try again."
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [applicationId, applicationType]);
-
-  const value = {
-    applicationId,
-    applicationType,
-    applicationStatus,
-    createNewApplication,
-    updateStatus,
-    isLoading,
-    setIsLoading,
   };
 
+  // Update application status
+  const updateStatus = async (status: ApplicationStatus): Promise<boolean> => {
+    if (!applicationId) {
+      toast({
+        description: "No active application to update."
+      });
+      return false;
+    }
+
+    setIsLoading(true);
+    try {
+      // Only update needed fields for the status change
+      const updateData = {
+        application_status: status,
+        submission_date: status === 'submitted' ? new Date().toISOString() : null,
+      };
+
+      const { data, error } = await applicationService.updateApplicationStatus(applicationId, status);
+      
+      if (error) {
+        console.error("Error updating application status:", error);
+        toast({
+          description: "Failed to update application status."
+        });
+        return false;
+      }
+
+      setApplicationStatus(data?.application_status as ApplicationStatus || status);
+      
+      toast({
+        description: `Application status updated to ${status.replace('_', ' ')}.`
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Unexpected error updating application status:", error);
+      toast({
+        description: "An unexpected error occurred while updating status."
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Return context provider
   return (
-    <ApplicationContext.Provider value={value}>
+    <ApplicationContext.Provider
+      value={{
+        applicationId,
+        applicationStatus,
+        applicationType,
+        isLoading,
+        setIsLoading,
+        createNewApplication,
+        updateStatus,
+      }}
+    >
       {children}
     </ApplicationContext.Provider>
   );
 };
-
-export const useApplication = () => useContext(ApplicationContext);

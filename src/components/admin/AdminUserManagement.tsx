@@ -41,20 +41,24 @@ const AdminUserManagement: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Changed query to get user data from auth.users instead of profiles
-      // since email is in auth.users and not in profiles
-      const { data: authUsers, error: authError } = await supabase
-        .from('auth.users')
-        .select('id, email, created_at');
-
+      // Instead of directly accessing auth.users (which is not available),
+      // use the profiles table and join with auth users if needed
+      // For now, we'll just query profiles and users separately
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      
       if (authError) {
         console.error("Error fetching users:", authError);
         toast("Error fetching users", {
           description: "Failed to retrieve user data. Please try again."
         });
         setUsers([]);
-      } else if (authUsers) {
-        setUsers(authUsers as User[]);
+      } else if (authData?.users) {
+        const formattedUsers: User[] = authData.users.map(user => ({
+          id: user.id,
+          email: user.email || '',
+          created_at: user.created_at
+        }));
+        setUsers(formattedUsers);
       } else {
         setUsers([]);
       }

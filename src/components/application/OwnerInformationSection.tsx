@@ -4,11 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/utils/toastCompat";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { ownerInformationService } from "@/services/application";
-import { useDebounce } from "@/hooks/useDebounce";
+import useDebounce from "@/hooks/useDebounce";
 
 // Define a helper window interface to extend the existing window object
 interface HelperWindow extends Window {
@@ -21,12 +21,11 @@ interface HelperWindow extends Window {
 declare const window: HelperWindow;
 
 const OwnerInformationSection = () => {
-  const { toast } = useToast();
   const { applicationId } = useApplication();
   const [ownerInfo, setOwnerInfo] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const debounce = useDebounce();
+  const debounced = useDebounce(ownerInfo, 500);
 
   // Fetch owner information on component mount
   useEffect(() => {
@@ -38,7 +37,7 @@ const OwnerInformationSection = () => {
           setOwnerInfo(data || {});
         } catch (error) {
           console.error("Error fetching owner information:", error);
-          toast("Failed to load owner information", {
+          toast({
             description: "There was a problem loading the owner information. Please try again.",
             variant: "destructive",
           });
@@ -49,7 +48,7 @@ const OwnerInformationSection = () => {
     };
 
     fetchOwnerInfo();
-  }, [applicationId, toast]);
+  }, [applicationId]);
 
   // Function to handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -64,7 +63,6 @@ const OwnerInformationSection = () => {
   const saveOwnerInfo = useCallback(async () => {
     if (!applicationId) {
       toast({
-        title: "Application Error",
         description: "Could not find application to save. Please try again.",
         variant: "destructive",
       });
@@ -73,29 +71,34 @@ const OwnerInformationSection = () => {
 
     setIsSaving(true);
     try {
-      await ownerInformationService.updateOwnerInformation(applicationId, ownerInfo);
+      await ownerInformationService.saveOwnerInformation({
+        ...ownerInfo,
+        application_id: applicationId
+      });
       toast({
-        title: "Owner Information Saved",
         description: "Your owner information has been saved successfully.",
       });
     } catch (error) {
       console.error("Error saving owner information:", error);
       toast({
-        title: "Error",
         description: "An error occurred while saving owner information. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSaving(false);
     }
-  }, [applicationId, ownerInfo, toast]);
+  }, [applicationId, ownerInfo]);
 
   // Debounced save effect
   useEffect(() => {
-    if (!isLoading) {
-      debounce(saveOwnerInfo, 500);
+    if (!isLoading && Object.keys(ownerInfo).length > 0) {
+      const timer = setTimeout(() => {
+        saveOwnerInfo();
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
-  }, [ownerInfo, isLoading, saveOwnerInfo, debounce]);
+  }, [debounced, isLoading, saveOwnerInfo]);
 
   // Expose validateAndSave function to the window
   useEffect(() => {
@@ -116,7 +119,6 @@ const OwnerInformationSection = () => {
 
       if (missingFields.length > 0) {
         toast({
-          title: "Incomplete Information",
           description: "Please complete all required owner information fields before proceeding.",
           variant: "destructive",
         });
@@ -133,7 +135,7 @@ const OwnerInformationSection = () => {
         delete window.ownerInfoHelpers.validateAndSave;
       }
     };
-  }, [ownerInfo, saveOwnerInfo, toast]);
+  }, [ownerInfo, saveOwnerInfo]);
 
   return (
     <FormSectionWrapper

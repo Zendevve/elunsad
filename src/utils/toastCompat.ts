@@ -1,34 +1,44 @@
-import { toast as sonnerToast } from "sonner";
+
+import { toast as sonnerToast } from 'sonner';
 
 type ToastOptions = {
+  title?: string;
   description?: string;
-  variant?: "default" | "destructive";
+  variant?: 'default' | 'destructive' | 'success';
   duration?: number;
 };
 
-// Create a wrapper function to handle both old-style and new-style toast calls
-export function compatToast(titleOrOptions: string | { title?: string; description?: string; variant?: string }, options?: ToastOptions) {
-  // If first parameter is an object, it's using the old shadcn/ui toast format
-  if (typeof titleOrOptions === 'object') {
-    const { title, description, variant } = titleOrOptions;
-    return sonnerToast(title || "", { 
-      description, 
-      ...(variant ? { className: variant === 'destructive' ? 'bg-destructive text-destructive-foreground' : '' } : {})
-    });
+/**
+ * Toast compatibility function that supports both object-style and arguments-style calls
+ */
+export function toast(titleOrOptions: string | ToastOptions, options?: ToastOptions) {
+  // If first argument is a string, use it as title
+  if (typeof titleOrOptions === 'string') {
+    const title = titleOrOptions;
+    const description = options?.description;
+    const variant = options?.variant || 'default';
+    const duration = options?.duration || 5000;
+    
+    if (variant === 'destructive') {
+      sonnerToast.error(title, { description, duration });
+    } else if (variant === 'success') {
+      sonnerToast.success(title, { description, duration });
+    } else {
+      sonnerToast(title, { description, duration });
+    }
+  } 
+  // If first argument is an object
+  else {
+    const { title, description, variant = 'default', duration = 5000 } = titleOrOptions;
+    
+    if (variant === 'destructive') {
+      sonnerToast.error(title || description || 'Error', { description: title ? description : undefined, duration });
+    } else if (variant === 'success') {
+      sonnerToast.success(title || description || 'Success', { description: title ? description : undefined, duration });
+    } else {
+      sonnerToast(title || description || 'Notification', { description: title ? description : undefined, duration });
+    }
   }
-  
-  // Otherwise, it's using the new sonner format
-  return sonnerToast(titleOrOptions, options);
 }
 
-// Export a patched toast function that works with both formats
-export const toast = compatToast;
-
-// Export a compatibility layer for useToast
-export function useToast() {
-  return {
-    toast: compatToast,
-    toasts: [],
-    dismiss: () => {}
-  };
-}
+export default toast;
