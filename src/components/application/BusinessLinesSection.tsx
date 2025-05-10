@@ -1,24 +1,31 @@
+
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, HelpCircle } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/utils/toastCompat";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessLinesService } from "@/services/application";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { v4 as uuidv4 } from 'uuid';
 
+// Update the interface to match what's available in the service response
 interface BusinessLine {
   id: string;
+  application_id: string;
   line_of_business: string;
-  no_of_employees: number;
+  products_services: string;
+  psic_code?: string;
+  units?: string;
+  gross_sales?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const BusinessLinesSection = () => {
   const [businessLines, setBusinessLines] = useState<BusinessLine[]>([]);
-  const { toast } = useToast();
   const { applicationId } = useApplication();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,8 +49,7 @@ const BusinessLinesSection = () => {
     } catch (error) {
       console.error("Error loading business lines:", error);
       toast("Error loading business lines", {
-        description: "Failed to load business lines. Please try again.",
-        variant: "destructive",
+        description: "Failed to load business lines. Please try again."
       });
     } finally {
       setIsLoading(false);
@@ -54,11 +60,12 @@ const BusinessLinesSection = () => {
   const addBusinessLine = useCallback(() => {
     const newLine: BusinessLine = {
       id: uuidv4(), // Generate a unique ID
+      application_id: applicationId || "",
       line_of_business: "",
-      no_of_employees: 0,
+      products_services: "",
     };
     setBusinessLines((prevLines) => [...prevLines, newLine]);
-  }, []);
+  }, [applicationId]);
 
   // Function to remove a business line
   const removeBusinessLine = useCallback(async (id: string) => {
@@ -67,17 +74,17 @@ const BusinessLinesSection = () => {
       // Optimistically update the UI
       setBusinessLines((prevLines) => prevLines.filter((line) => line.id !== id));
       
-      // Delete from the database
-      await businessLinesService.deleteBusinessLine(id);
+      // Delete from the database by saving only the remaining lines
+      const remainingLines = businessLines.filter(line => line.id !== id);
+      await businessLinesService.saveBusinessLines(remainingLines);
       
       toast("Business Line Removed", {
-        description: "The business line has been successfully removed.",
+        description: "The business line has been successfully removed."
       });
     } catch (error) {
       console.error("Error removing business line:", error);
       toast("Error removing business line", {
-        description: "Failed to remove the business line. Please try again.",
-        variant: "destructive",
+        description: "Failed to remove the business line. Please try again."
       });
       
       // If there's an error, revert the UI update
@@ -87,30 +94,28 @@ const BusinessLinesSection = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [applicationId, loadBusinessLines, toast]);
+  }, [applicationId, businessLines, loadBusinessLines]);
 
   // Function to update a business line
   const updateBusinessLine = useCallback(async (id: string, field: string, value: string | number) => {
     setIsLoading(true);
     try {
       // Optimistically update the UI
-      setBusinessLines((prevLines) =>
-        prevLines.map((line) =>
-          line.id === id ? { ...line, [field]: value } : line
-        )
+      const updatedLines = businessLines.map((line) =>
+        line.id === id ? { ...line, [field]: value } : line
       );
+      setBusinessLines(updatedLines);
       
-      // Update in the database
-      await businessLinesService.updateBusinessLine(id, { [field]: value });
+      // Update in the database with saveBusinessLines
+      await businessLinesService.saveBusinessLines(updatedLines);
       
       toast("Business Line Updated", {
-        description: "The business line has been successfully updated.",
+        description: "The business line has been successfully updated."
       });
     } catch (error) {
       console.error("Error updating business line:", error);
       toast("Error updating business line", {
-        description: "Failed to update the business line. Please try again.",
-        variant: "destructive",
+        description: "Failed to update the business line. Please try again."
       });
       
       // If there's an error, revert the UI update
@@ -120,7 +125,7 @@ const BusinessLinesSection = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [applicationId, loadBusinessLines, toast]);
+  }, [applicationId, businessLines, loadBusinessLines]);
 
   return (
     <FormSectionWrapper
@@ -148,7 +153,7 @@ const BusinessLinesSection = () => {
                   </Label>
                   <Input
                     id={`line_of_business_${index}`}
-                    value={line.line_of_business}
+                    value={line.line_of_business || ""}
                     onChange={(e) =>
                       updateBusinessLine(line.id, "line_of_business", e.target.value)
                     }
@@ -156,15 +161,14 @@ const BusinessLinesSection = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor={`no_of_employees_${index}`}>
-                    Number of Employees
+                  <Label htmlFor={`products_services_${index}`}>
+                    Products/Services
                   </Label>
                   <Input
-                    type="number"
-                    id={`no_of_employees_${index}`}
-                    value={String(line.no_of_employees)}
+                    id={`products_services_${index}`}
+                    value={line.products_services || ""}
                     onChange={(e) =>
-                      updateBusinessLine(line.id, "no_of_employees", parseInt(e.target.value))
+                      updateBusinessLine(line.id, "products_services", e.target.value)
                     }
                     disabled={isLoading}
                   />

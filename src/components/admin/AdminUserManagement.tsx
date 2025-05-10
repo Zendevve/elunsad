@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/utils/toastCompat';
 import {
   Table,
   TableBody,
@@ -26,7 +27,6 @@ interface User {
   id: string;
   email: string;
   created_at: string;
-  // Add other relevant fields from your users table
 }
 
 const AdminUserManagement: React.FC = () => {
@@ -41,23 +41,29 @@ const AdminUserManagement: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, created_at'); // Adjust selection based on your table
+      // Changed query to get user data from auth.users instead of profiles
+      // since email is in auth.users and not in profiles
+      const { data: authUsers, error: authError } = await supabase
+        .from('auth.users')
+        .select('id, email, created_at');
 
-      if (error) {
-        console.error("Error fetching users:", error);
-        toast('Error fetching users', {
+      if (authError) {
+        console.error("Error fetching users:", authError);
+        toast("Error fetching users", {
           description: "Failed to retrieve user data. Please try again."
         });
+        setUsers([]);
+      } else if (authUsers) {
+        setUsers(authUsers as User[]);
       } else {
-        setUsers(data || []);
+        setUsers([]);
       }
     } catch (error) {
       console.error("Unexpected error fetching users:", error);
-      toast('Unexpected error', {
+      toast("Unexpected error", {
         description: "An unexpected error occurred while fetching users."
       });
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -142,7 +148,7 @@ const AdminUserManagement: React.FC = () => {
   };
 
   const filteredUsers = users.filter(user =>
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

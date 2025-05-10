@@ -1,6 +1,7 @@
+
 import React, { createContext, useState, useContext, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/utils/toastCompat";
 import { 
   applicationService,
   businessInformationService, 
@@ -50,23 +51,50 @@ export const ApplicationProvider: React.FC<ApplicationProviderProps> = ({ childr
       await applicationService.createApplication({
         id: newApplicationId,
         application_type: type,
-        application_status: 'draft',
+        application_status: 'draft' as ApplicationStatus,
         submission_date: null,
         admin_notes: null,
-        created_at: new Date(),
+        created_at: new Date().toISOString(),
+        user_id: '',  // This will be set by the backend
       });
       
-      // Initialize related entities
-      await businessInformationService.createBusinessInformation({
+      // Initialize business information
+      await businessInformationService.saveBusinessInformation({
         application_id: newApplicationId,
+        business_name: '',
+        tin_number: '',
+        ownership_type: 'soleProprietorship',
+        street: '',
+        barangay: '',
+        city_municipality: '',
+        province: '',
+        zip_code: '',
+        mobile_no: '',
+        email_address: '',
       });
       
-      await ownerInformationService.createOwnerInformation({
+      // Initialize owner information
+      await ownerInformationService.saveOwnerInformation({
         application_id: newApplicationId,
+        surname: '',
+        given_name: '',
+        age: 0,
+        sex: 'male',
+        civil_status: 'single',
+        nationality: '',
+        owner_street: '',
+        owner_barangay: '',
+        owner_city_municipality: '',
+        owner_province: '',
+        owner_zip_code: '',
       });
       
-      await declarationService.createDeclaration({
+      // Initialize declaration
+      await declarationService.saveDeclaration({
         application_id: newApplicationId,
+        signature: '',
+        is_agreed: false,
+        declaration_place: 'City of Lucena',
       });
       
       // Set context values
@@ -74,14 +102,13 @@ export const ApplicationProvider: React.FC<ApplicationProviderProps> = ({ childr
       setApplicationType(type);
       setApplicationStatus('draft');
       
-      toast('Application Started', {
+      toast("Application Started", {
         description: `New ${type.replace("Application", "")} application has been started.`
       });
     } catch (error) {
       console.error("Error creating application:", error);
-      toast('Application Failed', {
-        description: "Failed to start a new application. Please try again.",
-        variant: "destructive",
+      toast("Application Failed", {
+        description: "Failed to start a new application. Please try again."
       });
     } finally {
       setIsLoading(false);
@@ -92,9 +119,8 @@ export const ApplicationProvider: React.FC<ApplicationProviderProps> = ({ childr
   const updateStatus = useCallback(async (status: ApplicationStatus) => {
     setIsLoading(true);
     if (!applicationId) {
-      toast('Missing Application', {
-        description: "No application ID found. Cannot update status.",
-        variant: "destructive",
+      toast("Missing Application", {
+        description: "No application ID found. Cannot update status."
       });
       setIsLoading(false);
       return;
@@ -102,27 +128,29 @@ export const ApplicationProvider: React.FC<ApplicationProviderProps> = ({ childr
 
     try {
       // Update application status in database
-      await applicationService.updateApplication(applicationId, {
+      await applicationService.createApplication({
+        id: applicationId,
         application_status: status,
-        submission_date: status === 'submitted' ? new Date() : null,
+        submission_date: status === 'submitted' ? new Date().toISOString() : null,
+        application_type: applicationType as ApplicationType,
+        user_id: '',  // This will be ignored by the backend for updates
       });
 
       // Update context value
       setApplicationStatus(status);
       
-      toast('Application Updated', {
+      toast("Application Updated", {
         description: `Application status updated to ${status}.`
       });
     } catch (error) {
       console.error("Error updating application status:", error);
-      toast('Update Failed', {
-        description: "Failed to update application status. Please try again.",
-        variant: "destructive",
+      toast("Update Failed", {
+        description: "Failed to update application status. Please try again."
       });
     } finally {
       setIsLoading(false);
     }
-  }, [applicationId]);
+  }, [applicationId, applicationType]);
 
   const value = {
     applicationId,

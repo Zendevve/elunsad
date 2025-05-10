@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/utils/toastCompat";
 
 interface EntityDataOptions<T> {
   tableName: string;
@@ -14,7 +15,6 @@ function useEntityData<T>(options: EntityDataOptions<T>) {
   const [data, setData] = useState<T | null>(initialData || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!entityId) {
@@ -37,8 +37,7 @@ function useEntityData<T>(options: EntityDataOptions<T>) {
           console.error(`Error fetching ${tableName} data:`, error);
           setError(error);
           toast("Error fetching data", {
-            description: `Failed to fetch ${tableName} data.`,
-            variant: "destructive",
+            description: `Failed to fetch ${tableName} data.`
           });
         } else if (result) {
           setData(result as T);
@@ -49,8 +48,7 @@ function useEntityData<T>(options: EntityDataOptions<T>) {
         console.error(`Unexpected error fetching ${tableName} data:`, err);
         setError(err instanceof Error ? err : new Error('An unexpected error occurred'));
         toast("Unexpected error", {
-          description: `An unexpected error occurred while fetching ${tableName} data.`,
-          variant: "destructive",
+          description: `An unexpected error occurred while fetching ${tableName} data.`
         });
       } finally {
         setLoading(false);
@@ -58,7 +56,7 @@ function useEntityData<T>(options: EntityDataOptions<T>) {
     };
 
     fetchData();
-  }, [tableName, entityId, selectQuery, toast, initialData]);
+  }, [tableName, entityId, selectQuery, initialData]);
 
   const updateData = async (newData: Partial<T>) => {
     setLoading(true);
@@ -76,13 +74,12 @@ function useEntityData<T>(options: EntityDataOptions<T>) {
         console.error(`Error updating ${tableName} data:`, error);
         setError(error);
         toast("Error updating data", {
-          description: `Failed to update ${tableName} data.`,
-          variant: "destructive",
+          description: `Failed to update ${tableName} data.`
         });
       } else if (result) {
         setData(result as T);
         toast("Data updated", {
-          description: `Successfully updated ${tableName} data.`,
+          description: `Successfully updated ${tableName} data.`
         });
       } else {
         setData(null);
@@ -91,9 +88,8 @@ function useEntityData<T>(options: EntityDataOptions<T>) {
       console.error(`Unexpected error updating ${tableName} data:`, err);
       setError(err instanceof Error ? err : new Error('An unexpected error occurred'));
       toast("Unexpected error", {
-        description: `An unexpected error occurred while updating ${tableName} data.`,
-        variant: "destructive",
-      });
+        description: `An unexpected error occurred while updating ${tableName} data.`
+        });
     } finally {
       setLoading(false);
     }
