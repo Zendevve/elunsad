@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessInformationService } from "@/services/application";
+import { OwnershipType } from "@/services/application/types";
 
 // Define the schema for Business Information using Zod
 const businessInformationSchema = z.object({
@@ -109,16 +109,42 @@ const BusinessInformationSection = () => {
 
       // Save the business information to the database
       await businessInformationService.saveBusinessInformation({
-        ...values,
         application_id: applicationId,
+        business_name: values.business_name,
+        tin_number: values.tin_number,
+        ownership_type: values.ownership_type as OwnershipType,
+        street: values.street,
+        barangay: values.barangay,
+        city_municipality: values.city_municipality,
+        province: values.province,
+        zip_code: values.zip_code,
+        mobile_no: values.mobile_no,
+        email_address: values.email_address,
+        website_url: values.website_url,
+        fb_page_url: values.fb_page_url,
+        business_description: values.business_description,
+        trade_name: undefined, // Add any other required or optional fields
+        registration_number: undefined,
+        sss_number: undefined,
+        ctc_number: undefined,
+        ctc_date_issue: undefined,
+        ctc_place_issue: undefined,
+        house_bldg_no: undefined,
+        building_name: undefined,
+        block_no: undefined,
+        lot_no: undefined,
+        subdivision: undefined,
+        telephone_no: undefined,
       });
 
-      toast("Business Information Saved", {
+      toast({
+        title: "Business Information Saved",
         description: "Your business information has been saved successfully.",
       });
     } catch (error) {
       console.error("Error saving business information:", error);
-      toast("Failed to save business information", {
+      toast({
+        title: "Failed to save business information",
         description: "There was a problem saving the business information. Please try again.",
         variant: "destructive",
       });
@@ -153,7 +179,7 @@ const BusinessInformationSection = () => {
       delete window.businessInfoHelpers;
     };
   }, [form, onSubmit]);
-
+  
   return (
     <FormSectionWrapper
       title="Business Information"
@@ -208,10 +234,11 @@ const BusinessInformationSection = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="sole_proprietorship">Sole Proprietorship</SelectItem>
+                    <SelectItem value="soleProprietorship">Sole Proprietorship</SelectItem>
                     <SelectItem value="partnership">Partnership</SelectItem>
                     <SelectItem value="corporation">Corporation</SelectItem>
                     <SelectItem value="cooperative">Cooperative</SelectItem>
+                    <SelectItem value="onePersonCorp">One Person Corporation</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

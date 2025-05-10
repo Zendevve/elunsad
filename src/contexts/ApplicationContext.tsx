@@ -74,7 +74,7 @@ export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ childre
           application_id: appData.id,
           business_name: '',
           tin_number: '',
-          ownership_type: 'sole_proprietorship',
+          ownership_type: 'soleProprietorship', // Fixed to match the enum
           street: '',
           barangay: '',
           city_municipality: '',

@@ -18,8 +18,8 @@ export const businessInformationService = {
         throw new Error("Missing required fields for business information");
       }
 
-      // Map the ownership_type from our app type to database enum value if needed
-      let mappedOwnershipType: string = data.ownership_type;
+      // Ensure the ownership_type is a valid value from our OwnershipType enum
+      const mappedOwnershipType: OwnershipType = data.ownership_type;
       
       // Check if business information already exists for this application
       const { data: existingData, error: checkError } = await supabase

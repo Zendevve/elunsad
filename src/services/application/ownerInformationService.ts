@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { OwnerInformationData } from "./types";
+import { OwnerInformationData, SexType } from "./types";
 
 // Owner Information service methods
 export const ownerInformationService = {
@@ -16,7 +16,7 @@ export const ownerInformationService = {
       if (checkError) throw checkError;
       
       // Make sure the sex value is compatible with the database enum
-      const mappedSex = data.sex === 'other' ? 'male' : data.sex; // Map 'other' to 'male' as a fallback
+      const mappedSex: SexType = data.sex;
       
       if (existingData) {
         // Update existing record

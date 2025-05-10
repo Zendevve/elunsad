@@ -2,6 +2,7 @@
 // Application type definitions
 export type ApplicationType = 'newApplication' | 'renewalApplication' | 'amendmentApplication';
 export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info';
+// Important: Adjust the values to match what's used in the database
 export type OwnershipType = 'soleProprietorship' | 'partnership' | 'corporation' | 'cooperative' | 'onePersonCorp';
 export type SexType = 'male' | 'female';
 
