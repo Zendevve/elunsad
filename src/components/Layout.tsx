@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu, LogOut } from "lucide-react";
@@ -6,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import Sidebar from "./Sidebar";
 import UserTools from "./UserTools";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import useRoleAuth from "@/hooks/useRoleAuth";
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const location = useLocation();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { isAdmin, isBusinessOwner } = useRoleAuth();
   
@@ -58,8 +56,7 @@ const Layout = () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      toast({
-        title: "Successfully signed out",
+      toast('Successfully signed out', {
         description: "You have been logged out of your account"
       });
       
@@ -67,10 +64,8 @@ const Layout = () => {
       navigate("/");
     } catch (error) {
       console.error("Error signing out:", error);
-      toast({
-        title: "Sign out failed",
-        description: "There was a problem signing you out",
-        variant: "destructive"
+      toast('Sign out failed', {
+        description: "There was a problem signing you out"
       });
     }
   };

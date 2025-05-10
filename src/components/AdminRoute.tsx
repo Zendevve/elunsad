@@ -2,12 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const { toast } = useToast();
 
   // Simplified check for admin status
   useEffect(() => {
@@ -65,10 +64,8 @@ const AdminRoute: React.FC = () => {
 
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
-    toast({
-      title: 'Access Denied',
-      description: 'You do not have permission to access the admin area',
-      variant: 'destructive',
+    toast('Access Denied', {
+      description: 'You do not have permission to access the admin area'
     });
     
     return <Navigate to="/dashboard" replace />;

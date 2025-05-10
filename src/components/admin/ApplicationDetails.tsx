@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminApplicationService } from "@/services/application/adminApplicationService";
@@ -54,9 +53,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
       setAdminNotes(data?.admin_notes || "");
     } catch (error) {
       console.error("Error fetching application details:", error);
-      toast({
-        variant: "destructive",
-        title: "Failed to load application details",
+      toast('Failed to load application details', {
         description: "There was a problem loading the application. Please try again."
       });
     } finally {
@@ -71,8 +68,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
       setProcessingAction(true);
       await adminApplicationService.updateApplicationStatus(applicationId, status, adminNotes);
       
-      toast({
-        title: "Status Updated",
+      toast('Status Updated', {
         description: `Application status has been updated to ${status.replace("_", " ")}.`
       });
       
@@ -81,9 +77,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
       setDialogAction(null);
     } catch (error) {
       console.error("Error updating application status:", error);
-      toast({
-        variant: "destructive",
-        title: "Failed to update status",
+      toast('Failed to update status', {
         description: "There was a problem updating the application status. Please try again."
       });
     } finally {

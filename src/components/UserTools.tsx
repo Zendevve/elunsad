@@ -1,4 +1,3 @@
-
 import { Bell, User, Settings, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface UserToolsProps {
@@ -29,7 +28,6 @@ interface UserToolsProps {
 }
 
 const UserTools: React.FC<UserToolsProps> = ({ user, settings }) => {
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -42,19 +40,16 @@ const UserTools: React.FC<UserToolsProps> = ({ user, settings }) => {
       }
       
       // Show success message
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
+      toast('Logged out', {
+        description: "You have been successfully logged out"
       });
       
       // Redirect to landing page
       navigate("/");
     } catch (error) {
       console.error("Logout error:", error);
-      toast({
-        title: "Logout failed",
-        description: "There was an error logging out. Please try again.",
-        variant: "destructive",
+      toast('Logout failed', {
+        description: "There was an error logging out. Please try again."
       });
     }
   };

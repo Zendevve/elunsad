@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Trash2, Upload, Save, FileImage } from "lucide-react";
@@ -27,10 +26,8 @@ export const SignatureUpload = ({ onSave, initialSignatureUrl, applicationId }: 
     // Validate file type (only accept images)
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!validTypes.includes(selectedFile.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload an image file (JPG, JPEG, or PNG)",
-        variant: "destructive",
+      toast('Invalid file type', {
+        description: "Please upload an image file (JPG, JPEG, or PNG)"
       });
       return;
     }
@@ -38,10 +35,8 @@ export const SignatureUpload = ({ onSave, initialSignatureUrl, applicationId }: 
     // Validate file size (max 2MB)
     const maxSize = 2 * 1024 * 1024; // 2MB
     if (selectedFile.size > maxSize) {
-      toast({
-        title: "File too large",
-        description: "Signature image must be less than 2MB",
-        variant: "destructive",
+      toast('File too large', {
+        description: "Signature image must be less than 2MB"
       });
       return;
     }
@@ -74,10 +69,8 @@ export const SignatureUpload = ({ onSave, initialSignatureUrl, applicationId }: 
       
       if (error) {
         console.error("Error uploading signature:", error);
-        toast({
-          title: "Upload Failed",
-          description: "There was an error uploading your signature. Please try again.",
-          variant: "destructive",
+        toast('Upload Failed', {
+          description: "There was an error uploading your signature. Please try again."
         });
         setIsUploading(false);
         return;
@@ -93,16 +86,13 @@ export const SignatureUpload = ({ onSave, initialSignatureUrl, applicationId }: 
       // Save the signature URL
       onSave(publicUrl);
       
-      toast({
-        title: "Signature Saved",
-        description: "Your signature has been uploaded successfully",
+      toast('Signature Saved', {
+        description: "Your signature has been uploaded successfully"
       });
     } catch (error) {
       console.error("Error in signature upload process:", error);
-      toast({
-        title: "Upload Failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
+      toast('Upload Failed', {
+        description: "An unexpected error occurred. Please try again."
       });
     } finally {
       setIsUploading(false);

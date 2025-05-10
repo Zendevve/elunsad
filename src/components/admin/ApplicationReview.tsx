@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -14,7 +13,7 @@ import {
   SelectTrigger, SelectValue 
 } from "@/components/ui/select";
 import { adminApplicationService } from "@/services/application/adminApplicationService";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
 import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search } from "lucide-react";
 
@@ -36,7 +35,6 @@ const ApplicationReview = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     fetchApplications();
@@ -57,9 +55,7 @@ const ApplicationReview = () => {
       setFilteredApplications(data);
     } catch (error) {
       console.error("Error fetching applications:", error);
-      toast({
-        variant: "destructive",
-        title: "Failed to load applications",
+      toast('Failed to load applications', {
         description: "There was a problem loading the applications. Please try again."
       });
     } finally {

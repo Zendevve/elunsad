@@ -2,13 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const AuthRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const location = useLocation();
-  const { toast } = useToast();
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -53,12 +52,10 @@ const AuthRoute: React.FC = () => {
   if (!isAuthenticated) {
     // Show toast notification when redirecting to login
     useEffect(() => {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access this page',
-        variant: 'destructive',
+      toast('Authentication Required', {
+        description: 'Please sign in to access this page'
       });
-    }, [toast]);
+    }, []);
     
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
