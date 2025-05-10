@@ -53,8 +53,7 @@ const Applications = () => {
       setIsAuthenticated(!!data.user);
       
       if (!data.user) {
-        toast({
-          title: "Authentication Required",
+        toast("Authentication Required", {
           description: "Please sign in to create an application.",
           variant: "destructive",
         });
@@ -125,8 +124,7 @@ const Applications = () => {
           const isValid = await window.businessInfoHelpers.validateAndSave();
           
           if (!isValid) {
-            toast({
-              title: "Incomplete Information",
+            toast("Incomplete Information", {
               description: "Please complete all required business information fields before proceeding.",
               variant: "destructive",
             });
@@ -138,8 +136,7 @@ const Applications = () => {
           const businessInfo = await businessInformationService.getBusinessInformation(applicationId || '');
           
           if (!businessInfo) {
-            toast({
-              title: "Incomplete Information",
+            toast("Incomplete Information", {
               description: "Please complete the business information before proceeding.",
               variant: "destructive",
             });
@@ -157,8 +154,7 @@ const Applications = () => {
           const missingFields = requiredBusinessFields.filter(field => !businessInfo[field as keyof typeof businessInfo]);
           
           if (missingFields.length > 0) {
-            toast({
-              title: "Incomplete Information",
+            toast("Incomplete Information", {
               description: "Please complete all required fields before proceeding.",
               variant: "destructive",
             });
@@ -172,8 +168,7 @@ const Applications = () => {
           console.log("Applications - Validating owner info through helper");
           const isValid = await window.ownerInfoHelpers.validateAndSave();
           if (!isValid) {
-            toast({
-              title: "Incomplete Information",
+            toast("Incomplete Information", {
               description: "Please complete all required owner information fields before proceeding.",
               variant: "destructive",
             });
@@ -184,8 +179,7 @@ const Applications = () => {
           // Fallback validation
           const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId || '');
           if (!ownerInfo) {
-            toast({
-              title: "Incomplete Information",
+            toast("Incomplete Information", {
               description: "Please complete the owner information before proceeding.",
               variant: "destructive",
             });
@@ -204,8 +198,7 @@ const Applications = () => {
           const missingFields = requiredOwnerFields.filter(field => !ownerInfo[field as keyof typeof ownerInfo]);
           
           if (missingFields.length > 0) {
-            toast({
-              title: "Incomplete Information",
+            toast("Incomplete Information", {
               description: "Please complete all required owner information fields before proceeding.",
               variant: "destructive",
             });
@@ -217,8 +210,7 @@ const Applications = () => {
         // Validate business operation and lines
         const businessLines = await businessLinesService.getBusinessLines(applicationId || '');
         if (!businessLines || businessLines.length === 0) {
-          toast({
-            title: "Incomplete Information",
+          toast("Incomplete Information", {
             description: "Please add at least one line of business before proceeding.",
             variant: "destructive",
           });
@@ -232,8 +224,7 @@ const Applications = () => {
           const isValid = await window.declarationHelpers.validateAndSave();
           
           if (!isValid) {
-            toast({
-              title: "Incomplete Declaration",
+            toast("Incomplete Declaration", {
               description: "Please complete the declaration before proceeding.",
               variant: "destructive",
             });
@@ -243,8 +234,7 @@ const Applications = () => {
         } else {
           const declaration = await declarationService.getDeclaration(applicationId || '');
           if (!declaration || !declaration.signature) {
-            toast({
-              title: "Signature Required",
+            toast("Signature Required", {
               description: "Please sign the declaration before submitting.",
               variant: "destructive",
             });
@@ -253,8 +243,7 @@ const Applications = () => {
           }
           
           if (!isAgreed) {
-            toast({
-              title: "Agreement Required",
+            toast("Agreement Required", {
               description: "You must agree to the declaration before submitting.",
               variant: "destructive",
             });
@@ -268,23 +257,19 @@ const Applications = () => {
       if (currentStep < totalSteps) {
         // Only show success toast when explicitly moving to next step
         if (currentStep === 2) {
-          toast({
-            title: "Business Information Saved",
+          toast("Business Information Saved", {
             description: "Your business information has been saved successfully.",
           });
         } else if (currentStep === 3) {
-          toast({
-            title: "Owner Information Saved",
+          toast("Owner Information Saved", {
             description: "Your owner information has been saved successfully.",
           });
         } else if (currentStep === 4) {
-          toast({
-            title: "Business Operations Saved",
+          toast("Business Operations Saved", {
             description: "Your business operations and lines have been saved successfully.",
           });
         } else if (currentStep === 5) {
-          toast({
-            title: "Declaration Confirmed",
+          toast("Declaration Confirmed", {
             description: "Your declaration has been confirmed successfully.",
           });
         }
@@ -297,8 +282,7 @@ const Applications = () => {
       }
     } catch (error) {
       console.error("Error validating before next step:", error);
-      toast({
-        title: "Error",
+      toast("Error", {
         description: "An error occurred while processing your information. Please try again.",
         variant: "destructive",
       });
@@ -319,8 +303,7 @@ const Applications = () => {
   // Validate required data before submission
   const validateApplication = async () => {
     if (!applicationId) {
-      toast({
-        title: "Application Error",
+      toast("Application Error", {
         description: "Could not find application to submit. Please try again.",
         variant: "destructive",
       });
@@ -328,8 +311,7 @@ const Applications = () => {
     }
     
     if (!isAgreed) {
-      toast({
-        title: "Agreement Required",
+      toast("Agreement Required", {
         description: "You must agree to the declaration before submitting the application.",
         variant: "destructive",
       });
@@ -351,8 +333,7 @@ const Applications = () => {
       });
       
       if (!businessInfo) {
-        toast({
-          title: "Incomplete Application",
+        toast("Incomplete Application", {
           description: "Please complete the Business Information section before submitting.",
           variant: "destructive",
         });
@@ -361,8 +342,7 @@ const Applications = () => {
       }
       
       if (!ownerInfo) {
-        toast({
-          title: "Incomplete Application",
+        toast("Incomplete Application", {
           description: "Please complete the Owner Information section before submitting.",
           variant: "destructive",
         });
@@ -371,8 +351,7 @@ const Applications = () => {
       }
       
       if (!businessLines || businessLines.length === 0) {
-        toast({
-          title: "Incomplete Application",
+        toast("Incomplete Application", {
           description: "Please add at least one Line of Business before submitting.",
           variant: "destructive",
         });
@@ -381,8 +360,7 @@ const Applications = () => {
       }
       
       if (!declaration || !declaration.signature) {
-        toast({
-          title: "Signature Required",
+        toast("Signature Required", {
           description: "Please sign the declaration before submitting.",
           variant: "destructive",
         });
@@ -393,8 +371,7 @@ const Applications = () => {
       return true;
     } catch (error) {
       console.error("Validation error:", error);
-      toast({
-        title: "Validation Error",
+      toast("Validation Error", {
         description: "An error occurred while validating your application. Please try again.",
         variant: "destructive",
       });
@@ -415,8 +392,7 @@ const Applications = () => {
       // Update application status to submitted
       await updateStatus('submitted');
       
-      toast({
-        title: "Application Submitted",
+      toast("Application Submitted", {
         description: "Your business permit application has been submitted successfully.",
       });
       
@@ -424,8 +400,7 @@ const Applications = () => {
       navigate('/status');
     } catch (error) {
       console.error("Application submission error:", error);
-      toast({
-        title: "Submission Failed",
+      toast("Submission Failed", {
         description: "There was an error submitting your application. Please try again.",
         variant: "destructive",
       });

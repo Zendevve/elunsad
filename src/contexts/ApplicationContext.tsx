@@ -1,160 +1,126 @@
+import React, { createContext, useState, useContext, useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { toast } from "@/hooks/use-toast";
+import { 
+  applicationService,
+  businessInformationService, 
+  ownerInformationService, 
+  businessLinesService, 
+  declarationService 
+} from "@/services/application";
+import { ApplicationData, ApplicationType, ApplicationStatus } from '@/services/application/types';
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useToast } from "@/components/ui/use-toast";
-import { ApplicationType, ApplicationStatus } from '@/services/application/types';
-import { applicationService } from '@/services/application';
-import { supabase } from "@/integrations/supabase/client";
-
-interface ApplicationContextType {
+interface ApplicationContextProps {
   applicationId: string | null;
   applicationType: ApplicationType | null;
   applicationStatus: ApplicationStatus | null;
-  isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setApplicationId: (id: string | null) => void;
-  createNewApplication: (type: ApplicationType) => Promise<string | null>;
-  getApplicationDetails: () => Promise<void>;
+  createNewApplication: (type: ApplicationType) => Promise<void>;
   updateStatus: (status: ApplicationStatus) => Promise<void>;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
 }
 
-const ApplicationContext = createContext<ApplicationContextType | undefined>(undefined);
+const ApplicationContext = createContext<ApplicationContextProps>({
+  applicationId: null,
+  applicationType: null,
+  applicationStatus: null,
+  createNewApplication: async () => {},
+  updateStatus: async () => {},
+  isLoading: false,
+  setIsLoading: () => {},
+});
 
-export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface ApplicationProviderProps {
+  children: React.ReactNode;
+}
+
+export const ApplicationProvider: React.FC<ApplicationProviderProps> = ({ children }) => {
   const [applicationId, setApplicationId] = useState<string | null>(null);
   const [applicationType, setApplicationType] = useState<ApplicationType | null>(null);
   const [applicationStatus, setApplicationStatus] = useState<ApplicationStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const { toast } = useToast();
-
-  // Check if the user is authenticated
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data, error } = await supabase.auth.getUser();
-        if (error) {
-          console.error("Auth error:", error);
-          setIsAuthenticated(false);
-        } else {
-          setIsAuthenticated(!!data.user);
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
-        setIsAuthenticated(false);
-      }
-    };
-    
-    checkAuth();
-    
-    // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-    
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
 
   // Create a new application
-  const createNewApplication = async (type: ApplicationType) => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to create an application.",
-        variant: "destructive",
-      });
-      return null;
-    }
-    
+  const createNewApplication = useCallback(async (type: ApplicationType) => {
     setIsLoading(true);
     try {
-      const application = await applicationService.createApplication(type);
-      if (application) {
-        setApplicationId(application.id);
-        setApplicationType(application.application_type);
-        setApplicationStatus(application.application_status as ApplicationStatus);
-        return application.id;
-      }
-      return null;
+      const newApplicationId = uuidv4();
+      
+      // Create application record
+      await applicationService.createApplication({
+        id: newApplicationId,
+        application_type: type,
+        application_status: 'draft',
+        submission_date: null,
+        admin_notes: null,
+        created_at: new Date(),
+      });
+      
+      // Initialize related entities
+      await businessInformationService.createBusinessInformation({
+        application_id: newApplicationId,
+      });
+      
+      await ownerInformationService.createOwnerInformation({
+        application_id: newApplicationId,
+      });
+      
+      await declarationService.createDeclaration({
+        application_id: newApplicationId,
+      });
+      
+      // Set context values
+      setApplicationId(newApplicationId);
+      setApplicationType(type);
+      setApplicationStatus('draft');
+      
+      toast('Application Started', {
+        description: `New ${type.replace("Application", "")} application has been started.`
+      });
     } catch (error) {
       console.error("Error creating application:", error);
-      toast({
-        title: "Application Creation Failed",
-        description: "There was an error creating your application. Please try again.",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Get application details
-  const getApplicationDetails = async () => {
-    if (!applicationId) return;
-    
-    setIsLoading(true);
-    try {
-      const application = await applicationService.getApplicationById(applicationId);
-      if (application) {
-        setApplicationType(application.application_type);
-        setApplicationStatus(application.application_status as ApplicationStatus);
-      } else {
-        // Application not found, reset state
-        setApplicationId(null);
-        setApplicationType(null);
-        setApplicationStatus(null);
-      }
-    } catch (error) {
-      console.error("Error getting application details:", error);
-      toast({
-        title: "Failed to Retrieve Application",
-        description: "There was an error loading your application. Please try again.",
+      toast('Application Failed', {
+        description: "Failed to start a new application. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Update application status
-  const updateStatus = async (status: ApplicationStatus) => {
-    if (!applicationId) return;
-    
+  const updateStatus = useCallback(async (status: ApplicationStatus) => {
     setIsLoading(true);
+    if (!applicationId) {
+      toast('Missing Application', {
+        description: "No application ID found. Cannot update status.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const application = await applicationService.updateApplicationStatus(applicationId, status);
-      if (application) {
-        setApplicationStatus(application.application_status as ApplicationStatus);
-        
-        // Show success message for submission
-        if (status === 'submitted') {
-          toast({
-            title: "Application Submitted Successfully",
-            description: "Your application has been submitted for review.",
-          });
-        }
-      }
+      // Update application status in database
+      await applicationService.updateApplication(applicationId, {
+        application_status: status,
+        submission_date: status === 'submitted' ? new Date() : null,
+      });
+
+      // Update context value
+      setApplicationStatus(status);
+      
+      toast('Application Updated', {
+        description: `Application status updated to ${status}.`
+      });
     } catch (error) {
       console.error("Error updating application status:", error);
-      toast({
-        title: "Status Update Failed",
-        description: "There was an error updating your application status. Please try again.",
+      toast('Update Failed', {
+        description: "Failed to update application status. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Load application details when applicationId changes
-  useEffect(() => {
-    if (applicationId) {
-      getApplicationDetails();
-    } else {
-      setApplicationType(null);
-      setApplicationStatus(null);
     }
   }, [applicationId]);
 
@@ -162,12 +128,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     applicationId,
     applicationType,
     applicationStatus,
+    createNewApplication,
+    updateStatus,
     isLoading,
     setIsLoading,
-    setApplicationId,
-    createNewApplication,
-    getApplicationDetails,
-    updateStatus
   };
 
   return (
@@ -177,10 +141,4 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
   );
 };
 
-export const useApplication = () => {
-  const context = useContext(ApplicationContext);
-  if (context === undefined) {
-    throw new Error('useApplication must be used within an ApplicationProvider');
-  }
-  return context;
-};
+export const useApplication = () => useContext(ApplicationContext);
