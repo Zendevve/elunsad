@@ -88,20 +88,6 @@ const BusinessInformationView: React.FC<BusinessInformationProps> = ({ businessI
             <p className="text-sm font-medium text-gray-500">Email Address</p>
             <p>{businessInformation.email_address}</p>
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Website URL</p>
-            <p>{businessInformation.website_url || "N/A"}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Facebook Page URL</p>
-            <p>{businessInformation.fb_page_url || "N/A"}</p>
-          </div>
-          {businessInformation.business_description && (
-            <div className="col-span-3">
-              <p className="text-sm font-medium text-gray-500">Business Description</p>
-              <p>{businessInformation.business_description}</p>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

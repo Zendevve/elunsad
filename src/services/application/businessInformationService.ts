@@ -62,9 +62,7 @@ export const businessInformationService = {
             zip_code: data.zip_code,
             telephone_no: data.telephone_no,
             mobile_no: data.mobile_no,
-            email_address: data.email_address,
-            website_url: data.website_url,
-            fb_page_url: data.fb_page_url
+            email_address: data.email_address
           })
           .eq('application_id', data.application_id)
           .select('*')
@@ -105,9 +103,7 @@ export const businessInformationService = {
             zip_code: data.zip_code,
             telephone_no: data.telephone_no,
             mobile_no: data.mobile_no,
-            email_address: data.email_address,
-            website_url: data.website_url,
-            fb_page_url: data.fb_page_url
+            email_address: data.email_address
           })
           .select('*')
           .single();

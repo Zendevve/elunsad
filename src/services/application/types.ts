@@ -42,9 +42,6 @@ export interface BusinessInformationData {
   telephone_no?: string;
   mobile_no: string;
   email_address: string;
-  website_url?: string;
-  fb_page_url?: string;
-  business_description?: string;
 }
 
 export interface OwnerInformationData {

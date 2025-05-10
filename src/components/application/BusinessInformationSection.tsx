@@ -6,7 +6,6 @@ import * as z from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { useApplication } from "@/contexts/ApplicationContext";
@@ -36,10 +35,7 @@ const businessInformationSchema = z.object({
   zip_code: z.string().min(4, { message: "Zip code must be at least 4 characters." }).max(4, { message: "Zip code must be at most 4 characters." }),
   telephone_no: z.string().optional(),
   mobile_no: z.string().min(11, { message: "Mobile number must be at least 11 characters." }).max(11, { message: "Mobile number must be at most 11 characters." }),
-  email_address: z.string().email({ message: "Invalid email address." }),
-  website_url: z.string().url({ message: "Invalid website URL." }).optional().or(z.literal('')),
-  fb_page_url: z.string().url({ message: "Invalid Facebook page URL." }).optional().or(z.literal('')),
-  business_description: z.string().optional(),
+  email_address: z.string().email({ message: "Invalid email address." })
 });
 
 type BusinessInformationValues = z.infer<typeof businessInformationSchema>;
@@ -75,10 +71,7 @@ const BusinessInformationSection = () => {
       zip_code: "",
       telephone_no: "",
       mobile_no: "",
-      email_address: "",
-      website_url: "",
-      fb_page_url: "",
-      business_description: "",
+      email_address: ""
     },
     mode: "onChange", // Validate on change
   });
@@ -113,10 +106,7 @@ const BusinessInformationSection = () => {
               zip_code: data.zip_code || "",
               telephone_no: data.telephone_no || "",
               mobile_no: data.mobile_no || "",
-              email_address: data.email_address || "",
-              website_url: data.website_url || "",
-              fb_page_url: data.fb_page_url || "",
-              business_description: data.business_description || "",
+              email_address: data.email_address || ""
             };
             
             // Set the default values for the form
@@ -168,10 +158,7 @@ const BusinessInformationSection = () => {
         zip_code: values.zip_code,
         telephone_no: values.telephone_no,
         mobile_no: values.mobile_no,
-        email_address: values.email_address,
-        website_url: values.website_url,
-        fb_page_url: values.fb_page_url,
-        business_description: values.business_description,
+        email_address: values.email_address
       });
 
       toast({
@@ -576,57 +563,6 @@ const BusinessInformationSection = () => {
                 <FormLabel>Email Address</FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="Enter email address" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Website URL */}
-            <FormField
-              control={form.control}
-              name="website_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website URL (Optional)</FormLabel>
-                  <FormControl>
-                    <Input type="url" placeholder="Enter website URL" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Facebook Page URL */}
-            <FormField
-              control={form.control}
-              name="fb_page_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Facebook Page URL (Optional)</FormLabel>
-                  <FormControl>
-                    <Input type="url" placeholder="Enter Facebook page URL" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Business Description */}
-          <FormField
-            control={form.control}
-            name="business_description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Business Description (Optional)</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Describe your business"
-                    className="resize-none"
-                    {...field}
-                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
