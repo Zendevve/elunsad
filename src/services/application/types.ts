@@ -83,13 +83,38 @@ export interface BusinessLinesData {
 
 export interface BusinessOperationsData {
   application_id: string;
+  business_activity?: string;
+  other_activity?: string;
   business_area?: number;
   employees_in_lucena?: number;
+  professional_male?: number;
+  professional_female?: number;
+  non_professional_male?: number;
+  non_professional_female?: number;
   capitalization?: number;
   property_owned?: boolean;
   monthly_rental?: number;
   lessor_full_name?: string;
+  lessor_business_name?: string;
+  lessor_address?: string;
+  lessor_contact_number?: string;
+  lessor_email_address?: string;
   has_tax_incentives?: boolean;
+  tax_declaration_no?: string;
+  main_block_no?: string;
+  main_lot_no?: string;
+  main_house_bldg_no?: string;
+  main_building_name?: string;
+  main_street?: string;
+  main_subdivision?: string;
+  main_barangay?: string;
+  main_city_municipality?: string;
+  main_province?: string;
+  main_zip_code?: string;
+  van_truck?: number;
+  motorcycle?: number;
+  other_vehicles?: number;
+  cctv_cameras?: number;
 }
 
 export interface DeclarationData {

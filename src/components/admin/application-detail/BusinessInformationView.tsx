@@ -9,6 +9,17 @@ interface BusinessInformationProps {
 const BusinessInformationView: React.FC<BusinessInformationProps> = ({ businessInformation }) => {
   if (!businessInformation) return null;
 
+  // Map ownership_type to display text
+  const ownershipTypeMap: Record<string, string> = {
+    soleProprietorship: "Sole Proprietorship",
+    partnership: "Partnership",
+    corporation: "Corporation",
+    cooperative: "Cooperative",
+    onePersonCorp: "One Person Corporation"
+  };
+
+  const ownershipTypeDisplay = ownershipTypeMap[businessInformation.ownership_type] || businessInformation.ownership_type;
+
   return (
     <Card>
       <CardHeader>
@@ -29,14 +40,35 @@ const BusinessInformationView: React.FC<BusinessInformationProps> = ({ businessI
             <p>{businessInformation.tin_number}</p>
           </div>
           <div>
+            <p className="text-sm font-medium text-gray-500">Registration Number</p>
+            <p>{businessInformation.registration_number || "N/A"}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">SSS Number</p>
+            <p>{businessInformation.sss_number || "N/A"}</p>
+          </div>
+          <div>
             <p className="text-sm font-medium text-gray-500">Ownership Type</p>
-            <p>{businessInformation.ownership_type}</p>
+            <p>{ownershipTypeDisplay}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">CTC Details</p>
+            <p>
+              {businessInformation.ctc_number ? 
+                `${businessInformation.ctc_number} issued on ${businessInformation.ctc_date_issue || 'N/A'} at ${businessInformation.ctc_place_issue || 'N/A'}` : 
+                "N/A"}
+            </p>
           </div>
           <div className="col-span-3">
             <p className="text-sm font-medium text-gray-500">Address</p>
             <p>
               {[
+                businessInformation.house_bldg_no && `House/Bldg No: ${businessInformation.house_bldg_no}`,
+                businessInformation.building_name && `Building: ${businessInformation.building_name}`,
+                businessInformation.block_no && `Block: ${businessInformation.block_no}`,
+                businessInformation.lot_no && `Lot: ${businessInformation.lot_no}`,
                 businessInformation.street,
+                businessInformation.subdivision && `Subdivision: ${businessInformation.subdivision}`,
                 businessInformation.barangay,
                 businessInformation.city_municipality,
                 businessInformation.province,
@@ -49,9 +81,27 @@ const BusinessInformationView: React.FC<BusinessInformationProps> = ({ businessI
             <p>{businessInformation.mobile_no}</p>
           </div>
           <div>
+            <p className="text-sm font-medium text-gray-500">Telephone Number</p>
+            <p>{businessInformation.telephone_no || "N/A"}</p>
+          </div>
+          <div>
             <p className="text-sm font-medium text-gray-500">Email Address</p>
             <p>{businessInformation.email_address}</p>
           </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Website URL</p>
+            <p>{businessInformation.website_url || "N/A"}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Facebook Page URL</p>
+            <p>{businessInformation.fb_page_url || "N/A"}</p>
+          </div>
+          {businessInformation.business_description && (
+            <div className="col-span-3">
+              <p className="text-sm font-medium text-gray-500">Business Description</p>
+              <p>{businessInformation.business_description}</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

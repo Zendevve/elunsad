@@ -65,8 +65,6 @@ export const businessInformationService = {
             email_address: data.email_address,
             website_url: data.website_url,
             fb_page_url: data.fb_page_url
-            // Add business_description if it's not in the database schema
-            // business_description: data.business_description
           })
           .eq('application_id', data.application_id)
           .select('*')
@@ -110,8 +108,6 @@ export const businessInformationService = {
             email_address: data.email_address,
             website_url: data.website_url,
             fb_page_url: data.fb_page_url
-            // Add business_description if it's not in the database schema
-            // business_description: data.business_description
           })
           .select('*')
           .single();

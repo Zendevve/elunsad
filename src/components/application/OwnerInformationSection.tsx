@@ -1,321 +1,454 @@
 
-import React, { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/utils/toastCompat";
-import FormSectionWrapper from "@/components/application/FormSectionWrapper";
+import { useToast } from "@/hooks/use-toast";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { ownerInformationService } from "@/services/application";
-import useDebounce from "@/hooks/useDebounce";
-
-// Define a helper window interface to extend the existing window object
-interface HelperWindow extends Window {
-  ownerInfoHelpers?: {
-    validateAndSave: () => Promise<boolean>;
-  };
-}
-
-// Declare the window object with the extended interface
-declare const window: HelperWindow;
+import FormSectionWrapper from "./FormSectionWrapper";
 
 const OwnerInformationSection = () => {
-  const { applicationId } = useApplication();
-  const [ownerInfo, setOwnerInfo] = useState<any>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const debouncedOwnerInfo = useDebounce(ownerInfo, 500);
-
-  // Fetch owner information on component mount
+  const { toast } = useToast();
+  const { applicationId, isLoading, setIsLoading } = useApplication();
+  
+  // Owner information state
+  const [surname, setSurname] = useState("");
+  const [givenName, setGivenName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [suffix, setSuffix] = useState("");
+  const [age, setAge] = useState<number | null>(null);
+  const [sex, setSex] = useState<"male" | "female">("male");
+  const [civilStatus, setCivilStatus] = useState<"single" | "married" | "widowed" | "divorced" | "separated">("single");
+  const [nationality, setNationality] = useState("Filipino");
+  
+  // Owner address state
+  const [ownerStreet, setOwnerStreet] = useState("");
+  const [ownerBarangay, setOwnerBarangay] = useState("");
+  const [ownerCityMunicipality, setOwnerCityMunicipality] = useState("");
+  const [ownerProvince, setOwnerProvince] = useState("");
+  const [ownerZipCode, setOwnerZipCode] = useState("");
+  const [ownerHouseBldgNo, setOwnerHouseBldgNo] = useState("");
+  const [ownerBuildingName, setOwnerBuildingName] = useState("");
+  const [ownerBlockNo, setOwnerBlockNo] = useState("");
+  const [ownerLotNo, setOwnerLotNo] = useState("");
+  const [ownerSubdivision, setOwnerSubdivision] = useState("");
+  
   useEffect(() => {
-    const fetchOwnerInfo = async () => {
-      if (applicationId) {
+    const loadOwnerInformation = async () => {
+      if (!applicationId) return;
+      
+      try {
         setIsLoading(true);
-        try {
-          const data = await ownerInformationService.getOwnerInformation(applicationId);
-          setOwnerInfo(data || {});
-        } catch (error) {
-          console.error("Error fetching owner information:", error);
-          toast({
-            description: "There was a problem loading the owner information. Please try again.",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoading(false);
+        const data = await ownerInformationService.getOwnerInformation(applicationId);
+        
+        if (data) {
+          setSurname(data.surname || "");
+          setGivenName(data.given_name || "");
+          setMiddleName(data.middle_name || "");
+          setSuffix(data.suffix || "");
+          setAge(data.age || null);
+          setSex(data.sex || "male");
+          setCivilStatus(data.civil_status || "single");
+          setNationality(data.nationality || "Filipino");
+          
+          setOwnerStreet(data.owner_street || "");
+          setOwnerBarangay(data.owner_barangay || "");
+          setOwnerCityMunicipality(data.owner_city_municipality || "");
+          setOwnerProvince(data.owner_province || "");
+          setOwnerZipCode(data.owner_zip_code || "");
+          setOwnerHouseBldgNo(data.owner_house_bldg_no || "");
+          setOwnerBuildingName(data.owner_building_name || "");
+          setOwnerBlockNo(data.owner_block_no || "");
+          setOwnerLotNo(data.owner_lot_no || "");
+          setOwnerSubdivision(data.owner_subdivision || "");
         }
+      } catch (error) {
+        console.error("Error loading owner information:", error);
+        toast({
+          description: "Failed to load owner information. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
-
-    fetchOwnerInfo();
-  }, [applicationId]);
-
-  // Function to handle input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setOwnerInfo(prevInfo => ({
-      ...prevInfo,
-      [name]: value,
-    }));
-  };
-
-  // Function to handle saving the owner information
-  const saveOwnerInfo = useCallback(async () => {
-    if (!applicationId) {
+    
+    loadOwnerInformation();
+  }, [applicationId, toast, setIsLoading]);
+  
+  const validateForm = () => {
+    // Required fields check
+    if (!surname || !givenName || !age || !sex || !civilStatus || !nationality ||
+        !ownerStreet || !ownerBarangay || !ownerCityMunicipality || !ownerProvince || !ownerZipCode) {
       toast({
-        description: "Could not find application to save. Please try again.",
+        description: "Please fill in all required fields.",
         variant: "destructive",
       });
       return false;
     }
-
-    setIsSaving(true);
+    
+    return true;
+  };
+  
+  const saveOwnerInformation = async (showToast = true) => {
+    if (!applicationId) return false;
+    
     try {
-      await ownerInformationService.saveOwnerInformation({
-        ...ownerInfo,
-        application_id: applicationId
-      });
-      toast({
-        description: "Your owner information has been saved successfully.",
-      });
+      setIsLoading(true);
+      
+      if (!validateForm()) {
+        setIsLoading(false);
+        return false;
+      }
+      
+      const ownerData = {
+        application_id: applicationId,
+        surname,
+        given_name: givenName,
+        middle_name: middleName || undefined,
+        suffix: suffix || undefined,
+        age: age || 0,
+        sex,
+        civil_status: civilStatus,
+        nationality,
+        owner_street: ownerStreet,
+        owner_barangay: ownerBarangay,
+        owner_city_municipality: ownerCityMunicipality,
+        owner_province: ownerProvince,
+        owner_zip_code: ownerZipCode,
+        owner_house_bldg_no: ownerHouseBldgNo || undefined,
+        owner_building_name: ownerBuildingName || undefined,
+        owner_block_no: ownerBlockNo || undefined,
+        owner_lot_no: ownerLotNo || undefined,
+        owner_subdivision: ownerSubdivision || undefined,
+      };
+      
+      await ownerInformationService.saveOwnerInformation(ownerData);
+      
+      if (showToast) {
+        toast({
+          description: "Owner information saved successfully.",
+        });
+      }
+      
       return true;
     } catch (error) {
       console.error("Error saving owner information:", error);
-      toast({
-        description: "An error occurred while saving owner information. Please try again.",
-        variant: "destructive",
-      });
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  }, [applicationId, ownerInfo]);
-
-  // Debounced save effect
-  useEffect(() => {
-    if (!isLoading && Object.keys(ownerInfo).length > 0) {
-      const timer = setTimeout(() => {
-        saveOwnerInfo();
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [debouncedOwnerInfo, isLoading, saveOwnerInfo]);
-
-  // Expose validateAndSave function to the window
-  useEffect(() => {
-    // Initialize the helper object if it doesn't exist
-    if (!window.ownerInfoHelpers) {
-      window.ownerInfoHelpers = {
-        validateAndSave: async () => false
-      };
-    }
-    
-    // Update the validateAndSave function
-    window.ownerInfoHelpers.validateAndSave = async () => {
-      // Validate required fields
-      const requiredFields = [
-        'surname', 'given_name', 'age', 'sex',
-        'civil_status', 'nationality', 'owner_street',
-        'owner_barangay', 'owner_city_municipality',
-        'owner_province', 'owner_zip_code'
-      ];
-
-      const missingFields = requiredFields.filter(field => !ownerInfo[field]);
-
-      if (missingFields.length > 0) {
+      if (showToast) {
         toast({
-          description: "Please complete all required owner information fields before proceeding.",
+          description: "Failed to save owner information. Please try again.",
           variant: "destructive",
         });
-        return false;
       }
-
-      // Save the information if validation passes
-      return await saveOwnerInfo();
-    };
-
-    return () => {
-      if (window.ownerInfoHelpers) {
-        delete window.ownerInfoHelpers.validateAndSave;
-      }
-    };
-  }, [ownerInfo, saveOwnerInfo]);
-
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Expose validation and save function for parent component
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.ownerInfoHelpers = {
+        validateAndSave: async () => {
+          const result = await saveOwnerInformation(false);
+          return result;
+        }
+      };
+      
+      return () => {
+        // Cleanup when component unmounts
+        if (window.ownerInfoHelpers) {
+          delete window.ownerInfoHelpers.validateAndSave;
+        }
+      };
+    }
+  }, [
+    surname, givenName, middleName, suffix, age, sex, civilStatus, nationality,
+    ownerStreet, ownerBarangay, ownerCityMunicipality, ownerProvince, ownerZipCode,
+    ownerHouseBldgNo, ownerBuildingName, ownerBlockNo, ownerLotNo, ownerSubdivision
+  ]);
+  
+  const handleInputBlur = () => {
+    // Auto-save on blur without showing toast
+    saveOwnerInformation(false);
+  };
+  
   return (
     <FormSectionWrapper
       title="Owner Information"
-      description="Provide details about the business owner"
+      description="Provide information about the business owner"
       stepNumber={3}
     >
-      <Card className="shadow-md border border-gray-200/80">
-        <CardHeader className="py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b">
-          <CardTitle className="text-lg font-medium">Owner Details</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-32">
-              Loading owner information...
+      <div className="space-y-6">
+        {/* Owner's Name Section */}
+        <div>
+          <h3 className="text-md font-medium mb-4">Name of Owner / President / Officer-in-Charge</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="surname">Surname</Label>
+              <Input
+                id="surname"
+                value={surname}
+                onChange={(e) => setSurname(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter surname"
+                className="mt-1"
+              />
             </div>
-          ) : (
-            <div className="grid gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="surname">Surname</Label>
-                  <Input
-                    type="text"
-                    id="surname"
-                    name="surname"
-                    value={ownerInfo.surname || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="given_name">Given Name</Label>
-                  <Input
-                    type="text"
-                    id="given_name"
-                    name="given_name"
-                    value={ownerInfo.given_name || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="middle_name">Middle Name</Label>
-                  <Input
-                    type="text"
-                    id="middle_name"
-                    name="middle_name"
-                    value={ownerInfo.middle_name || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="age">Age</Label>
-                  <Input
-                    type="number"
-                    id="age"
-                    name="age"
-                    value={ownerInfo.age || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="sex">Sex</Label>
-                  <Select onValueChange={(value) => handleInputChange({ target: { name: 'sex', value } } as any)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select sex" defaultValue={ownerInfo.sex || ""}/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="civil_status">Civil Status</Label>
-                  <Select onValueChange={(value) => handleInputChange({ target: { name: 'civil_status', value } } as any)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select status" defaultValue={ownerInfo.civil_status || ""}/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="married">Married</SelectItem>
-                      <SelectItem value="divorced">Divorced</SelectItem>
-                      <SelectItem value="widowed">Widowed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="nationality">Nationality</Label>
-                  <Input
-                    type="text"
-                    id="nationality"
-                    name="nationality"
-                    value={ownerInfo.nationality || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <Label htmlFor="owner_street">Street</Label>
-                  <Input
-                    type="text"
-                    id="owner_street"
-                    name="owner_street"
-                    value={ownerInfo.owner_street || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="owner_barangay">Barangay</Label>
-                  <Input
-                    type="text"
-                    id="owner_barangay"
-                    name="owner_barangay"
-                    value={ownerInfo.owner_barangay || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="owner_city_municipality">City/Municipality</Label>
-                  <Input
-                    type="text"
-                    id="owner_city_municipality"
-                    name="owner_city_municipality"
-                    value={ownerInfo.owner_city_municipality || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="owner_province">Province</Label>
-                  <Input
-                    type="text"
-                    id="owner_province"
-                    name="owner_province"
-                    value={ownerInfo.owner_province || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="owner_zip_code">Zip Code</Label>
-                  <Input
-                    type="text"
-                    id="owner_zip_code"
-                    name="owner_zip_code"
-                    value={ownerInfo.owner_zip_code || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="owner_address_remarks">Address Remarks (Optional)</Label>
-                <Textarea
-                  id="owner_address_remarks"
-                  name="owner_address_remarks"
-                  placeholder="e.g., Unit number, Building name"
-                  value={ownerInfo.owner_address_remarks || ""}
-                  onChange={handleInputChange}
-                />
-              </div>
+            <div>
+              <Label htmlFor="givenName">Given Name</Label>
+              <Input
+                id="givenName"
+                value={givenName}
+                onChange={(e) => setGivenName(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter given name"
+                className="mt-1"
+              />
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div>
+              <Label htmlFor="middleName">Middle Name</Label>
+              <Input
+                id="middleName"
+                value={middleName}
+                onChange={(e) => setMiddleName(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter middle name"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="suffix">Suffix</Label>
+              <Input
+                id="suffix"
+                value={suffix}
+                onChange={(e) => setSuffix(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Jr., Sr., III, etc."
+                className="mt-1"
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Personal Information Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <Label htmlFor="civilStatus">Civil Status</Label>
+            <Select 
+              value={civilStatus} 
+              onValueChange={(value: any) => {
+                setCivilStatus(value);
+                handleInputBlur();
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select civil status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="single">Single</SelectItem>
+                <SelectItem value="married">Married</SelectItem>
+                <SelectItem value="widowed">Widowed</SelectItem>
+                <SelectItem value="divorced">Divorced</SelectItem>
+                <SelectItem value="separated">Separated</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="age">Age</Label>
+            <Input
+              id="age"
+              type="number"
+              value={age || ''}
+              onChange={(e) => setAge(e.target.value ? parseInt(e.target.value) : null)}
+              onBlur={handleInputBlur}
+              placeholder="Enter age"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label>Sex</Label>
+            <RadioGroup 
+              value={sex} 
+              onValueChange={(value: "male" | "female") => {
+                setSex(value);
+                handleInputBlur();
+              }}
+              className="flex gap-4 mt-1"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="male" id="male" />
+                <Label htmlFor="male" className="cursor-pointer">Male</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="female" id="female" />
+                <Label htmlFor="female" className="cursor-pointer">Female</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <div>
+            <Label>Nationality</Label>
+            <RadioGroup 
+              value={nationality === "Filipino" ? "Filipino" : "Foreigner"} 
+              onValueChange={(value) => {
+                setNationality(value === "Foreigner" && nationality === "Filipino" ? "" : value);
+                handleInputBlur();
+              }}
+              className="flex gap-4 mt-1"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Filipino" id="filipino" />
+                <Label htmlFor="filipino" className="cursor-pointer">Filipino</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Foreigner" id="foreigner" />
+                <Label htmlFor="foreigner" className="cursor-pointer">Foreigner</Label>
+              </div>
+            </RadioGroup>
+            
+            {nationality !== "Filipino" && (
+              <Input
+                value={nationality}
+                onChange={(e) => setNationality(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Specify nationality"
+                className="mt-2"
+              />
+            )}
+          </div>
+        </div>
+        
+        {/* Owner's Residential Address Section */}
+        <div>
+          <h3 className="text-md font-medium mb-4">Owner's Residential Address</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="ownerBlockNo">Block No.</Label>
+              <Input
+                id="ownerBlockNo"
+                value={ownerBlockNo}
+                onChange={(e) => setOwnerBlockNo(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter block number"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ownerLotNo">Lot No.</Label>
+              <Input
+                id="ownerLotNo"
+                value={ownerLotNo}
+                onChange={(e) => setOwnerLotNo(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter lot number"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ownerHouseBldgNo">House/Bldg. No.</Label>
+              <Input
+                id="ownerHouseBldgNo"
+                value={ownerHouseBldgNo}
+                onChange={(e) => setOwnerHouseBldgNo(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter house/bldg number"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ownerBuildingName">Building Name</Label>
+              <Input
+                id="ownerBuildingName"
+                value={ownerBuildingName}
+                onChange={(e) => setOwnerBuildingName(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter building name"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <Label htmlFor="ownerStreet">Street</Label>
+              <Input
+                id="ownerStreet"
+                value={ownerStreet}
+                onChange={(e) => setOwnerStreet(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter street name"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ownerSubdivision">Subdivision</Label>
+              <Input
+                id="ownerSubdivision"
+                value={ownerSubdivision}
+                onChange={(e) => setOwnerSubdivision(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter subdivision"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div>
+              <Label htmlFor="ownerBarangay">Barangay</Label>
+              <Input
+                id="ownerBarangay"
+                value={ownerBarangay}
+                onChange={(e) => setOwnerBarangay(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter barangay"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ownerCityMunicipality">City/Municipality</Label>
+              <Input
+                id="ownerCityMunicipality"
+                value={ownerCityMunicipality}
+                onChange={(e) => setOwnerCityMunicipality(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter city/municipality"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ownerProvince">Province</Label>
+              <Input
+                id="ownerProvince"
+                value={ownerProvince}
+                onChange={(e) => setOwnerProvince(e.target.value)}
+                onBlur={handleInputBlur}
+                placeholder="Enter province"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          
+          <div className="mt-4 max-w-xs">
+            <Label htmlFor="ownerZipCode">Zip Code</Label>
+            <Input
+              id="ownerZipCode"
+              value={ownerZipCode}
+              onChange={(e) => setOwnerZipCode(e.target.value)}
+              onBlur={handleInputBlur}
+              placeholder="Enter zip code"
+              className="mt-1"
+            />
+          </div>
+        </div>
+      </div>
     </FormSectionWrapper>
   );
 };
