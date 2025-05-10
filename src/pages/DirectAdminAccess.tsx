@@ -62,10 +62,39 @@ const DirectAdminAccess: React.FC = () => {
 
   const addAdminRole = async () => {
     try {
+      setLoading(true);
       const { data: userData } = await supabase.auth.getUser();
       
       if (!userData.user) {
         console.log("No user logged in");
+        toast({
+          variant: "destructive",
+          title: "Not logged in",
+          description: "You must be logged in to perform this action."
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Check if user already has admin role
+      const { data: existingRole, error: roleCheckError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userData.user.id)
+        .eq('role', 'office_staff')
+        .maybeSingle();
+
+      if (roleCheckError) {
+        console.error("Error checking admin role:", roleCheckError);
+      }
+
+      if (existingRole) {
+        console.log("User already has admin role");
+        toast({
+          title: "Already an admin",
+          description: "You already have administrator privileges."
+        });
+        setLoading(false);
         return;
       }
       
@@ -79,20 +108,18 @@ const DirectAdminAccess: React.FC = () => {
       
       if (error) {
         console.error("Error adding admin role:", error);
-        if (error.code === '23505') { // Duplicate key violation
-          console.log("User already has admin role");
-          toast({
-            title: "User already has admin role",
-            description: "This user already has administrator privileges."
-          });
-        }
+        toast({
+          variant: "destructive",
+          title: "Error adding admin role",
+          description: error.message || "An unexpected error occurred."
+        });
       } else {
         console.log("Admin role added successfully");
         toast({
           title: "Admin role added successfully",
           description: "Administrator privileges have been granted to your account."
         });
-        // Refresh the page to see changes
+        // Force page refresh to apply changes
         window.location.reload();
       }
     } catch (error) {
@@ -102,6 +129,8 @@ const DirectAdminAccess: React.FC = () => {
         title: "Error adding admin role",
         description: "An unexpected error occurred."
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -118,24 +147,23 @@ const DirectAdminAccess: React.FC = () => {
     setLoading(true);
     try {
       // First, find the user by email
-      const { data: users, error: userError } = await supabase
+      const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('username', email)
-        .single();
+        .eq('username', email);
 
-      if (userError) {
-        console.error("Error finding user:", userError);
+      if (profileError) {
+        console.error("Error finding user:", profileError);
         toast({
           variant: "destructive",
-          title: "User not found",
-          description: `Could not find user with email: ${email}`
+          title: "Error finding user",
+          description: profileError.message || `Could not find user with email: ${email}`
         });
         setLoading(false);
         return;
       }
 
-      if (!users) {
+      if (!profiles || profiles.length === 0) {
         toast({
           variant: "destructive",
           title: "User not found",
@@ -145,7 +173,7 @@ const DirectAdminAccess: React.FC = () => {
         return;
       }
 
-      const userId = users.id;
+      const userId = profiles[0].id;
 
       // Check if user already has admin role
       const { data: existingRole, error: roleCheckError } = await supabase
@@ -153,7 +181,11 @@ const DirectAdminAccess: React.FC = () => {
         .select('*')
         .eq('user_id', userId)
         .eq('role', 'office_staff')
-        .single();
+        .maybeSingle();
+
+      if (roleCheckError) {
+        console.error("Error checking existing role:", roleCheckError);
+      }
 
       if (existingRole) {
         toast({
@@ -177,7 +209,7 @@ const DirectAdminAccess: React.FC = () => {
         toast({
           variant: "destructive",
           title: "Error adding admin role",
-          description: `Failed to grant administrator privileges to ${email}.`
+          description: error.message || `Failed to grant administrator privileges to ${email}.`
         });
       } else {
         console.log("Admin role added successfully for:", email);
@@ -220,7 +252,9 @@ const DirectAdminAccess: React.FC = () => {
             className="w-full" 
             variant="default" 
             onClick={addAdminRole}
+            disabled={loading}
           >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Grant Admin Role to Current User
           </Button>
           

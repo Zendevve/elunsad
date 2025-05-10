@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const AdminRoute: React.FC = () => {
@@ -10,7 +10,7 @@ const AdminRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const location = useLocation();
 
-  // Simplified check for admin status
+  // Check for admin status
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
@@ -41,9 +41,9 @@ const AdminRoute: React.FC = () => {
           .select('id')
           .eq('user_id', userId)
           .eq('role', 'office_staff')
-          .single();
+          .maybeSingle();
         
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
+        if (error) {
           console.error("Error checking admin role:", error);
           setIsAdmin(false);
           return;
@@ -88,9 +88,9 @@ const AdminRoute: React.FC = () => {
             .select('id')
             .eq('user_id', userId)
             .eq('role', 'office_staff')
-            .single();
+            .maybeSingle();
           
-          if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
+          if (error) {
             console.error("Error rechecking admin role:", error);
             setIsAdmin(false);
             return;
