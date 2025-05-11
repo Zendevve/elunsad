@@ -8,13 +8,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const UserLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, signOut, userProfile } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   
   const navigationItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -47,32 +46,6 @@ const UserLayout: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
-
-  // Get user initials for avatar fallback
-  const getUserInitials = () => {
-    if (userProfile) {
-      const firstInitial = userProfile.firstname ? userProfile.firstname.charAt(0).toUpperCase() : '';
-      const lastInitial = userProfile.lastname ? userProfile.lastname.charAt(0).toUpperCase() : '';
-      return firstInitial + lastInitial;
-    }
-    return isAdmin ? "A" : "U";
-  };
-
-  // Get user display name
-  const getUserDisplayName = () => {
-    if (userProfile) {
-      return `${userProfile.firstname} ${userProfile.lastname || ''}`;
-    }
-    return "User";
-  };
-
-  // Get user role display text
-  const getUserRoleDisplay = () => {
-    if (isAdmin) {
-      return "Administrator";
-    }
-    return userProfile?.username || "Business Owner";
   };
 
   return (
@@ -128,17 +101,15 @@ const UserLayout: React.FC = () => {
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-gray-200 text-sm font-medium text-gray-600">
-                  {getUserInitials()}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+                {isAdmin ? "A" : "U"}
+              </div>
               <div className="ml-3">
                 <div className="text-sm font-medium">
-                  {getUserDisplayName()}
+                  {isAdmin ? "Office Staff" : "Business Owner"}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {getUserRoleDisplay()}
+                  {isAdmin ? "Administrator" : "User"}
                 </div>
               </div>
             </div>
