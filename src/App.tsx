@@ -40,21 +40,17 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public routes that don't require authentication */}
             <Route path="/signin" element={<SignIn />} />
             <Route path="/register" element={<Register />} />
-            
-            {/* Add explicit auth callback routes to handle all variations */}
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/auth/callback/*" element={<AuthCallback />} />
-            
-            {/* Public route for landing page */}
             <Route path="/" element={<Index />} />
-            
-            {/* Add the direct admin access helper */}
             <Route path="/admin-helper" element={<DirectAdminAccess />} />
             
             {/* Protected routes for authenticated users */}
             <Route element={<AuthRoute />}>
+              {/* Regular user routes */}
               <Route element={<Layout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/applications" element={<Applications />} />
@@ -67,7 +63,7 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin routes - protect with AdminRoute */}
+            {/* Admin routes - protected by AdminRoute */}
             <Route element={<AdminRoute />}>
               <Route path="/admin-dashboard" element={
                 <AdminLayout>
