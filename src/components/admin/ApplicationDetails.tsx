@@ -1,617 +1,575 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { adminApplicationService } from "@/services/application/adminApplicationService";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
+import { getApplicationFullDetails } from "./ApplicationDetailsService";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { ApplicationData, ApplicationStatus } from "@/services/application/types";
-import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, AlertCircle, Clock } from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { ApplicationData, ApplicationStatus, BusinessInformationData, OwnerInformationData, BusinessOperationsData, BusinessLinesData, DeclarationData } from "@/services/application/types";
 
-// Define a more comprehensive type for our application data including related entities
-interface DetailedApplicationData extends ApplicationData {
-  business_information?: any;
-  owner_information?: any;
-  business_operations?: any;
-  business_lines?: any[];
-  declarations?: any;
+interface ApplicationDetailsProps {
+  applicationId: string;
 }
 
-const ApplicationDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const [application, setApplication] = useState<DetailedApplicationData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [processingAction, setProcessingAction] = useState(false);
-  const [adminNotes, setAdminNotes] = useState("");
-  const [dialogAction, setDialogAction] = useState<ApplicationStatus | null>(null);
+const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<{
+    application: ApplicationData | null;
+    businessInformation: BusinessInformationData | null;
+    ownerInformation: OwnerInformationData | null;
+    businessOperations: BusinessOperationsData | null;
+    businessLines: BusinessLinesData[] | null;
+    declaration: DeclarationData | null;
+    profile: any | null;
+  }>({
+    application: null,
+    businessInformation: null,
+    ownerInformation: null,
+    businessOperations: null,
+    businessLines: null,
+    declaration: null,
+    profile: null
+  });
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
-    if (id) {
-      fetchApplicationDetails(id);
-    }
-  }, [id]);
+    const loadApplicationDetails = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const details = await getApplicationFullDetails(applicationId);
+        setData(details);
+      } catch (err) {
+        console.error("Error loading application details:", err);
+        setError("Failed to load application details. Please try again later.");
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load application details",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const fetchApplicationDetails = async (applicationId: string) => {
-    try {
-      setLoading(true);
-      const data = await adminApplicationService.getApplicationDetails(applicationId);
-      setApplication(data as DetailedApplicationData);
-      // Check if admin_notes exists before trying to access it
-      setAdminNotes(data?.admin_notes || "");
-    } catch (error) {
-      console.error("Error fetching application details:", error);
-      toast({
-        variant: "destructive",
-        title: "Failed to load application details",
-        description: "There was a problem loading the application. Please try again."
-      });
-    } finally {
-      setLoading(false);
+    if (applicationId) {
+      loadApplicationDetails();
     }
-  };
+  }, [applicationId]);
 
-  const handleStatusUpdate = async (status: ApplicationStatus) => {
-    if (!id) return;
-    
+  const handleUpdateStatus = async (status: ApplicationStatus) => {
     try {
-      setProcessingAction(true);
-      await adminApplicationService.updateApplicationStatus(id, status, adminNotes);
+      const { error } = await supabase
+        .from('applications')
+        .update({ application_status: status })
+        .eq('id', applicationId);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setData(prev => prev.application ? {
+        ...prev,
+        application: {
+          ...(prev.application as ApplicationData),
+          application_status: status
+        }
+      } : prev);
       
       toast({
         title: "Status Updated",
-        description: `Application status has been updated to ${status.replace("_", " ")}.`
+        description: `Application status has been changed to ${status.replace(/_/g, ' ')}`,
       });
-      
-      // Refresh the application data
-      fetchApplicationDetails(id);
-      setDialogAction(null);
-    } catch (error) {
-      console.error("Error updating application status:", error);
+    } catch (err) {
+      console.error("Error updating status:", err);
       toast({
         variant: "destructive",
-        title: "Failed to update status",
-        description: "There was a problem updating the application status. Please try again."
+        title: "Update Failed",
+        description: "Could not update application status",
       });
-    } finally {
-      setProcessingAction(false);
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
+  const handleSaveNotes = async (notes: string) => {
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ admin_notes: notes })
+        .eq('id', applicationId);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setData(prev => prev.application ? {
+        ...prev,
+        application: {
+          ...(prev.application as ApplicationData),
+          admin_notes: notes
+        }
+      } : prev);
+      
+      toast({
+        title: "Notes Saved",
+        description: "Admin notes have been updated",
+      });
+    } catch (err) {
+      console.error("Error saving notes:", err);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Could not save admin notes",
+      });
+    }
+  };
+
+  const getStatusBadge = (status: ApplicationStatus) => {
     switch (status) {
-      case "draft":
-        return "bg-gray-500";
-      case "submitted":
-        return "bg-blue-500";
-      case "under_review":
-        return "bg-amber-500";
-      case "approved":
-        return "bg-green-500";
-      case "rejected":
-        return "bg-red-500";
-      case "requires_additional_info":
-        return "bg-purple-500";
+      case 'draft':
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Draft</Badge>;
+      case 'submitted':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Submitted</Badge>;
+      case 'under_review':
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800">Under Review</Badge>;
+      case 'approved':
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-100 text-red-800">Rejected</Badge>;
+      case 'requires_additional_info':
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800">Requires Additional Info</Badge>;
       default:
-        return "bg-gray-500";
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
-  };
-
+  
   const getApplicationTypeLabel = (type: string) => {
     switch (type) {
-      case "newApplication":
-        return "New Business";
-      case "renewalApplication":
-        return "Renewal";
-      case "amendmentApplication":
-        return "Amendment";
+      case 'newApplication':
+        return 'New Business Application';
+      case 'renewalApplication':
+        return 'Business Renewal Application';
+      case 'amendmentApplication':
+        return 'Business Amendment Application';
       default:
         return type;
     }
   };
 
-  if (loading) {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'MMM dd, yyyy h:mm a');
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-lg">Loading application details...</p>
+      <div className="flex flex-col items-center justify-center p-12">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg font-medium">Loading application details...</p>
       </div>
     );
   }
 
-  if (!application) {
+  if (error || !data.application) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-        <p className="text-red-700">Application not found or has been deleted.</p>
-        <Button variant="outline" onClick={() => navigate('/admin/applications')} className="mt-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Applications
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h3 className="text-xl font-bold mb-2">Failed to Load Application</h3>
+        <p className="text-muted-foreground mb-6">{error || "Application not found or access denied"}</p>
+        <Button onClick={() => navigate('/admin-dashboard')}>
+          Return to Dashboard
         </Button>
       </div>
     );
   }
+
+  const { application, businessInformation, ownerInformation, businessOperations, businessLines, declaration, profile } = data;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" onClick={() => navigate('/admin/applications')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Applications
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {getApplicationTypeLabel(application.application_type)}
+          </h1>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-sm text-muted-foreground">Application ID: {application.id}</p>
+            {application.submission_date && (
+              <p className="text-sm text-muted-foreground">
+                • Submitted on {formatDate(application.submission_date)}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {getStatusBadge(application.application_status)}
+          <Button
+            variant="outline"
+            onClick={() => navigate('/admin-dashboard')}
+          >
+            Back to Dashboard
           </Button>
-          <h1 className="text-2xl font-bold">Application Details</h1>
-          <Badge className={getStatusBadgeColor(application.application_status)}>
-            {application.application_status.replace("_", " ")}
-          </Badge>
-        </div>
-        
-        <div className="space-x-2">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-300"
-                onClick={() => setDialogAction("under_review")}
-                disabled={application.application_status === "under_review"}
-              >
-                <AlertCircle className="h-4 w-4 mr-2" />
-                Mark as Reviewing
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Mark Application as Under Review?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will set the application status to "Under Review" and notify the applicant that their submission is being reviewed.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <Textarea
-                placeholder="Add notes about this application (optional)"
-                value={adminNotes}
-                onChange={(e) => setAdminNotes(e.target.value)}
-                className="min-h-[100px] mt-4"
-              />
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleStatusUpdate("under_review")}
-                  disabled={processingAction}
-                >
-                  {processingAction ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Proceed"
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-300"
-                onClick={() => setDialogAction("requires_additional_info")}
-                disabled={application.application_status === "requires_additional_info"}
-              >
-                <AlertCircle className="h-4 w-4 mr-2" />
-                Request More Info
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Request Additional Information?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will set the application status to "Requires Additional Information" and notify the applicant that they need to provide more information.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <Textarea
-                placeholder="Specify what additional information is required"
-                value={adminNotes}
-                onChange={(e) => setAdminNotes(e.target.value)}
-                className="min-h-[100px] mt-4"
-              />
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleStatusUpdate("requires_additional_info")}
-                  disabled={processingAction}
-                >
-                  {processingAction ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Proceed"
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
-                onClick={() => setDialogAction("approved")}
-                disabled={application.application_status === "approved"}
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Approve
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Approve This Application?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will set the application status to "Approved" and notify the applicant that their business permit has been approved.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <Textarea
-                placeholder="Add approval notes (optional)"
-                value={adminNotes}
-                onChange={(e) => setAdminNotes(e.target.value)}
-                className="min-h-[100px] mt-4"
-              />
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleStatusUpdate("approved")}
-                  disabled={processingAction}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {processingAction ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Confirm Approval"
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="bg-red-100 text-red-800 hover:bg-red-200 border-red-300"
-                onClick={() => setDialogAction("rejected")}
-                disabled={application.application_status === "rejected"}
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Reject
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Reject This Application?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will set the application status to "Rejected" and notify the applicant that their business permit application has been rejected.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <Textarea
-                placeholder="Explain the reason for rejection (required)"
-                value={adminNotes}
-                onChange={(e) => setAdminNotes(e.target.value)}
-                className="min-h-[100px] mt-4"
-              />
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleStatusUpdate("rejected")}
-                  disabled={processingAction || !adminNotes.trim()}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  {processingAction ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Confirm Rejection"
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
       </div>
-      
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Application Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Applicant Information</CardTitle>
+          <CardDescription>Details of the business owner who submitted this application</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-500">Application ID</p>
-              <p>{application.id}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Type</p>
-              <p>{getApplicationTypeLabel(application.application_type)}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Status</p>
-              <Badge className={getStatusBadgeColor(application.application_status)}>
-                {application.application_status.replace("_", " ")}
-              </Badge>
+              <h3 className="text-sm font-medium text-muted-foreground">Applicant Name</h3>
+              <p className="font-medium">
+                {profile ? 
+                  `${profile.firstname || ''} ${profile.middlename ? profile.middlename + ' ' : ''}${profile.lastname || ''}${profile.extension_name ? ' ' + profile.extension_name : ''}` : 
+                  'Not available'}
+              </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Created Date</p>
-              <p>{formatDate(application.created_at)}</p>
+              <h3 className="text-sm font-medium text-muted-foreground">User ID</h3>
+              <p className="font-medium">{application.user_id}</p>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Submission Date</p>
-              <p>{formatDate(application.submission_date)}</p>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Only show admin notes card if application has admin notes */}
-      {application.admin_notes && (
-        <Card className="col-span-2">
-          <CardHeader>
-            <CardTitle>Admin Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-line">{application.admin_notes}</p>
-          </CardContent>
-        </Card>
-      )}
+      <Tabs defaultValue="business-info">
+        <TabsList className="mb-4">
+          <TabsTrigger value="business-info">Business Information</TabsTrigger>
+          <TabsTrigger value="owner-info">Owner Information</TabsTrigger>
+          <TabsTrigger value="operations">Business Operations</TabsTrigger>
+          <TabsTrigger value="lines">Business Lines</TabsTrigger>
+          <TabsTrigger value="declaration">Declaration</TabsTrigger>
+          <TabsTrigger value="admin-notes">Admin Notes</TabsTrigger>
+        </TabsList>
 
-      </div>
-
-      {application.business_information && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Business Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Business Name</p>
-                <p>{application.business_information.business_name}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Trade Name</p>
-                <p>{application.business_information.trade_name || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">TIN Number</p>
-                <p>{application.business_information.tin_number}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Ownership Type</p>
-                <p>{application.business_information.ownership_type}</p>
-              </div>
-              <div className="col-span-3">
-                <p className="text-sm font-medium text-gray-500">Address</p>
-                <p>
-                  {[
-                    application.business_information.street,
-                    application.business_information.barangay,
-                    application.business_information.city_municipality,
-                    application.business_information.province,
-                    application.business_information.zip_code
-                  ].filter(Boolean).join(", ")}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Mobile Number</p>
-                <p>{application.business_information.mobile_no}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Email Address</p>
-                <p>{application.business_information.email_address}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {application.owner_information && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Owner Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Full Name</p>
-                <p>
-                  {[
-                    application.owner_information.surname,
-                    application.owner_information.given_name,
-                    application.owner_information.middle_name,
-                    application.owner_information.suffix
-                  ].filter(Boolean).join(" ")}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Sex</p>
-                <p>{application.owner_information.sex}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Age</p>
-                <p>{application.owner_information.age}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Civil Status</p>
-                <p>{application.owner_information.civil_status}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Nationality</p>
-                <p>{application.owner_information.nationality}</p>
-              </div>
-              <div className="col-span-3">
-                <p className="text-sm font-medium text-gray-500">Address</p>
-                <p>
-                  {[
-                    application.owner_information.owner_street,
-                    application.owner_information.owner_barangay,
-                    application.owner_information.owner_city_municipality,
-                    application.owner_information.owner_province,
-                    application.owner_information.owner_zip_code
-                  ].filter(Boolean).join(", ")}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {application.business_operations && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Business Operations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Business Area</p>
-                <p>{application.business_operations.business_area || "N/A"} sqm</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Employees in Lucena</p>
-                <p>{application.business_operations.employees_in_lucena || "0"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Capitalization</p>
-                <p>₱ {application.business_operations.capitalization || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Property Status</p>
-                <p>{application.business_operations.property_owned ? "Owned" : "Rented"}</p>
-              </div>
-              {!application.business_operations.property_owned && (
-                <>
+        <TabsContent value="business-info">
+          <Card>
+            <CardHeader>
+              <CardTitle>Business Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {businessInformation ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Monthly Rental</p>
-                    <p>₱ {application.business_operations.monthly_rental || "N/A"}</p>
+                    <h3 className="text-sm font-medium text-muted-foreground">Business Name</h3>
+                    <p className="font-medium">{businessInformation.business_name}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Lessor</p>
-                    <p>{application.business_operations.lessor_full_name || "N/A"}</p>
+                    <h3 className="text-sm font-medium text-muted-foreground">Trade Name</h3>
+                    <p className="font-medium">{businessInformation.trade_name || 'N/A'}</p>
                   </div>
-                </>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">TIN Number</h3>
+                    <p className="font-medium">{businessInformation.tin_number}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Registration Number</h3>
+                    <p className="font-medium">{businessInformation.registration_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">SSS Number</h3>
+                    <p className="font-medium">{businessInformation.sss_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Type of Ownership</h3>
+                    <p className="font-medium">{businessInformation.ownership_type}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">Business Address</h3>
+                    <p className="font-medium">
+                      {[
+                        businessInformation.house_bldg_no,
+                        businessInformation.building_name,
+                        businessInformation.street,
+                        businessInformation.barangay,
+                        businessInformation.city_municipality,
+                        businessInformation.province,
+                        businessInformation.zip_code
+                      ].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
+                    <p className="font-medium">{businessInformation.email_address}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Contact Number</h3>
+                    <p className="font-medium">{businessInformation.mobile_no}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center p-4">
+                  <p className="text-muted-foreground">No business information provided</p>
+                </div>
               )}
-              <div>
-                <p className="text-sm font-medium text-gray-500">Tax Incentives</p>
-                <p>{application.business_operations.has_tax_incentives ? "Yes" : "No"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {application.business_lines && application.business_lines.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Business Lines</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Line of Business</TableHead>
-                  <TableHead>Products/Services</TableHead>
-                  <TableHead>PSIC Code</TableHead>
-                  <TableHead>Gross Sales</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {application.business_lines.map((line: any) => (
-                  <TableRow key={line.id}>
-                    <TableCell>{line.line_of_business}</TableCell>
-                    <TableCell>{line.products_services}</TableCell>
-                    <TableCell>{line.psic_code || "N/A"}</TableCell>
-                    <TableCell>{line.gross_sales || "N/A"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="owner-info">
+          <Card>
+            <CardHeader>
+              <CardTitle>Owner Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {ownerInformation ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Full Name</h3>
+                    <p className="font-medium">
+                      {`${ownerInformation.given_name} ${ownerInformation.middle_name || ''} ${ownerInformation.surname}${ownerInformation.suffix ? ' ' + ownerInformation.suffix : ''}`}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Nationality</h3>
+                    <p className="font-medium">{ownerInformation.nationality}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Age</h3>
+                    <p className="font-medium">{ownerInformation.age}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Sex</h3>
+                    <p className="font-medium">{ownerInformation.sex}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Civil Status</h3>
+                    <p className="font-medium">{ownerInformation.civil_status}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">Owner's Address</h3>
+                    <p className="font-medium">
+                      {[
+                        ownerInformation.owner_house_bldg_no,
+                        ownerInformation.owner_building_name,
+                        ownerInformation.owner_street,
+                        ownerInformation.owner_barangay,
+                        ownerInformation.owner_city_municipality,
+                        ownerInformation.owner_province,
+                        ownerInformation.owner_zip_code
+                      ].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center p-4">
+                  <p className="text-muted-foreground">No owner information provided</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {application.declarations && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Declaration</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Agreed to Terms</p>
-                <p>{application.declarations.is_agreed ? "Yes" : "No"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Designation</p>
-                <p>{application.declarations.designation || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Declaration Place</p>
-                <p>{application.declarations.declaration_place || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Signature</p>
-                {application.declarations.signature && (
-                  <img 
-                    src={application.declarations.signature} 
-                    alt="Signature" 
-                    className="max-h-24 border border-gray-200 p-2"
-                  />
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="operations">
+          <Card>
+            <CardHeader>
+              <CardTitle>Business Operations</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {businessOperations ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Business Activity</h3>
+                    <p className="font-medium">{businessOperations.business_activity || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Business Area (sqm)</h3>
+                    <p className="font-medium">{businessOperations.business_area || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Capitalization</h3>
+                    <p className="font-medium">{businessOperations.capitalization ? `₱${businessOperations.capitalization.toLocaleString()}` : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Total Employees</h3>
+                    <p className="font-medium">
+                      {(
+                        (businessOperations.professional_male || 0) +
+                        (businessOperations.professional_female || 0) +
+                        (businessOperations.non_professional_male || 0) +
+                        (businessOperations.non_professional_female || 0)
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Employees in Lucena</h3>
+                    <p className="font-medium">{businessOperations.employees_in_lucena || 0}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Property Owned</h3>
+                    <p className="font-medium">{businessOperations.property_owned ? 'Yes' : 'No'}</p>
+                  </div>
+                  {!businessOperations.property_owned && (
+                    <>
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground">Monthly Rental</h3>
+                        <p className="font-medium">{businessOperations.monthly_rental ? `₱${businessOperations.monthly_rental.toLocaleString()}` : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground">Lessor Name</h3>
+                        <p className="font-medium">{businessOperations.lessor_full_name || 'N/A'}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center p-4">
+                  <p className="text-muted-foreground">No business operations information provided</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <div className="flex justify-between items-center pt-4">
-        <Button variant="outline" onClick={() => navigate('/admin/applications')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Applications
-        </Button>
-      </div>
+        <TabsContent value="lines">
+          <Card>
+            <CardHeader>
+              <CardTitle>Business Lines</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {businessLines && businessLines.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left px-4 py-2">Line of Business</th>
+                        <th className="text-left px-4 py-2">PSIC Code</th>
+                        <th className="text-left px-4 py-2">Products/Services</th>
+                        <th className="text-right px-4 py-2">Units</th>
+                        <th className="text-right px-4 py-2">Gross Sales</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {businessLines.map((line, index) => (
+                        <tr key={line.id || index} className="border-b">
+                          <td className="px-4 py-2">{line.line_of_business}</td>
+                          <td className="px-4 py-2">{line.psic_code || 'N/A'}</td>
+                          <td className="px-4 py-2">{line.products_services}</td>
+                          <td className="text-right px-4 py-2">{line.units || 'N/A'}</td>
+                          <td className="text-right px-4 py-2">{line.gross_sales || 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center p-4">
+                  <p className="text-muted-foreground">No business lines provided</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="declaration">
+          <Card>
+            <CardHeader>
+              <CardTitle>Declaration and Signature</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {declaration ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Agreement</h3>
+                    <p className="font-medium">{declaration.is_agreed ? 'Agreed' : 'Not Agreed'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Declaration Place</h3>
+                    <p className="font-medium">{declaration.declaration_place || 'City of Lucena'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Designation</h3>
+                    <p className="font-medium">{declaration.designation || 'N/A'}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">Signature</h3>
+                    {declaration.signature ? (
+                      <div className="mt-2 max-w-sm">
+                        <img src={declaration.signature} alt="Signature" className="border rounded-md" />
+                      </div>
+                    ) : (
+                      <p className="font-medium">No signature provided</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center p-4">
+                  <p className="text-muted-foreground">No declaration information provided</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="admin-notes">
+          <Card>
+            <CardHeader>
+              <CardTitle>Admin Notes</CardTitle>
+              <CardDescription>Add notes or comments about this application</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <textarea 
+                className="w-full min-h-[200px] p-4 border rounded-md" 
+                defaultValue={application.admin_notes || ''}
+                placeholder="Add notes about this application..."
+                onChange={(e) => {/* Handle change */}}
+                onBlur={(e) => handleSaveNotes(e.target.value)}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Application Status</CardTitle>
+          <CardDescription>Update the status of this application</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              variant={application.application_status === 'under_review' ? 'default' : 'outline'}
+              onClick={() => handleUpdateStatus('under_review')}
+            >
+              Mark Under Review
+            </Button>
+            <Button 
+              variant={application.application_status === 'requires_additional_info' ? 'default' : 'outline'}
+              onClick={() => handleUpdateStatus('requires_additional_info')}
+            >
+              Request More Info
+            </Button>
+            <Button 
+              variant={application.application_status === 'approved' ? 'default' : 'outline'}
+              className={application.application_status === 'approved' ? 'bg-green-600 hover:bg-green-700' : ''}
+              onClick={() => handleUpdateStatus('approved')}
+            >
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Approve
+            </Button>
+            <Button 
+              variant={application.application_status === 'rejected' ? 'default' : 'outline'}
+              className={application.application_status === 'rejected' ? 'bg-red-600 hover:bg-red-700' : ''}
+              onClick={() => handleUpdateStatus('rejected')}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Reject
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
