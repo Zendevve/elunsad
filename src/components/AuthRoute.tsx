@@ -4,11 +4,22 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const AuthRoute: React.FC = () => {
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading, refreshRoles } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
+
+  // Attempt to refresh roles when mounting to ensure we have the latest data
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      console.log("[AuthRoute] Authenticated user detected, refreshing roles");
+      refreshRoles().catch(err => {
+        console.error("[AuthRoute] Error refreshing roles:", err);
+      });
+    }
+  }, [isAuthenticated, isLoading, refreshRoles]);
 
   // Debug logging for component state
   useEffect(() => {
@@ -19,6 +30,37 @@ const AuthRoute: React.FC = () => {
       path: location.pathname 
     });
   }, [isAuthenticated, isAdmin, isLoading, location.pathname]);
+
+  // Directly check for admin role if needed
+  useEffect(() => {
+    const checkAdminDirectly = async () => {
+      if (isAuthenticated && !isLoading && !isAdmin) {
+        try {
+          console.log("[AuthRoute] Double-checking admin status directly");
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (!user) return;
+          
+          const { data: roleData, error: roleError } = await supabase
+            .rpc('check_user_role', { 
+              user_id: user.id, 
+              role_name: 'office_staff' 
+            });
+            
+          console.log("[AuthRoute] Direct admin check result:", { roleData, roleError });
+          
+          if (roleData === true) {
+            console.log("[AuthRoute] User is actually admin, refreshing roles");
+            await refreshRoles();
+          }
+        } catch (error) {
+          console.error("[AuthRoute] Error in direct admin check:", error);
+        }
+      }
+    };
+    
+    checkAdminDirectly();
+  }, [isAuthenticated, isAdmin, isLoading, refreshRoles]);
 
   // Show loading while checking authentication
   if (isLoading) {

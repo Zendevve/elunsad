@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { getRedirectPathForUser } from "@/utils/authUtils";
 
 // Define validation schema
@@ -37,6 +38,28 @@ const SignIn: React.FC = () => {
 
   // Get intended destination from location state, or use default
   const from = (location.state as any)?.from?.pathname || '/';
+
+  // Check admin status directly
+  const checkUserRole = async (userId: string): Promise<boolean> => {
+    try {
+      console.log("[SignIn] Checking admin status via RPC for user:", userId);
+      const { data, error } = await supabase.rpc('check_user_role', {
+        user_id: userId,
+        role_name: 'office_staff'
+      });
+      
+      if (error) {
+        console.error("[SignIn] RPC error checking admin role:", error);
+        return false;
+      }
+      
+      console.log("[SignIn] Admin role check result:", data);
+      return !!data;
+    } catch (error) {
+      console.error("[SignIn] Error checking admin role:", error);
+      return false;
+    }
+  };
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -63,15 +86,23 @@ const SignIn: React.FC = () => {
       const result = await signIn(data.email, data.password);
       console.log("[SignIn] Sign in successful, result:", result);
       
-      // Explicitly check roles from the sign-in result
-      const isAdminUser = result.isAdmin || result.roles?.includes('office_staff');
-      
-      // Determine where to redirect based on user role
-      const redirectPath = isAdminUser ? '/admin-dashboard' : '/dashboard';
-      console.log(`[SignIn] Redirecting to ${redirectPath} (isAdmin: ${isAdminUser})`);
-      
-      // Use replace: true to prevent going back to the login page
-      navigate(redirectPath, { replace: true });
+      if (result.user?.id) {
+        // Check admin status using our RPC function
+        const isAdminUser = await checkUserRole(result.user.id);
+        console.log("[SignIn] Admin status verified directly:", isAdminUser);
+        
+        // Determine where to redirect based on user role
+        const redirectPath = isAdminUser ? '/admin-dashboard' : '/dashboard';
+        console.log(`[SignIn] Redirecting to ${redirectPath} (isAdmin: ${isAdminUser})`);
+        
+        toast({
+          title: "Sign in successful",
+          description: `Welcome back! ${isAdminUser ? '(Admin Access)' : ''}`,
+        });
+        
+        // Use replace: true to prevent going back to the login page
+        navigate(redirectPath, { replace: true });
+      }
       
     } catch (error) {
       console.error("[SignIn] Sign in error:", error);
@@ -81,6 +112,7 @@ const SignIn: React.FC = () => {
     }
   };
 
+  // Rest of the component remains the same
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}

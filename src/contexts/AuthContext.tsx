@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { cleanupAuthState } from '@/utils/authUtils';
+import { cleanupAuthState, checkIsAdmin } from '@/utils/authUtils';
 
 export type UserRole = 'office_staff' | 'business_owner';
 
@@ -47,32 +46,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
-  // Fetch user roles from the database with improved error handling
+  // Fetch user roles using the new RPC function
   const fetchUserRoles = useCallback(async (userId: string) => {
     try {
       console.log("[AuthContext] Fetching roles for user:", userId);
       
-      // Use direct query to user_roles - the RLS policies should now properly work
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
+      // Check if user is admin first using RPC
+      const isAdminRole = await checkIsAdmin(userId);
+      console.log("[AuthContext] Admin role check result:", isAdminRole);
+      
+      // If admin check fails, try direct query to user_roles as backup
+      if (!isAdminRole) {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
+          
+        if (roleError) {
+          console.error("[AuthContext] Error fetching user roles directly:", roleError);
+          throw roleError;
+        }
         
-      if (roleError) {
-        console.error("[AuthContext] Error fetching user roles:", roleError);
-        throw roleError;
+        console.log("[AuthContext] User role data received:", roleData);
+        
+        // Extract roles from the data
+        const roles: UserRole[] = roleData ? 
+          roleData.map(item => item.role as UserRole) : [];
+          
+        console.log("[AuthContext] Parsed user roles:", roles);
+        setUserRoles(roles);
+        
+        return roles;
+      } else {
+        // User is admin, set roles accordingly
+        const roles: UserRole[] = ['office_staff'];
+        console.log("[AuthContext] Setting admin role from RPC check:", roles);
+        setUserRoles(roles);
+        return roles;
       }
-      
-      console.log("[AuthContext] User role data received:", roleData);
-      
-      // Extract roles from the data
-      const roles: UserRole[] = roleData ? 
-        roleData.map(item => item.role as UserRole) : [];
-        
-      console.log("[AuthContext] Parsed user roles:", roles);
-      setUserRoles(roles);
-      
-      return roles;
     } catch (error) {
       console.error("[AuthContext] Error fetching user roles:", error);
       // Show error toast only for unexpected errors
@@ -123,8 +134,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Refresh user roles
   const refreshRoles = useCallback(async () => {
     if (user?.id) {
-      await fetchUserRoles(user.id);
+      console.log("[AuthContext] Refreshing roles for user:", user.id);
+      return await fetchUserRoles(user.id);
     }
+    return [];
   }, [user, fetchUserRoles]);
 
   // Refresh user profile
