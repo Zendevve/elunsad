@@ -9,11 +9,16 @@ export function useRoleAuth() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState<boolean>(false);
 
   // Fetch user roles function that can be called as needed
   const fetchUserRoles = useCallback(async () => {
+    // Prevent multiple fetches if already attempted
+    if (hasAttemptedFetch) return;
+    
     setIsLoading(true);
     setError(null);
+    setHasAttemptedFetch(true);
     
     try {
       // Get the current user
@@ -69,19 +74,19 @@ export function useRoleAuth() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [hasAttemptedFetch]);
 
   // Initial fetch and auth state change subscription
   useEffect(() => {
     console.log("useRoleAuth hook initialized");
-    fetchUserRoles();
-
-    // Listen for auth state changes and update roles accordingly
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    
+    // Function to handle auth state changes
+    const handleAuthChange = (event: string) => {
       console.log("Auth state change detected:", event);
       
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        console.log("User signed in or token refreshed, fetching roles");
+        console.log("User signed in or token refreshed, resetting fetch state");
+        setHasAttemptedFetch(false); // Reset fetch state to allow a new fetch
         // Use setTimeout to avoid potential deadlocks with Supabase client
         setTimeout(() => fetchUserRoles(), 0);
       } else if (event === 'SIGNED_OUT') {
@@ -89,8 +94,15 @@ export function useRoleAuth() {
         setRoles([]);
         setIsAdminUser(false);
         setUserId(null);
+        setHasAttemptedFetch(false);
       }
-    });
+    };
+
+    // Initial fetch
+    fetchUserRoles();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
     return () => {
       console.log("Cleaning up auth subscription in useRoleAuth");
@@ -110,7 +122,10 @@ export function useRoleAuth() {
     isLoading,
     userId,
     error,
-    refetch: fetchUserRoles
+    refetch: useCallback(() => {
+      setHasAttemptedFetch(false);
+      fetchUserRoles();
+    }, [fetchUserRoles])
   };
 }
 
