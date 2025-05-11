@@ -6,17 +6,27 @@ import { cleanupAuthState } from '@/utils/authUtils';
 
 export type UserRole = 'office_staff' | 'business_owner';
 
+interface UserProfile {
+  firstname: string;
+  lastname: string;
+  middlename?: string;
+  extension_name?: string;
+  username: string;
+}
+
 interface AuthContextType {
   user: any | null;
   session: any | null;
   userRoles: UserRole[];
+  userProfile: UserProfile | null;
   isAdmin: boolean;
   isBusinessOwner: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<any>; // Updated return type to Promise<any> instead of Promise<void>
+  signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<any | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
@@ -68,12 +79,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Fetch user profile data
+  const fetchUserProfile = useCallback(async (userId: string) => {
+    try {
+      console.log("[AuthContext] Fetching profile for user:", userId);
+      
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('firstname, lastname, middlename, extension_name, username')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error("[AuthContext] Error fetching user profile:", profileError);
+        throw profileError;
+      }
+      
+      console.log("[AuthContext] User profile data received:", profileData);
+      
+      if (profileData) {
+        setUserProfile(profileData as UserProfile);
+      } else {
+        setUserProfile(null);
+      }
+      
+      return profileData;
+    } catch (error) {
+      console.error("[AuthContext] Error fetching user profile:", error);
+      setUserProfile(null);
+      return null;
+    }
+  }, []);
+
   // Refresh user roles
   const refreshRoles = useCallback(async () => {
     if (user?.id) {
       await fetchUserRoles(user.id);
     }
   }, [user, fetchUserRoles]);
+
+  // Refresh user profile
+  const refreshProfile = useCallback(async () => {
+    if (user?.id) {
+      await fetchUserProfile(user.id);
+    }
+  }, [user, fetchUserProfile]);
 
   // Sign in function
   const signIn = async (email: string, password: string) => {
@@ -116,12 +166,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fetch user roles after successful login
       await fetchUserRoles(data.user.id);
       
+      // Fetch user profile after successful login
+      await fetchUserProfile(data.user.id);
+      
       toast({
         title: "Sign in successful",
         description: "You have been signed in successfully",
       });
       
-      return data; // Return data instead of void
+      return data;
     } catch (error) {
       console.error("[AuthContext] Error in signIn function:", error);
       throw error;
@@ -156,6 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setUserRoles([]);
+      setUserProfile(null);
       
       toast({
         title: "Signed out",
@@ -190,12 +244,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             // Fetch roles on auth state change if needed
             if (currentSession?.user && event === 'SIGNED_IN') {
-              console.log("[AuthContext] User signed in, fetching roles");
+              console.log("[AuthContext] User signed in, fetching roles and profile");
               // Use setTimeout to avoid potential deadlocks with Supabase client
-              setTimeout(() => fetchUserRoles(currentSession.user.id), 0);
+              setTimeout(() => {
+                fetchUserRoles(currentSession.user.id);
+                fetchUserProfile(currentSession.user.id);
+              }, 0);
             } else if (event === 'SIGNED_OUT') {
-              console.log("[AuthContext] User signed out, clearing roles");
+              console.log("[AuthContext] User signed out, clearing roles and profile");
               setUserRoles([]);
+              setUserProfile(null);
             }
           }
         );
@@ -210,6 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Fetch roles for initial session if it exists
         if (initialSession?.user) {
           await fetchUserRoles(initialSession.user.id);
+          await fetchUserProfile(initialSession.user.id);
         }
         
         return () => {
@@ -224,7 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     initializeAuth();
-  }, [fetchUserRoles]);
+  }, [fetchUserRoles, fetchUserProfile]);
 
   // Computed properties based on userRoles
   const isAdmin = userRoles.includes('office_staff');
@@ -235,6 +294,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     userRoles,
+    userProfile,
     isAdmin,
     isBusinessOwner,
     isAuthenticated,
@@ -242,6 +302,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     refreshRoles,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
