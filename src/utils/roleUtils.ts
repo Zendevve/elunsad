@@ -10,6 +10,8 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
+    console.log(`Checking if user ${user.user.id} has role: ${role}`);
+    
     // Use a direct query to check user role
     const { data, error } = await supabase
       .from('user_roles')
@@ -23,7 +25,9 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
       return false;
     }
     
-    return !!data;
+    const hasRequestedRole = !!data;
+    console.log(`User has role ${role}: ${hasRequestedRole}`);
+    return hasRequestedRole;
   } catch (error) {
     console.error("Error checking user role:", error);
     return false;
@@ -114,26 +118,24 @@ export const removeRoleFromUser = async (userId: string, role: UserRole): Promis
 };
 
 /**
- * Make a user an admin (admin only, or first user)
+ * Helper function to clean up authentication state
+ * Used to avoid auth "limbo" states
  */
-export const makeUserAdmin = async (userId: string): Promise<boolean> => {
-  try {
-    // Add admin role using direct insert
-    const { error } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: userId,
-        role: 'office_staff'
-      });
-    
-    if (error) {
-      console.error("Error making user admin:", error);
-      return false;
+export const cleanupAuthState = () => {
+  // Remove standard auth tokens
+  localStorage.removeItem('supabase.auth.token');
+  
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
     }
-    
-    return true;
-  } catch (error) {
-    console.error("Error making user admin:", error);
-    return false;
-  }
+  });
+  
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
 };

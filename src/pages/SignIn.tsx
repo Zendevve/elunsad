@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,6 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { hasRole } from "@/utils/roleUtils";
 
 // Define validation schema
 const signInSchema = z.object({
@@ -55,24 +55,11 @@ const SignIn = () => {
     try {
       console.log("Checking roles for user:", userId);
       
-      // Query user roles with explicit logging
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      
-      if (roleError) {
-        console.error("Error fetching user roles:", roleError);
-        throw roleError;
-      }
-      
-      console.log("Role data received:", roleData);
-      
-      // Check if user has office_staff role
-      const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
-      
+      // Check if user is admin using the utility function
+      const isAdmin = await hasRole('office_staff');
       console.log("Is admin determined to be:", isAdmin);
       
+      // Redirect based on admin status
       if (isAdmin) {
         console.log("Redirecting to admin dashboard");
         navigate('/admin-dashboard');
@@ -101,6 +88,20 @@ const SignIn = () => {
     try {
       console.log("Attempting sign in with email:", data.email);
       
+      // Clean up any existing auth state before logging in
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Try a global signout first to clear any existing sessions
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (logoutError) {
+        console.log("Pre-login signout error (can be ignored):", logoutError);
+      }
+      
       // Sign in with Supabase Auth
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -118,50 +119,38 @@ const SignIn = () => {
       }
       
       console.log("Successfully signed in user:", authData.user.id);
-
-      // Fetch user profile from the profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('firstname, lastname')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-      }
-
-      const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
       
-      // Check the user's role with explicit query
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', authData.user.id);
-      
-      if (roleError) {
-        console.error("Error fetching user roles:", roleError);
-      }
-      
-      // Log the actual role data for debugging
-      console.log("User role data:", roleData);
-      
-      const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
-      console.log("Is user admin?", isAdmin);
-      
-      // Show success message with role information
-      toast({
-        title: "Sign in successful",
-        description: `Welcome back, ${firstname}! ${isAdmin ? '(Admin Access)' : ''}`,
-      });
-      
-      // Redirect based on user role
-      if (isAdmin) {
-        console.log("Redirecting admin to admin dashboard");
-        navigate('/admin-dashboard');
-      } else {
-        console.log("Redirecting user to dashboard");
-        navigate('/dashboard');
-      }
+      // After successful login, wait a moment and then check for admin status
+      // Use setTimeout to avoid potential Supabase client deadlocks
+      setTimeout(async () => {
+        // Check if user is admin using the utility function
+        const isAdmin = await hasRole('office_staff');
+        console.log("Admin status after login:", isAdmin);
+        
+        // Fetch user profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('firstname, lastname')
+          .eq('id', authData.user.id)
+          .maybeSingle();
+          
+        const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
+        
+        // Show success message with role information
+        toast({
+          title: "Sign in successful",
+          description: `Welcome back, ${firstname}! ${isAdmin ? '(Admin Access)' : ''}`,
+        });
+        
+        // Redirect based on user role
+        if (isAdmin) {
+          console.log("Redirecting admin to admin dashboard");
+          navigate('/admin-dashboard');
+        } else {
+          console.log("Redirecting user to dashboard");
+          navigate('/dashboard');
+        }
+      }, 500);
       
     } catch (error) {
       console.error("Sign in error:", error);
@@ -170,7 +159,6 @@ const SignIn = () => {
         title: "Sign in failed",
         description: error instanceof Error ? error.message : "An error occurred during sign in.",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -292,7 +280,7 @@ const SignIn = () => {
                     className="w-full flex items-center justify-center gap-2"
                     disabled={isLoading}
                   >
-                    <LogIn className="h-5 w-5" />
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
                     {isLoading ? "Signing In..." : "Sign In"}
                   </Button>
                 </form>
