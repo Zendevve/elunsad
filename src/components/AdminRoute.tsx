@@ -1,82 +1,39 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
-import { hasRole } from '@/utils/roleUtils';
+import useRoleAuth from '@/hooks/useRoleAuth';
 
 const AdminRoute: React.FC = () => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [showRedirectMessage, setShowRedirectMessage] = useState<boolean>(false);
-  const location = useLocation();
+  const { isAdmin, isLoading } = useRoleAuth();
   const { toast } = useToast();
+  const location = useLocation();
 
-  // Check admin status
+  // Show access denied toast when redirecting non-admin users
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      try {
-        console.log("AdminRoute: Checking authentication and admin status");
-        
-        // Get current user session
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("AdminRoute: Session error", sessionError);
-          setIsAuthenticated(false);
-          setIsAdmin(false);
-          return;
-        }
-        
-        setIsAuthenticated(!!sessionData.session);
-        
-        if (!sessionData.session) {
-          console.log("AdminRoute: No authenticated user found");
-          setIsAdmin(false);
-          return;
-        }
-        
-        console.log("AdminRoute: User authenticated, checking admin role");
-        
-        // Check if user has office_staff role using the utility function
-        const adminStatus = await hasRole('office_staff');
-        console.log("AdminRoute: Admin status determined:", adminStatus);
-        setIsAdmin(adminStatus);
-        
-      } catch (error) {
-        console.error("AdminRoute: Error checking admin status:", error);
-        setIsAuthenticated(false);
-        setIsAdmin(false);
-      }
-    };
+    if (isLoading === false && isAdmin === false) {
+      console.log("[AdminRoute] Access denied - user is not admin");
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access the admin area',
+        variant: 'destructive',
+      });
+    }
+  }, [isLoading, isAdmin, toast]);
 
-    checkAdminStatus();
-    
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("AdminRoute: Auth state changed, session exists:", !!session);
-      setIsAuthenticated(!!session);
-      
-      if (session) {
-        // Use setTimeout to avoid potential Supabase client deadlocks
-        setTimeout(async () => {
-          const adminStatus = await hasRole('office_staff');
-          console.log("AdminRoute: Admin status after auth change:", adminStatus);
-          setIsAdmin(adminStatus);
-        }, 0);
-      } else {
-        setIsAdmin(false);
-      }
+  // Log the current state for debugging
+  useEffect(() => {
+    console.log("[AdminRoute] Current state:", { 
+      isAdmin, 
+      isLoading, 
+      path: location.pathname 
     });
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  }, [isAdmin, isLoading, location.pathname]);
 
   // Show loading while checking admin status
-  if (isAdmin === null || isAuthenticated === null) {
+  if (isLoading) {
+    console.log("[AdminRoute] Loading - checking admin status");
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -85,41 +42,14 @@ const AdminRoute: React.FC = () => {
     );
   }
 
-  // Show toast and set redirect flag for authentication redirect
-  useEffect(() => {
-    if (!isAuthenticated && !showRedirectMessage) {
-      setShowRedirectMessage(true);
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access this page',
-        variant: 'destructive',
-      });
-    }
-  }, [isAuthenticated, toast, showRedirectMessage]);
-
-  // Show toast and set redirect flag for admin redirect
-  useEffect(() => {
-    if (isAuthenticated && isAdmin === false && !showRedirectMessage) {
-      setShowRedirectMessage(true);
-      toast({
-        title: 'Access Denied',
-        description: 'You do not have permission to access the admin area',
-        variant: 'destructive',
-      });
-    }
-  }, [isAuthenticated, isAdmin, toast, showRedirectMessage]);
-
-  // If not authenticated at all, redirect to login
-  if (!isAuthenticated) {
-    return <Navigate to="/signin" state={{ from: location }} replace />;
-  }
-
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
+    console.log("[AdminRoute] Not admin - redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 
   // User is an admin, render the admin layout and routes
+  console.log("[AdminRoute] Admin access granted - rendering admin content");
   return <Outlet />;
 };
 

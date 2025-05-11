@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react"; // Added Loader2 import here
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,8 +16,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { getRedirectPathForUser } from "@/utils/authUtils";
 
 // Define validation schema
 const signInSchema = z.object({
@@ -27,66 +27,20 @@ const signInSchema = z.object({
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
-const SignIn = () => {
+const SignIn: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const { signIn, isAuthenticated, isAdmin } = useAuth();
 
-  // Check if user is already authenticated on page load
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        console.log("[SignIn] Checking if user is already authenticated");
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          console.log("[SignIn] User already authenticated, determining route");
-          await determineUserRouteAndRedirect(data.session.user.id);
-        }
-      } catch (error) {
-        console.error("[SignIn] Error checking auth status:", error);
-      }
-    };
-    
-    checkAuthStatus();
-  }, [navigate]);
-
-  // Helper function to determine user route and redirect
-  const determineUserRouteAndRedirect = async (userId: string) => {
-    try {
-      console.log("[SignIn] Checking roles for user:", userId);
-      
-      // Query user roles with explicit logging
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      
-      if (roleError) {
-        console.error("[SignIn] Error fetching user roles:", roleError);
-        throw roleError;
-      }
-      
-      console.log("[SignIn] Role data received:", roleData);
-      
-      // Check if user has office_staff role
-      const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
-      
-      console.log("[SignIn] Is admin determined to be:", isAdmin);
-      
-      if (isAdmin) {
-        console.log("[SignIn] Redirecting to admin dashboard");
-        navigate('/admin-dashboard');
-      } else {
-        console.log("[SignIn] Redirecting to user dashboard");
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error("[SignIn] Error determining user route:", error);
-      // Default to user dashboard if there's an error
-      navigate('/dashboard');
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      const redirectPath = getRedirectPathForUser(isAdmin);
+      console.log(`[SignIn] User already authenticated, redirecting to ${redirectPath}`);
+      navigate(redirectPath);
     }
-  };
+  }, [isAuthenticated, isAdmin, navigate]);
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -97,86 +51,22 @@ const SignIn = () => {
   });
 
   const onSubmit = async (data: SignInFormData) => {
-    setIsLoading(true);
-    
     try {
+      setIsLoading(true);
       console.log("[SignIn] Attempting sign in with email:", data.email);
       
-      // Sign in with Supabase Auth
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (error) {
-        console.error("[SignIn] Authentication error:", error);
-        throw error;
-      }
-
-      if (!authData.user) {
-        console.error("[SignIn] No user data returned after sign in");
-        throw new Error("No user data returned after sign in");
-      }
+      await signIn(data.email, data.password);
       
-      console.log("[SignIn] Successfully signed in user:", authData.user.id);
-
-      // Fetch user profile from the profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('firstname, lastname')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (profileError) {
-        console.error("[SignIn] Error fetching profile:", profileError);
-      }
-
-      const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
-      
-      // Check the user's role with explicit query
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', authData.user.id);
-      
-      if (roleError) {
-        console.error("[SignIn] Error fetching user roles:", roleError);
-      }
-      
-      // Log the actual role data for debugging
-      console.log("[SignIn] User role data:", roleData);
-      
-      const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
-      console.log("[SignIn] Is user admin?", isAdmin);
-      
-      // Show success message with role information
-      toast({
-        title: "Sign in successful",
-        description: `Welcome back, ${firstname}! ${isAdmin ? '(Admin Access)' : ''}`,
-      });
-      
-      // Redirect based on user role
-      if (isAdmin) {
-        console.log("[SignIn] Redirecting admin to admin dashboard");
-        navigate('/admin-dashboard');
-      } else {
-        console.log("[SignIn] Redirecting user to dashboard");
-        navigate('/dashboard');
-      }
-      
+      // The redirect will happen automatically through the useEffect above
+      // when authentication state changes
     } catch (error) {
       console.error("[SignIn] Sign in error:", error);
-      toast({
-        variant: "destructive",
-        title: "Sign in failed",
-        description: error instanceof Error ? error.message : "An error occurred during sign in.",
-      });
+      // Error handling is done in the signIn function
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Rest of the component remains unchanged
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
@@ -293,8 +183,17 @@ const SignIn = () => {
                     className="w-full flex items-center justify-center gap-2"
                     disabled={isLoading}
                   >
-                    <LogIn className="h-5 w-5" />
-                    {isLoading ? "Signing In..." : "Sign In"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Signing In...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="h-5 w-5" />
+                        <span>Sign In</span>
+                      </>
+                    )}
                   </Button>
                 </form>
               </Form>

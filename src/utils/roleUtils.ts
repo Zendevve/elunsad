@@ -8,34 +8,31 @@ import { UserRole } from "@/types/auth";
 export const hasRole = async (role: UserRole): Promise<boolean> => {
   try {
     const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return false;
-    
-    console.log(`Checking if user ${user.user.id} has role: ${role}`);
-    
-    // Use a direct query to check user role
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', user.user.id)
-        .eq('role', role)
-        .maybeSingle();
-      
-      if (error) {
-        console.error("Error checking role:", error);
-        // In case of database errors, return false rather than breaking the app
-        return false;
-      }
-      
-      const hasRequestedRole = !!data;
-      console.log(`User has role ${role}: ${hasRequestedRole}`);
-      return hasRequestedRole;
-    } catch (error) {
-      console.error("Error checking user role:", error);
+    if (!user.user) {
+      console.log("[roleUtils] No user found when checking role");
       return false;
     }
+    
+    console.log(`[roleUtils] Checking if user ${user.user.id} has role: ${role}`);
+    
+    // Use a direct query to check user role
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', user.user.id)
+      .eq('role', role)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("[roleUtils] Error checking role:", error);
+      return false;
+    }
+    
+    const hasRole = !!data;
+    console.log(`[roleUtils] User ${user.user.id} has role ${role}: ${hasRole}`);
+    return hasRole;
   } catch (error) {
-    console.error("Error checking user role:", error);
+    console.error("[roleUtils] Error checking user role:", error);
     return false;
   }
 };
@@ -46,7 +43,12 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
 export const getUserRoles = async (): Promise<UserRole[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return [];
+    if (!user.user) {
+      console.log("[roleUtils] No user found when getting roles");
+      return [];
+    }
+    
+    console.log(`[roleUtils] Getting roles for user: ${user.user.id}`);
     
     // Use direct query to get roles
     const { data, error } = await supabase
@@ -55,14 +57,16 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
       .eq('user_id', user.user.id);
     
     if (error) {
-      console.error("Error getting user roles:", error);
+      console.error("[roleUtils] Error getting user roles:", error);
       return [];
     }
     
     // Convert results to UserRole array
-    return Array.isArray(data) ? data.map(item => item.role as UserRole) : [];
+    const roles = Array.isArray(data) ? data.map(item => item.role as UserRole) : [];
+    console.log(`[roleUtils] Roles for user ${user.user.id}:`, roles);
+    return roles;
   } catch (error) {
-    console.error("Error fetching user roles:", error);
+    console.error("[roleUtils] Error fetching user roles:", error);
     return [];
   }
 };
@@ -71,7 +75,9 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
  * Check if the current user is an admin
  */
 export const isAdmin = async (): Promise<boolean> => {
-  return await hasRole('office_staff');
+  const result = await hasRole('office_staff');
+  console.log("[roleUtils] isAdmin check result:", result);
+  return result;
 };
 
 /**
@@ -79,6 +85,8 @@ export const isAdmin = async (): Promise<boolean> => {
  */
 export const addRoleToUser = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
+    console.log(`[roleUtils] Adding role ${role} to user ${userId}`);
+    
     // Add role using direct insert
     const { error } = await supabase
       .from('user_roles')
@@ -88,13 +96,14 @@ export const addRoleToUser = async (userId: string, role: UserRole): Promise<boo
       });
     
     if (error) {
-      console.error("Error adding role to user:", error);
+      console.error("[roleUtils] Error adding role to user:", error);
       return false;
     }
     
+    console.log(`[roleUtils] Successfully added role ${role} to user ${userId}`);
     return true;
   } catch (error) {
-    console.error("Error adding role to user:", error);
+    console.error("[roleUtils] Error adding role to user:", error);
     return false;
   }
 };
@@ -104,6 +113,8 @@ export const addRoleToUser = async (userId: string, role: UserRole): Promise<boo
  */
 export const removeRoleFromUser = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
+    console.log(`[roleUtils] Removing role ${role} from user ${userId}`);
+    
     // Remove role using direct delete
     const { error } = await supabase
       .from('user_roles')
@@ -112,36 +123,42 @@ export const removeRoleFromUser = async (userId: string, role: UserRole): Promis
       .eq('role', role);
     
     if (error) {
-      console.error("Error removing role from user:", error);
+      console.error("[roleUtils] Error removing role from user:", error);
       return false;
     }
     
+    console.log(`[roleUtils] Successfully removed role ${role} from user ${userId}`);
     return true;
   } catch (error) {
-    console.error("Error removing role from user:", error);
+    console.error("[roleUtils] Error removing role from user:", error);
     return false;
   }
 };
 
 /**
- * Helper function to clean up authentication state
- * Used to avoid auth "limbo" states
+ * Make a user an admin (admin only, or first user)
  */
-export const cleanupAuthState = () => {
-  // Remove standard auth tokens
-  localStorage.removeItem('supabase.auth.token');
-  
-  // Remove all Supabase auth keys from localStorage
-  Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      localStorage.removeItem(key);
+export const makeUserAdmin = async (userId: string): Promise<boolean> => {
+  try {
+    console.log(`[roleUtils] Making user ${userId} an admin`);
+    
+    // Add admin role using direct insert
+    const { error } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: userId,
+        role: 'office_staff'
+      });
+    
+    if (error) {
+      console.error("[roleUtils] Error making user admin:", error);
+      return false;
     }
-  });
-  
-  // Remove from sessionStorage if in use
-  Object.keys(sessionStorage || {}).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      sessionStorage.removeItem(key);
-    }
-  });
+    
+    console.log(`[roleUtils] Successfully made user ${userId} an admin`);
+    return true;
+  } catch (error) {
+    console.error("[roleUtils] Error making user admin:", error);
+    return false;
+  }
 };
