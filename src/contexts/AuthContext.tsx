@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -24,7 +25,7 @@ interface AuthContextType {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
-  refreshRoles: () => Promise<void>;
+  refreshRoles: () => Promise<UserRole[]>; // Updated to match implementation return type
   refreshProfile: () => Promise<void>;
 }
 
@@ -131,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Refresh user roles
+  // Refresh user roles - ensures return type matches interface
   const refreshRoles = useCallback(async () => {
     if (user?.id) {
       console.log("[AuthContext] Refreshing roles for user:", user.id);
@@ -140,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return [];
   }, [user, fetchUserRoles]);
 
-  // Refresh user profile
+  // Refresh user profile - updated to match interface
   const refreshProfile = useCallback(async () => {
     if (user?.id) {
       await fetchUserProfile(user.id);
