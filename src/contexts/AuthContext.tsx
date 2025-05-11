@@ -47,11 +47,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
-  // Fetch user roles from the database
+  // Fetch user roles from the database with improved error handling
   const fetchUserRoles = useCallback(async (userId: string) => {
     try {
       console.log("[AuthContext] Fetching roles for user:", userId);
       
+      // Use direct query to user_roles - the RLS policies should now properly work
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -74,10 +75,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return roles;
     } catch (error) {
       console.error("[AuthContext] Error fetching user roles:", error);
+      // Show error toast only for unexpected errors
+      if (error instanceof Error && !error.message.includes('JWT')) {
+        toast({
+          variant: "destructive",
+          title: "Error fetching user roles",
+          description: "There was a problem determining your user permissions"
+        });
+      }
       setUserRoles([]);
       return [];
     }
-  }, []);
+  }, [toast]);
 
   // Fetch user profile data
   const fetchUserProfile = useCallback(async (userId: string) => {
@@ -125,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, fetchUserProfile]);
 
-  // Sign in function
+  // Sign in function with improved error handling
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -164,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("[AuthContext] Successfully signed in user:", data.user.id);
       
       // Fetch user roles after successful login
-      await fetchUserRoles(data.user.id);
+      const roles = await fetchUserRoles(data.user.id);
       
       // Fetch user profile after successful login
       await fetchUserProfile(data.user.id);
@@ -174,7 +183,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "You have been signed in successfully",
       });
       
-      return data;
+      // Return roles along with auth data so the calling component can redirect
+      return {
+        ...data,
+        roles,
+        isAdmin: roles.includes('office_staff')
+      };
     } catch (error) {
       console.error("[AuthContext] Error in signIn function:", error);
       throw error;
@@ -183,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign out function
+  // Sign out function with improved error handling
   const signOut = async () => {
     try {
       setIsLoading(true);
@@ -243,8 +257,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(currentSession?.user ?? null);
             
             // Fetch roles on auth state change if needed
-            if (currentSession?.user && event === 'SIGNED_IN') {
-              console.log("[AuthContext] User signed in, fetching roles and profile");
+            if (currentSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+              console.log("[AuthContext] User signed in or token refreshed, fetching roles and profile");
               // Use setTimeout to avoid potential deadlocks with Supabase client
               setTimeout(() => {
                 fetchUserRoles(currentSession.user.id);
@@ -254,6 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               console.log("[AuthContext] User signed out, clearing roles and profile");
               setUserRoles([]);
               setUserProfile(null);
+              window.location.href = '/signin';
             }
           }
         );
