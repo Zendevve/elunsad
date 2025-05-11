@@ -8,6 +8,19 @@ import useRoleAuth from '@/hooks/useRoleAuth';
 const AdminRoute: React.FC = () => {
   const { toast } = useToast();
   const { isAdmin, isLoading } = useRoleAuth();
+  const [accessDenied, setAccessDenied] = useState<boolean>(false);
+
+  // Effect to show toast only when we know user isn't admin
+  useEffect(() => {
+    if (!isLoading && !isAdmin) {
+      setAccessDenied(true);
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access the admin area',
+        variant: 'destructive',
+      });
+    }
+  }, [isLoading, isAdmin, toast]);
 
   // Show loading while checking admin status
   if (isLoading) {
@@ -21,12 +34,6 @@ const AdminRoute: React.FC = () => {
 
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
-    toast({
-      title: 'Access Denied',
-      description: 'You do not have permission to access the admin area',
-      variant: 'destructive',
-    });
-    
     return <Navigate to="/dashboard" replace />;
   }
 

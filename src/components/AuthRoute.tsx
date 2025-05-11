@@ -8,9 +8,21 @@ import useRoleAuth from '@/hooks/useRoleAuth';
 
 const AuthRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [showAuthToast, setShowAuthToast] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
   const { isAdmin, isLoading: isRoleLoading } = useRoleAuth();
+
+  // Effect to show toast when redirecting to login
+  useEffect(() => {
+    if (showAuthToast) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to access this page',
+        variant: 'destructive',
+      });
+    }
+  }, [showAuthToast, toast]);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -53,14 +65,10 @@ const AuthRoute: React.FC = () => {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    // Show toast notification when redirecting to login
-    useEffect(() => {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access this page',
-        variant: 'destructive',
-      });
-    }, [toast]);
+    // Set flag to show toast on next render
+    if (!showAuthToast) {
+      setShowAuthToast(true);
+    }
     
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
