@@ -14,7 +14,7 @@ interface AuthContextType {
   isBusinessOwner: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<any>; // Updated return type to Promise<any> instead of Promise<void>
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "You have been signed in successfully",
       });
       
-      return data;
+      return data; // Return data instead of void
     } catch (error) {
       console.error("[AuthContext] Error in signIn function:", error);
       throw error;
