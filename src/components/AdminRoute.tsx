@@ -1,26 +1,26 @@
 
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import useRoleAuth from '@/hooks/useRoleAuth';
 
 const AdminRoute: React.FC = () => {
   const { toast } = useToast();
   const { isAdmin, isLoading } = useRoleAuth();
-  const [accessDenied, setAccessDenied] = useState<boolean>(false);
+  const [hasShownToast, setHasShownToast] = useState<boolean>(false);
 
   // Effect to show toast only when we know user isn't admin
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      setAccessDenied(true);
+    if (!isLoading && !isAdmin && !hasShownToast) {
       toast({
         title: 'Access Denied',
         description: 'You do not have permission to access the admin area',
         variant: 'destructive',
       });
+      setHasShownToast(true);
     }
-  }, [isLoading, isAdmin, toast]);
+  }, [isLoading, isAdmin, toast, hasShownToast]);
 
   // Show loading while checking admin status
   if (isLoading) {
@@ -31,6 +31,9 @@ const AdminRoute: React.FC = () => {
       </div>
     );
   }
+
+  // Log current state for debugging
+  console.log("AdminRoute: isAdmin=", isAdmin, "isLoading=", isLoading);
 
   // If not an admin, redirect to dashboard
   if (!isAdmin) {

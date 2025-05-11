@@ -33,40 +33,32 @@ export function useRoleAuth() {
         
         console.log("Fetching roles for user:", user.id);
         
-        try {
-          // Explicitly query user roles from the database
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id);
-            
-          if (roleError) {
-            console.error("Error fetching user roles:", roleError);
-            // Don't throw here, just handle the error gracefully
-            setRoles([]);
-            setIsAdminUser(false);
-          } else {
-            console.log("User role data received:", roleData);
-            
-            // Extract roles from the data
-            const userRoles: UserRole[] = roleData ? 
-              roleData.map(item => item.role as UserRole) : [];
-              
-            console.log("Parsed user roles:", userRoles);
-            
-            setRoles(userRoles);
-            
-            // Check if admin (office_staff role)
-            const adminStatus = userRoles.includes('office_staff');
-            console.log("Admin status determined:", adminStatus);
-            
-            setIsAdminUser(adminStatus);
-          }
-        } catch (roleErr) {
-          // Handle database errors gracefully
-          console.error("Database error fetching roles:", roleErr);
+        // Explicitly query user roles from the database
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        if (roleError) {
+          console.error("Error fetching user roles:", roleError);
           setRoles([]);
           setIsAdminUser(false);
+        } else {
+          console.log("User role data received:", roleData);
+          
+          // Extract roles from the data
+          const userRoles: UserRole[] = roleData ? 
+            roleData.map(item => item.role as UserRole) : [];
+          
+          console.log("Parsed user roles:", userRoles);
+          
+          setRoles(userRoles);
+          
+          // Check if admin (office_staff role)
+          const adminStatus = userRoles.includes('office_staff');
+          console.log("Admin status determined:", adminStatus);
+          
+          setIsAdminUser(adminStatus);
         }
       } else {
         console.log("No user found, clearing roles");
@@ -93,7 +85,27 @@ export function useRoleAuth() {
   // Initial fetch and auth state change subscription
   useEffect(() => {
     console.log("useRoleAuth hook initialized");
-    fetchUserRoles();
+    
+    // First check if user is logged in
+    const checkAuthAndFetchRoles = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("Session found, will fetch roles");
+          fetchUserRoles();
+        } else {
+          console.log("No session found, clearing roles");
+          setRoles([]);
+          setIsAdminUser(false);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        setIsLoading(false);
+      }
+    };
+    
+    checkAuthAndFetchRoles();
 
     // Listen for auth state changes and update roles accordingly
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -109,6 +121,7 @@ export function useRoleAuth() {
         setRoles([]);
         setIsAdminUser(false);
         setUserId(null);
+        setIsLoading(false);
       }
     });
 
