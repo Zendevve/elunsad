@@ -4,11 +4,13 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import useRoleAuth from '@/hooks/useRoleAuth';
 
 const AuthRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const location = useLocation();
   const { toast } = useToast();
+  const { isAdmin, isLoading: isRoleLoading } = useRoleAuth();
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -40,7 +42,7 @@ const AuthRoute: React.FC = () => {
   }, []);
 
   // Show loading while checking authentication
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null || (isAuthenticated && isRoleLoading)) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -63,7 +65,13 @@ const AuthRoute: React.FC = () => {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  // Render the child routes
+  // If user is admin, redirect to admin dashboard
+  if (isAdmin) {
+    console.log("User is admin, redirecting to admin dashboard");
+    return <Navigate to="/admin-dashboard" replace />;
+  }
+
+  // Render the child routes for regular authenticated non-admin users
   return <Outlet />;
 };
 

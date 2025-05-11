@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -18,6 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import useRoleAuth from "@/hooks/useRoleAuth";
 
 // Define validation schema
 const signInSchema = z.object({
@@ -40,7 +40,7 @@ const SignIn = () => {
         const { data } = await supabase.auth.getSession();
         if (data.session) {
           console.log("User already authenticated, determining route");
-          await determineUserRouteAndRedirect(data.session.user.id);
+          await determineUserRouteAndRedirect();
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
@@ -51,15 +51,13 @@ const SignIn = () => {
   }, [navigate]);
 
   // Helper function to determine user route and redirect
-  const determineUserRouteAndRedirect = async (userId: string) => {
+  const determineUserRouteAndRedirect = async () => {
     try {
-      console.log("Checking roles for user:", userId);
-      
-      // Query user roles with explicit logging
+      // Get the user roles using our hook functions
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId);
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
       
       if (roleError) {
         console.error("Error fetching user roles:", roleError);
