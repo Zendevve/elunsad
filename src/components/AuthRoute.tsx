@@ -9,6 +9,7 @@ import { hasRole } from '@/utils/roleUtils';
 const AuthRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [showRedirectMessage, setShowRedirectMessage] = useState<boolean>(false);
   const location = useLocation();
   const { toast } = useToast();
 
@@ -78,17 +79,20 @@ const AuthRoute: React.FC = () => {
     );
   }
 
-  // If not authenticated, redirect to login
-  if (!isAuthenticated) {
-    // Show toast notification when redirecting to login
-    useEffect(() => {
+  // Show toast for authentication redirect
+  useEffect(() => {
+    if (!isAuthenticated && !showRedirectMessage) {
+      setShowRedirectMessage(true);
       toast({
         title: 'Authentication Required',
         description: 'Please sign in to access this page',
         variant: 'destructive',
       });
-    }, [toast]);
-    
+    }
+  }, [isAuthenticated, toast, showRedirectMessage]);
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 

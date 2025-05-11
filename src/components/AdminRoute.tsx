@@ -9,6 +9,7 @@ import { hasRole } from '@/utils/roleUtils';
 const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [showRedirectMessage, setShowRedirectMessage] = useState<boolean>(false);
   const location = useLocation();
   const { toast } = useToast();
 
@@ -84,25 +85,37 @@ const AdminRoute: React.FC = () => {
     );
   }
 
+  // Show toast and set redirect flag for authentication redirect
+  useEffect(() => {
+    if (!isAuthenticated && !showRedirectMessage) {
+      setShowRedirectMessage(true);
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to access this page',
+        variant: 'destructive',
+      });
+    }
+  }, [isAuthenticated, toast, showRedirectMessage]);
+
+  // Show toast and set redirect flag for admin redirect
+  useEffect(() => {
+    if (isAuthenticated && isAdmin === false && !showRedirectMessage) {
+      setShowRedirectMessage(true);
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access the admin area',
+        variant: 'destructive',
+      });
+    }
+  }, [isAuthenticated, isAdmin, toast, showRedirectMessage]);
+
   // If not authenticated at all, redirect to login
   if (!isAuthenticated) {
-    toast({
-      title: 'Authentication Required',
-      description: 'Please sign in to access this page',
-      variant: 'destructive',
-    });
-    
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
-    toast({
-      title: 'Access Denied',
-      description: 'You do not have permission to access the admin area',
-      variant: 'destructive',
-    });
-    
     return <Navigate to="/dashboard" replace />;
   }
 

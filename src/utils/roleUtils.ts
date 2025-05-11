@@ -13,21 +13,27 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     console.log(`Checking if user ${user.user.id} has role: ${role}`);
     
     // Use a direct query to check user role
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('id')
-      .eq('user_id', user.user.id)
-      .eq('role', role)
-      .maybeSingle();
-    
-    if (error) {
-      console.error("Error checking role:", error);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', user.user.id)
+        .eq('role', role)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error checking role:", error);
+        // In case of database errors, return false rather than breaking the app
+        return false;
+      }
+      
+      const hasRequestedRole = !!data;
+      console.log(`User has role ${role}: ${hasRequestedRole}`);
+      return hasRequestedRole;
+    } catch (error) {
+      console.error("Error checking user role:", error);
       return false;
     }
-    
-    const hasRequestedRole = !!data;
-    console.log(`User has role ${role}: ${hasRequestedRole}`);
-    return hasRequestedRole;
   } catch (error) {
     console.error("Error checking user role:", error);
     return false;
