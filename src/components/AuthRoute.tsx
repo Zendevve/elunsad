@@ -2,27 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
-import useRoleAuth from '@/hooks/useRoleAuth';
 
 const AuthRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [hasShownAuthToast, setHasShownAuthToast] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
-  const { isAdmin, isLoading: isRoleLoading } = useRoleAuth();
-
-  // Effect to show toast when redirecting to login
-  useEffect(() => {
-    if (!isAuthenticated && hasShownAuthToast) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access this page',
-        variant: 'destructive',
-      });
-    }
-  }, [isAuthenticated, hasShownAuthToast, toast]);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -54,7 +40,7 @@ const AuthRoute: React.FC = () => {
   }, []);
 
   // Show loading while checking authentication
-  if (isAuthenticated === null || (isAuthenticated && isRoleLoading)) {
+  if (isAuthenticated === null) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -65,24 +51,19 @@ const AuthRoute: React.FC = () => {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    // Set flag to show toast on next render if not already shown
-    if (!hasShownAuthToast) {
-      setHasShownAuthToast(true);
-    }
+    // Show toast notification when redirecting to login
+    useEffect(() => {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to access this page',
+        variant: 'destructive',
+      });
+    }, [toast]);
     
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  // Log current state for debugging
-  console.log("AuthRoute: isAdmin=", isAdmin, "isAuthenticated=", isAuthenticated);
-
-  // If user is admin and we've confirmed it, redirect to admin dashboard
-  if (isAdmin && !isRoleLoading) {
-    console.log("User is admin, redirecting to admin dashboard");
-    return <Navigate to="/admin-dashboard" replace />;
-  }
-
-  // Render the child routes for regular authenticated non-admin users
+  // Render the child routes
   return <Outlet />;
 };
 
