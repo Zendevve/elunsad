@@ -3,6 +3,8 @@
  * Cleans up authentication state to prevent "limbo" states
  * when logging in, out, or switching accounts
  */
+import { supabase } from "@/integrations/supabase/client";
+
 export const cleanupAuthState = () => {
   console.log("[authUtils] Cleaning up auth state");
   
