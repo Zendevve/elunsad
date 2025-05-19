@@ -37,6 +37,9 @@ import Analytics from "./pages/Analytics";
 import AdminApplicationDetail from "./pages/AdminApplicationDetail";
 import DirectAdminAccess from "./pages/DirectAdminAccess";
 
+// Debug Components
+import AuthDebugger from "./components/debug/AuthDebugger";
+
 // Application Context
 import { ApplicationProvider } from "./contexts/ApplicationContext";
 
@@ -61,6 +64,7 @@ const App = () => (
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/callback/*" element={<AuthCallback />} />
               <Route path="/admin-helper" element={<DirectAdminAccess />} />
+              <Route path="/debug/auth" element={<AuthDebugger />} />
               
               {/* Protected user routes */}
               <Route element={<AuthGuard />}>
