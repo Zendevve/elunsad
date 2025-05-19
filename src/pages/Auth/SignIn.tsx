@@ -1,10 +1,9 @@
-
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react"; // Added Loader2 import here
+import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,7 +15,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { getRedirectPathForUser } from "@/utils/authUtils";
 
 // Define validation schema
@@ -31,14 +32,41 @@ const SignIn: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   const { signIn, isAuthenticated, isAdmin } = useAuth();
 
+  // Get intended destination from location state, or use default
+  const from = (location.state as any)?.from?.pathname || '/';
+
+  // Check admin status directly
+  const checkUserRole = async (userId: string): Promise<boolean> => {
+    try {
+      console.log("[SignIn] Checking admin status via RPC for user:", userId);
+      const { data, error } = await supabase.rpc('check_user_role', {
+        user_id: userId,
+        role_name: 'office_staff'
+      });
+      
+      if (error) {
+        console.error("[SignIn] RPC error checking admin role:", error);
+        return false;
+      }
+      
+      console.log("[SignIn] Admin role check result:", data);
+      return !!data;
+    } catch (error) {
+      console.error("[SignIn] Error checking admin role:", error);
+      return false;
+    }
+  };
+
   // Redirect if already authenticated
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       const redirectPath = getRedirectPathForUser(isAdmin);
-      console.log(`[SignIn] User already authenticated, redirecting to ${redirectPath}`);
-      navigate(redirectPath);
+      console.log(`[SignIn] User already authenticated (isAdmin: ${isAdmin}), redirecting to ${redirectPath}`);
+      navigate(redirectPath, { replace: true });
     }
   }, [isAuthenticated, isAdmin, navigate]);
 
@@ -55,10 +83,27 @@ const SignIn: React.FC = () => {
       setIsLoading(true);
       console.log("[SignIn] Attempting sign in with email:", data.email);
       
-      await signIn(data.email, data.password);
+      const result = await signIn(data.email, data.password);
+      console.log("[SignIn] Sign in successful, result:", result);
       
-      // The redirect will happen automatically through the useEffect above
-      // when authentication state changes
+      if (result.user?.id) {
+        // Check admin status using our RPC function
+        const isAdminUser = await checkUserRole(result.user.id);
+        console.log("[SignIn] Admin status verified directly:", isAdminUser);
+        
+        // Determine where to redirect based on user role
+        const redirectPath = isAdminUser ? '/admin-dashboard' : '/dashboard';
+        console.log(`[SignIn] Redirecting to ${redirectPath} (isAdmin: ${isAdminUser})`);
+        
+        toast({
+          title: "Sign in successful",
+          description: `Welcome back! ${isAdminUser ? '(Admin Access)' : ''}`,
+        });
+        
+        // Use replace: true to prevent going back to the login page
+        navigate(redirectPath, { replace: true });
+      }
+      
     } catch (error) {
       console.error("[SignIn] Sign in error:", error);
       // Error handling is done in the signIn function
@@ -67,6 +112,7 @@ const SignIn: React.FC = () => {
     }
   };
 
+  // Rest of the component remains the same
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}

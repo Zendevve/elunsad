@@ -2,21 +2,31 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { cleanupAuthState } from '@/utils/authUtils';
+import { cleanupAuthState, checkIsAdmin } from '@/utils/authUtils';
 
 export type UserRole = 'office_staff' | 'business_owner';
+
+interface UserProfile {
+  firstname: string;
+  lastname: string;
+  middlename?: string;
+  extension_name?: string;
+  username: string;
+}
 
 interface AuthContextType {
   user: any | null;
   session: any | null;
   userRoles: UserRole[];
+  userProfile: UserProfile | null;
   isAdmin: boolean;
   isBusinessOwner: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<any>; // Updated return type to Promise<any> instead of Promise<void>
+  signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
-  refreshRoles: () => Promise<void>;
+  refreshRoles: () => Promise<UserRole[]>; // Updated to match implementation return type
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,49 +43,112 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<any | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
-  // Fetch user roles from the database
+  // Fetch user roles using the new RPC function
   const fetchUserRoles = useCallback(async (userId: string) => {
     try {
       console.log("[AuthContext] Fetching roles for user:", userId);
       
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
+      // Check if user is admin first using RPC
+      const isAdminRole = await checkIsAdmin(userId);
+      console.log("[AuthContext] Admin role check result:", isAdminRole);
+      
+      // If admin check fails, try direct query to user_roles as backup
+      if (!isAdminRole) {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
+          
+        if (roleError) {
+          console.error("[AuthContext] Error fetching user roles directly:", roleError);
+          throw roleError;
+        }
         
-      if (roleError) {
-        console.error("[AuthContext] Error fetching user roles:", roleError);
-        throw roleError;
+        console.log("[AuthContext] User role data received:", roleData);
+        
+        // Extract roles from the data
+        const roles: UserRole[] = roleData ? 
+          roleData.map(item => item.role as UserRole) : [];
+          
+        console.log("[AuthContext] Parsed user roles:", roles);
+        setUserRoles(roles);
+        
+        return roles;
+      } else {
+        // User is admin, set roles accordingly
+        const roles: UserRole[] = ['office_staff'];
+        console.log("[AuthContext] Setting admin role from RPC check:", roles);
+        setUserRoles(roles);
+        return roles;
       }
-      
-      console.log("[AuthContext] User role data received:", roleData);
-      
-      // Extract roles from the data
-      const roles: UserRole[] = roleData ? 
-        roleData.map(item => item.role as UserRole) : [];
-        
-      console.log("[AuthContext] Parsed user roles:", roles);
-      setUserRoles(roles);
-      
-      return roles;
     } catch (error) {
       console.error("[AuthContext] Error fetching user roles:", error);
+      // Show error toast only for unexpected errors
+      if (error instanceof Error && !error.message.includes('JWT')) {
+        toast({
+          variant: "destructive",
+          title: "Error fetching user roles",
+          description: "There was a problem determining your user permissions"
+        });
+      }
       setUserRoles([]);
       return [];
     }
+  }, [toast]);
+
+  // Fetch user profile data
+  const fetchUserProfile = useCallback(async (userId: string) => {
+    try {
+      console.log("[AuthContext] Fetching profile for user:", userId);
+      
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('firstname, lastname, middlename, extension_name, username')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error("[AuthContext] Error fetching user profile:", profileError);
+        throw profileError;
+      }
+      
+      console.log("[AuthContext] User profile data received:", profileData);
+      
+      if (profileData) {
+        setUserProfile(profileData as UserProfile);
+      } else {
+        setUserProfile(null);
+      }
+      
+      return profileData;
+    } catch (error) {
+      console.error("[AuthContext] Error fetching user profile:", error);
+      setUserProfile(null);
+      return null;
+    }
   }, []);
 
-  // Refresh user roles
+  // Refresh user roles - ensures return type matches interface
   const refreshRoles = useCallback(async () => {
     if (user?.id) {
-      await fetchUserRoles(user.id);
+      console.log("[AuthContext] Refreshing roles for user:", user.id);
+      return await fetchUserRoles(user.id);
     }
+    return [];
   }, [user, fetchUserRoles]);
 
-  // Sign in function
+  // Refresh user profile - updated to match interface
+  const refreshProfile = useCallback(async () => {
+    if (user?.id) {
+      await fetchUserProfile(user.id);
+    }
+  }, [user, fetchUserProfile]);
+
+  // Sign in function with improved error handling
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -114,14 +187,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("[AuthContext] Successfully signed in user:", data.user.id);
       
       // Fetch user roles after successful login
-      await fetchUserRoles(data.user.id);
+      const roles = await fetchUserRoles(data.user.id);
+      
+      // Fetch user profile after successful login
+      await fetchUserProfile(data.user.id);
       
       toast({
         title: "Sign in successful",
         description: "You have been signed in successfully",
       });
       
-      return data; // Return data instead of void
+      // Return roles along with auth data so the calling component can redirect
+      return {
+        ...data,
+        roles,
+        isAdmin: roles.includes('office_staff')
+      };
     } catch (error) {
       console.error("[AuthContext] Error in signIn function:", error);
       throw error;
@@ -130,7 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign out function
+  // Sign out function with improved error handling
   const signOut = async () => {
     try {
       setIsLoading(true);
@@ -156,6 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setUserRoles([]);
+      setUserProfile(null);
       
       toast({
         title: "Signed out",
@@ -189,13 +271,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(currentSession?.user ?? null);
             
             // Fetch roles on auth state change if needed
-            if (currentSession?.user && event === 'SIGNED_IN') {
-              console.log("[AuthContext] User signed in, fetching roles");
+            if (currentSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+              console.log("[AuthContext] User signed in or token refreshed, fetching roles and profile");
               // Use setTimeout to avoid potential deadlocks with Supabase client
-              setTimeout(() => fetchUserRoles(currentSession.user.id), 0);
+              setTimeout(() => {
+                fetchUserRoles(currentSession.user.id);
+                fetchUserProfile(currentSession.user.id);
+              }, 0);
             } else if (event === 'SIGNED_OUT') {
-              console.log("[AuthContext] User signed out, clearing roles");
+              console.log("[AuthContext] User signed out, clearing roles and profile");
               setUserRoles([]);
+              setUserProfile(null);
+              window.location.href = '/signin';
             }
           }
         );
@@ -210,6 +297,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Fetch roles for initial session if it exists
         if (initialSession?.user) {
           await fetchUserRoles(initialSession.user.id);
+          await fetchUserProfile(initialSession.user.id);
         }
         
         return () => {
@@ -224,7 +312,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     initializeAuth();
-  }, [fetchUserRoles]);
+  }, [fetchUserRoles, fetchUserProfile]);
 
   // Computed properties based on userRoles
   const isAdmin = userRoles.includes('office_staff');
@@ -235,6 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     userRoles,
+    userProfile,
     isAdmin,
     isBusinessOwner,
     isAuthenticated,
@@ -242,6 +331,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     refreshRoles,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

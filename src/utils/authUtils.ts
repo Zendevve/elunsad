@@ -1,34 +1,50 @@
 
+import { supabase } from "@/integrations/supabase/client";
+import { UserRole } from "@/types/auth";
+
 /**
- * Cleans up authentication state to prevent "limbo" states
- * when logging in, out, or switching accounts
+ * Function to clean up auth state and prevent conflicts
  */
 export const cleanupAuthState = () => {
-  console.log("[authUtils] Cleaning up auth state");
-  
   // Remove standard auth tokens
   localStorage.removeItem('supabase.auth.token');
-  
   // Remove all Supabase auth keys from localStorage
   Object.keys(localStorage).forEach((key) => {
     if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      console.log(`[authUtils] Removing localStorage key: ${key}`);
       localStorage.removeItem(key);
     }
   });
-  
   // Remove from sessionStorage if in use
   Object.keys(sessionStorage || {}).forEach((key) => {
     if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      console.log(`[authUtils] Removing sessionStorage key: ${key}`);
       sessionStorage.removeItem(key);
     }
   });
 };
 
-/**
- * Determines the appropriate redirect path based on user role
- */
+// Determine the redirect path based on user role
 export const getRedirectPathForUser = (isAdmin: boolean): string => {
   return isAdmin ? '/admin-dashboard' : '/dashboard';
+};
+
+// Direct check for admin role using RPC
+export const checkIsAdmin = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
+  
+  try {
+    const { data, error } = await supabase.rpc('check_user_role', {
+      user_id: userId,
+      role_name: 'office_staff'
+    });
+    
+    if (error) {
+      console.error("[authUtils] RPC error checking admin role:", error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error("[authUtils] Error checking admin role:", error);
+    return false;
+  }
 };
