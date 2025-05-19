@@ -16,7 +16,7 @@ import AdminLayout from "@/layouts/AdminLayout";
 
 // Public Pages
 import Index from "./pages/Index";
-import SignIn from "./pages/Auth/SignIn";
+import SignIn from "./pages/Auth/SignIn";  // Using the canonical SignIn component
 import Register from "./pages/Register";
 import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
@@ -56,7 +56,7 @@ const App = () => (
             <Routes>
               {/* Public routes that don't require authentication */}
               <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signin" element={<SignIn />} />  {/* Canonical signin path */}
               <Route path="/register" element={<Register />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/callback/*" element={<AuthCallback />} />

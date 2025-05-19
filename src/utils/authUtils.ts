@@ -30,5 +30,6 @@ export const cleanupAuthState = () => {
  * Determines the appropriate redirect path based on user role
  */
 export const getRedirectPathForUser = (isAdmin: boolean): string => {
+  console.log("[authUtils] Determining redirect path:", isAdmin ? "admin" : "user");
   return isAdmin ? '/admin-dashboard' : '/dashboard';
 };

@@ -4,11 +4,22 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { getRedirectPathForUser } from '@/utils/authUtils';
 
 const AuthGuard: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
+
+  // Debug logging
+  useEffect(() => {
+    console.log("[AuthGuard] Current state:", { 
+      isAuthenticated, 
+      isAdmin, 
+      isLoading, 
+      path: location.pathname 
+    });
+  }, [isAuthenticated, isAdmin, isLoading, location.pathname]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -38,7 +49,21 @@ const AuthGuard: React.FC = () => {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  // User is authenticated, render the protected content
+  // If authenticated and the user is an admin, redirect to admin dashboard
+  // BUT only if they're trying to access a regular user route
+  const isAdminRoute = location.pathname.startsWith('/admin') || 
+                      location.pathname === '/admin-dashboard' || 
+                      location.pathname.startsWith('/analytics');
+
+  if (isAdmin && !isAdminRoute) {
+    console.log("[AuthGuard] Admin user detected on regular route - redirecting to admin dashboard");
+    return <Navigate to="/admin-dashboard" replace />;
+  }
+
+  // User is authenticated and either:
+  // 1. Not an admin trying to access a regular route
+  // 2. An admin trying to access an admin route (AdminRoute will handle this case)
+  console.log("[AuthGuard] User has proper access for this route - rendering content");
   return <Outlet />;
 };
 

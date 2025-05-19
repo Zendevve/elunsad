@@ -9,6 +9,11 @@ const AdminGuard: React.FC = () => {
   const { isAdmin, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
 
+  // Debug logging
+  useEffect(() => {
+    console.log("[AdminGuard] Current state:", { isAdmin, isAuthenticated, isLoading });
+  }, [isAdmin, isAuthenticated, isLoading]);
+
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAdmin) {
       console.log("[AdminGuard] Access denied - user is not admin");
@@ -32,15 +37,18 @@ const AdminGuard: React.FC = () => {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
+    console.log("[AdminGuard] Not authenticated - redirecting to signin");
     return <Navigate to="/signin" />;
   }
 
   // If authenticated but not admin, redirect to user dashboard
   if (!isAdmin) {
+    console.log("[AdminGuard] Not admin - redirecting to dashboard");
     return <Navigate to="/dashboard" />;
   }
 
   // User is an admin, render the admin content
+  console.log("[AdminGuard] Admin access granted - rendering admin content");
   return <Outlet />;
 };
 

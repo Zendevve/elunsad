@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -114,11 +113,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("[AuthContext] Successfully signed in user:", data.user.id);
       
       // Fetch user roles after successful login
-      await fetchUserRoles(data.user.id);
+      const roles = await fetchUserRoles(data.user.id);
+      
+      // Log admin status for debugging
+      const isAdminUser = roles.includes('office_staff');
+      console.log("[AuthContext] User admin status:", isAdminUser);
       
       toast({
         title: "Sign in successful",
-        description: "You have been signed in successfully",
+        description: `You have been signed in successfully${isAdminUser ? ' as an administrator' : ''}`,
       });
       
       return data; // Return data instead of void
@@ -189,8 +192,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(currentSession?.user ?? null);
             
             // Fetch roles on auth state change if needed
-            if (currentSession?.user && event === 'SIGNED_IN') {
-              console.log("[AuthContext] User signed in, fetching roles");
+            if (currentSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+              console.log("[AuthContext] User signed in or token refreshed, fetching roles");
               // Use setTimeout to avoid potential deadlocks with Supabase client
               setTimeout(() => fetchUserRoles(currentSession.user.id), 0);
             } else if (event === 'SIGNED_OUT') {
