@@ -14,14 +14,18 @@ const AuthRoute: React.FC = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log("AuthRoute: Checking authentication status");
         const { data, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Auth check error:", error);
+          console.error("AuthRoute: Auth check error:", error);
           throw error;
         }
-        setIsAuthenticated(!!data.session);
+        
+        const authenticated = !!data.session;
+        console.log("AuthRoute: User authenticated:", authenticated);
+        setIsAuthenticated(authenticated);
       } catch (error) {
-        console.error('Error checking authentication:', error);
+        console.error('AuthRoute: Error checking authentication:', error);
         setIsAuthenticated(false);
       }
     };
@@ -30,7 +34,7 @@ const AuthRoute: React.FC = () => {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", !!session);
+      console.log("AuthRoute: Auth state changed:", !!session);
       setIsAuthenticated(!!session);
     });
 
@@ -51,19 +55,20 @@ const AuthRoute: React.FC = () => {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
+    console.log("AuthRoute: Not authenticated, redirecting to /signin from", location.pathname);
+    
     // Show toast notification when redirecting to login
-    useEffect(() => {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access this page',
-        variant: 'destructive',
-      });
-    }, [toast]);
+    toast({
+      title: 'Authentication Required',
+      description: 'Please sign in to access this page',
+      variant: 'destructive',
+    });
     
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
   // Render the child routes
+  console.log("AuthRoute: User authenticated, rendering", location.pathname);
   return <Outlet />;
 };
 

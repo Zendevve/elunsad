@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -8,22 +8,29 @@ import { Loader2 } from 'lucide-react';
 const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
+  const location = useLocation();
 
-  // Simplified check for admin status
+  // Simplified check for admin status with improved logging
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
+        console.log("AdminRoute: Starting admin status check");
         // Get current user session
-        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("AdminRoute: Session error", sessionError);
+          throw sessionError;
+        }
         
         if (!sessionData.session) {
-          console.log("No authenticated user found");
+          console.log("AdminRoute: No authenticated user found");
           setIsAdmin(false);
           return;
         }
         
         const userId = sessionData.session.user.id;
-        console.log("Checking admin status for user:", userId);
+        console.log("AdminRoute: Checking admin status for user:", userId);
         
         // Direct query to check if user has office_staff role
         const { data, error } = await supabase
@@ -34,18 +41,18 @@ const AdminRoute: React.FC = () => {
           .single();
         
         if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
-          console.error("Error checking admin role:", error);
+          console.error("AdminRoute: Error checking admin role:", error);
           setIsAdmin(false);
           return;
         }
         
         // User is admin if data exists
         const hasAdminRole = !!data;
-        console.log("User admin status:", hasAdminRole);
+        console.log("AdminRoute: User admin status:", hasAdminRole);
         setIsAdmin(hasAdminRole);
         
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        console.error("AdminRoute: Error checking admin status:", error);
         setIsAdmin(false);
       }
     };
@@ -63,7 +70,7 @@ const AdminRoute: React.FC = () => {
     );
   }
 
-  // If not an admin, redirect to dashboard
+  // If not an admin, redirect to dashboard with a message
   if (!isAdmin) {
     toast({
       title: 'Access Denied',
@@ -71,10 +78,12 @@ const AdminRoute: React.FC = () => {
       variant: 'destructive',
     });
     
-    return <Navigate to="/dashboard" replace />;
+    console.log("AdminRoute: Access denied, redirecting from", location.pathname, "to /dashboard");
+    return <Navigate to="/dashboard" replace state={{ from: location }} />;
   }
 
   // User is an admin, render the admin layout and routes
+  console.log("AdminRoute: Admin access granted to", location.pathname);
   return <Outlet />;
 };
 

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,18 +32,24 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the intended destination from location state, or default to dashboard
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
   // Check if user is already authenticated on page load
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
+        console.log("SignIn: Checking auth status");
         const { data } = await supabase.auth.getSession();
+        
         if (data.session) {
-          console.log("User already authenticated, determining route");
+          console.log("SignIn: User already authenticated, determining route");
           await determineUserRouteAndRedirect(data.session.user.id);
         }
       } catch (error) {
-        console.error("Error checking auth status:", error);
+        console.error("SignIn: Error checking auth status:", error);
       }
     };
     
@@ -53,7 +59,7 @@ const SignIn = () => {
   // Helper function to determine user route and redirect
   const determineUserRouteAndRedirect = async (userId: string) => {
     try {
-      console.log("Checking roles for user:", userId);
+      console.log("SignIn: Checking roles for user:", userId);
       
       // Query user roles with explicit logging
       const { data: roleData, error: roleError } = await supabase
@@ -62,26 +68,32 @@ const SignIn = () => {
         .eq('user_id', userId);
       
       if (roleError) {
-        console.error("Error fetching user roles:", roleError);
+        console.error("SignIn: Error fetching user roles:", roleError);
         throw roleError;
       }
       
-      console.log("Role data received:", roleData);
+      console.log("SignIn: Role data received:", roleData);
       
       // Check if user has office_staff role
       const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
       
-      console.log("Is admin determined to be:", isAdmin);
+      console.log("SignIn: Is admin determined to be:", isAdmin);
       
       if (isAdmin) {
-        console.log("Redirecting to admin dashboard");
+        console.log("SignIn: Redirecting to admin dashboard");
         navigate('/admin-dashboard');
       } else {
-        console.log("Redirecting to user dashboard");
-        navigate('/dashboard');
+        console.log("SignIn: Redirecting to user dashboard or previous location:", from);
+        
+        // If the user was trying to access an admin page, redirect to dashboard instead
+        if (from.startsWith('/admin')) {
+          navigate('/dashboard');
+        } else {
+          navigate(from);
+        }
       }
     } catch (error) {
-      console.error("Error determining user route:", error);
+      console.error("SignIn: Error determining user route:", error);
       // Default to user dashboard if there's an error
       navigate('/dashboard');
     }
@@ -99,7 +111,7 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      console.log("Attempting sign in with email:", data.email);
+      console.log("SignIn: Attempting sign in with email:", data.email);
       
       // Sign in with Supabase Auth
       const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -108,16 +120,16 @@ const SignIn = () => {
       });
 
       if (error) {
-        console.error("Authentication error:", error);
+        console.error("SignIn: Authentication error:", error);
         throw error;
       }
 
       if (!authData.user) {
-        console.error("No user data returned after sign in");
+        console.error("SignIn: No user data returned after sign in");
         throw new Error("No user data returned after sign in");
       }
       
-      console.log("Successfully signed in user:", authData.user.id);
+      console.log("SignIn: Successfully signed in user:", authData.user.id);
 
       // Fetch user profile from the profiles table
       const { data: profileData, error: profileError } = await supabase
@@ -127,7 +139,7 @@ const SignIn = () => {
         .single();
 
       if (profileError) {
-        console.error("Error fetching profile:", profileError);
+        console.error("SignIn: Error fetching profile:", profileError);
       }
 
       const firstname = profileData?.firstname || authData.user.user_metadata?.firstname || '';
@@ -139,14 +151,14 @@ const SignIn = () => {
         .eq('user_id', authData.user.id);
       
       if (roleError) {
-        console.error("Error fetching user roles:", roleError);
+        console.error("SignIn: Error fetching user roles:", roleError);
       }
       
       // Log the actual role data for debugging
-      console.log("User role data:", roleData);
+      console.log("SignIn: User role data:", roleData);
       
       const isAdmin = roleData && roleData.some(r => r.role === 'office_staff');
-      console.log("Is user admin?", isAdmin);
+      console.log("SignIn: Is user admin?", isAdmin);
       
       // Show success message with role information
       toast({
@@ -156,15 +168,21 @@ const SignIn = () => {
       
       // Redirect based on user role
       if (isAdmin) {
-        console.log("Redirecting admin to admin dashboard");
+        console.log("SignIn: Redirecting admin to admin dashboard");
         navigate('/admin-dashboard');
       } else {
-        console.log("Redirecting user to dashboard");
-        navigate('/dashboard');
+        console.log("SignIn: Redirecting user to dashboard or previous location:", from);
+        
+        // If the user was trying to access an admin page, redirect to dashboard instead
+        if (from.startsWith('/admin')) {
+          navigate('/dashboard');
+        } else {
+          navigate(from);
+        }
       }
       
     } catch (error) {
-      console.error("Sign in error:", error);
+      console.error("SignIn: Sign in error:", error);
       toast({
         variant: "destructive",
         title: "Sign in failed",
