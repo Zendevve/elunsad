@@ -1,12 +1,13 @@
 
 import React, { useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminGuard: React.FC = () => {
   const { isAdmin, isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   // Debug logging
@@ -14,6 +15,7 @@ const AdminGuard: React.FC = () => {
     console.log("[AdminGuard] Current state:", { isAdmin, isAuthenticated, isLoading });
   }, [isAdmin, isAuthenticated, isLoading]);
 
+  // Show access denied toast only once when access is actually denied
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAdmin) {
       console.log("[AdminGuard] Access denied - user is not admin");
@@ -22,8 +24,13 @@ const AdminGuard: React.FC = () => {
         description: 'You do not have permission to access the admin area',
         variant: 'destructive',
       });
+      
+      // Navigate back to user dashboard
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     }
-  }, [isLoading, isAuthenticated, isAdmin, toast]);
+  }, [isLoading, isAuthenticated, isAdmin, toast, navigate]);
 
   // Show loading while checking admin status
   if (isLoading) {

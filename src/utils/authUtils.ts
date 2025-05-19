@@ -28,8 +28,28 @@ export const cleanupAuthState = () => {
 
 /**
  * Determines the appropriate redirect path based on user role
+ * Falls back safely to user dashboard if admin status cannot be determined
  */
 export const getRedirectPathForUser = (isAdmin: boolean): string => {
   console.log("[authUtils] Determining redirect path:", isAdmin ? "admin" : "user");
-  return isAdmin ? '/admin-dashboard' : '/dashboard';
+  try {
+    return isAdmin ? '/admin-dashboard' : '/dashboard';
+  } catch (error) {
+    console.error("[authUtils] Error in redirect determination, defaulting to dashboard:", error);
+    return '/dashboard';
+  }
+};
+
+/**
+ * Safe redirect to the appropriate dashboard based on user role
+ */
+export const safeRedirectByRole = (isAdmin: boolean, navigate: (path: string) => void): void => {
+  try {
+    const redirectPath = getRedirectPathForUser(isAdmin);
+    console.log("[authUtils] Safe redirecting to:", redirectPath);
+    navigate(redirectPath);
+  } catch (error) {
+    console.error("[authUtils] Error during redirect, defaulting to dashboard:", error);
+    navigate('/dashboard');
+  }
 };
