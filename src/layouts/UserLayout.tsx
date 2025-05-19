@@ -54,7 +54,7 @@ const UserLayout: React.FC = () => {
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-3">
-            <img alt="Logo" className="h-8 w-8" src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" />
+            <img alt="Logo" className="h-8 w-8" src="/assets/images/logo.png" />
             <h1 className="text-xl font-bold">eLUNSAD</h1>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>

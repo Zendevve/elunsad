@@ -1,69 +1,67 @@
-# Welcome to your Lovable project
 
-## Project info
+# eLUNSAD - Business Permit Licensing Office Progressive Web App
 
-**URL**: https://lovable.dev/projects/61188355-b24a-47bc-b6d0-ca2908520434
+## Project Overview
 
-## How can I edit this code?
+eLUNSAD is a progressive web application (PWA) designed to streamline the business permit process for both the licensing office and business owners in the City of Lucena.
 
-There are several ways of editing your application.
+## Target Users
 
-**Use Lovable**
+- **Office Staff:**
+  - Track renewals and expiry dates of business permits
+  - Monitor and manage requirement approvals and declines
+  - Send reminders and notifications to business owners
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/61188355-b24a-47bc-b6d0-ca2908520434) and start prompting.
+- **Business Owners:**
+  - Submit requirements for new applications
+  - Apply for permit renewals through an intuitive online interface
 
-Changes made via Lovable will be committed automatically to this repo.
+## Key Features
 
-**Use your preferred IDE**
+- **For Licensing Office:**
+  - Dashboard for tracking permit statuses (renewals, expiry)
+  - Management system for reviewing and updating requirement statuses (approved/declined)
+  - Automated reminder and notification system
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **For Business Owners:**
+  - User-friendly submission portal for new applications and renewals
+  - Real-time status updates and communication with the licensing office
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Benefits
 
-Follow these steps:
+- Enhanced efficiency in managing permit renewals and applications
+- Improved communication between the licensing office and business owners
+- Reduced paperwork and streamlined administrative processes
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Technology Stack
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase
 
-## How can I deploy this project?
+## Development Setup
 
-Simply open [Lovable](https://lovable.dev/projects/61188355-b24a-47bc-b6d0-ca2908520434) and click on Share -> Publish.
+Follow these steps to set up the project locally:
 
-## I want to use a custom domain - is that possible?
+```sh
+# Clone the repository
+git clone <REPOSITORY_URL>
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+# Navigate to the project directory
+cd elunsad
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+## Deployment
+
+The application can be deployed to any static hosting service that supports single-page applications.
