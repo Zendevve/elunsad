@@ -67,34 +67,34 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin routes - wrap these with AdminRoute for proper protection */}
-            <Route element={<AdminRoute />}>
-              <Route path="/admin-dashboard" element={
-                <AdminLayout>
-                  <AdminDashboard />
-                </AdminLayout>
-              } />
-              
-              <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
-              
-              <Route path="/admin/*" element={
-                <AdminLayout>
-                  <Administration />
-                </AdminLayout>
-              } />
+            {/* Admin routes using AdminLayout as a component wrapper */}
+            <Route path="/admin-dashboard" element={
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            } />
+            
+            <Route path="/admin/*" element={
+              <AdminLayout>
+                <Administration />
+              </AdminLayout>
+            } />
 
-              <Route path="/admin/applications/:id" element={
-                <AdminLayout>
-                  <AdminApplicationDetail />
-                </AdminLayout>
-              } />
-              
-              <Route path="/analytics/*" element={
-                <AdminLayout>
-                  <Analytics />
-                </AdminLayout>
-              } />
-            </Route>
+            {/* Add route for admin application detail view */}
+            <Route path="/admin/applications/:id" element={
+              <AdminLayout>
+                <AdminApplicationDetail />
+              </AdminLayout>
+            } />
+            
+            <Route path="/analytics/*" element={
+              <AdminLayout>
+                <Analytics />
+              </AdminLayout>
+            } />
+            
+            {/* Redirect /admin to /admin-dashboard */}
+            <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
