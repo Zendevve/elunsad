@@ -1,24 +1,16 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Mail, Lock, User, UserCircle, Phone } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, UserPlus, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { cleanupAuthState } from "@/utils/authUtils";
-import { verifyAuthState } from "@/utils/authDebugUtils";
 
 // Define validation schema
 const registerSchema = z.object({
@@ -26,51 +18,38 @@ const registerSchema = z.object({
   middlename: z.string().optional(),
   lastname: z.string().min(1, "Last name is required"),
   extension_name: z.string().optional(),
-  username: z.string().min(1, "Username is required"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-  confirmPassword: z.string().min(1, "Please confirm your password"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters").refine(password => {
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    return hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+  }, {
+    message: "Password must include uppercase, lowercase, numbers and special characters"
+  }),
+  verifyPassword: z.string().min(1, "Please confirm your password"),
+  email: z.string().email("Invalid email address"),
+  agreeToTerms: z.boolean().refine(val => val === true, {
+    message: "You must agree to the terms and conditions"
+  })
+}).refine(data => data.password === data.verifyPassword, {
+  message: "Passwords do not match",
+  path: ["verifyPassword"]
 });
-
 type RegisterFormData = z.infer<typeof registerSchema>;
-
-const Register: React.FC = () => {
+const passwordStrengthColors = {
+  weak: "bg-red-500",
+  medium: "bg-yellow-500",
+  strong: "bg-green-500"
+};
+const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showVerifyPassword, setShowVerifyPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<"weak" | "medium" | "strong" | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Check if user is already authenticated on page load
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        console.log("[Register] Checking if user is already authenticated");
-        
-        // Use the auth debugger utility to get detailed info
-        const authState = await verifyAuthState();
-        console.log("[Register] Auth state:", authState);
-        
-        if (authState.isAuthenticated) {
-          console.log("[Register] User already authenticated, redirecting to dashboard");
-          navigate('/dashboard');
-        }
-      } catch (error) {
-        console.error("[Register] Error checking auth status:", error);
-      }
-    };
-    
-    checkAuthStatus();
-  }, [navigate]);
-
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -79,32 +58,35 @@ const Register: React.FC = () => {
       lastname: "",
       extension_name: "",
       username: "",
-      email: "",
       password: "",
-      confirmPassword: "",
-    },
+      verifyPassword: "",
+      email: "",
+      agreeToTerms: false
+    }
   });
-
+  const checkPasswordStrength = (password: string) => {
+    if (!password) {
+      setPasswordStrength(null);
+      return;
+    }
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const strength = (hasUpperCase ? 1 : 0) + (hasLowerCase ? 1 : 0) + (hasNumbers ? 1 : 0) + (hasSpecialChar ? 1 : 0);
+    if (password.length < 8 || strength < 2) {
+      setPasswordStrength("weak");
+    } else if (strength < 4 || password.length < 10) {
+      setPasswordStrength("medium");
+    } else {
+      setPasswordStrength("strong");
+    }
+  };
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
-    
     try {
-      console.log("[Register] Starting registration process");
-      
-      // Clean up any existing auth state to prevent conflicts
-      cleanupAuthState();
-      
-      // Attempt to sign out any existing sessions first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        console.log("[Register] Error during pre-signup cleanup:", err);
-      }
-
-      console.log("[Register] Attempting to register new user:", data.email);
-      
-      // Register with Supabase Auth
-      const { data: authData, error } = await supabase.auth.signUp({
+      // Sign up with Supabase Auth
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -113,58 +95,43 @@ const Register: React.FC = () => {
             middlename: data.middlename || null,
             lastname: data.lastname,
             extension_name: data.extension_name || null,
-            username: data.username
-          }
-        }
+            username: data.username,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
 
-      if (error) {
-        console.error("[Register] Registration error:", error);
-        throw error;
+      if (signUpError) {
+        throw new Error(signUpError.message);
       }
 
-      if (!authData.user) {
-        console.error("[Register] No user data returned after sign up");
-        throw new Error("No user data returned after sign up");
-      }
+      console.log("Registration response:", authData);
       
-      console.log("[Register] Successfully registered user:", authData.user.id);
-      
-      // Add the business_owner role to the new user
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: 'business_owner'
+      // Check if email confirmation is needed
+      if (authData?.user && !authData.user.email_confirmed_at) {
+        toast({
+          title: "Registration successful",
+          description: "Please check your email to confirm your account. If you don't receive an email within a few minutes, please check your spam folder."
         });
-        
-      if (roleError) {
-        console.error("[Register] Error adding user role:", roleError);
-        // Continue despite role error as the user is created
       } else {
-        console.log("[Register] Successfully added business_owner role to user");
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created."
+        });
       }
-      
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created successfully. You can now sign in.",
-      });
-      
+
       // Redirect to sign in page
       navigate('/signin');
     } catch (error) {
-      console.error("[Register] Error in registration process:", error);
       toast({
         variant: "destructive",
         title: "Registration failed",
-        description: error instanceof Error ? error.message : "An error occurred during registration.",
+        description: error instanceof Error ? error.message : "An error occurred during registration."
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Form rendering remains the same
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
@@ -172,17 +139,10 @@ const Register: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <img 
-                src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" 
-                alt="eLUNSAD Logo" 
-                className="h-8 w-auto mr-3"
-              />
+              <img src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" alt="eLUNSAD Logo" className="h-8 w-auto mr-3" />
               <span className="text-xl font-bold text-gray-900">eLUNSAD</span>
             </div>
-            <Link 
-              to="/signin" 
-              className="text-sm font-medium text-primary hover:text-primary/80"
-            >
+            <Link to="/signin" className="text-sm font-medium text-primary hover:text-primary/80">
               Sign In
             </Link>
           </div>
@@ -191,119 +151,36 @@ const Register: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-        <div className="w-full max-w-lg space-y-8">
-          {/* Hero Section */}
+        <div className="max-w-xl w-full space-y-8">
+          {/* Page Title and Introduction */}
           <div className="text-center">
             <h1 className="text-3xl font-extrabold text-gray-900">Create Your Account</h1>
             <p className="mt-2 text-sm text-gray-600">
-              Register to start managing your business permits
+              Join our platform to streamline your business permit applications and renewals
             </p>
           </div>
 
           {/* Registration Form */}
-          <Card className="overflow-hidden">
+          <Card>
             <CardHeader>
               <CardTitle className="text-xl">Register</CardTitle>
               <CardDescription>
-                Fill in your details to create an account
+                Please fill in the information below to create your account
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                  {/* Name fields */}
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Registrant Profile Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Registrant Profile</h3>
+                    
                     <FormField
-                      control={form.control}
-                      name="firstname"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <UserCircle className="h-5 w-5" />
-                              </span>
-                              <Input
-                                {...field}
-                                placeholder="First name"
-                                className="pl-10"
-                                disabled={isLoading}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="lastname"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <UserCircle className="h-5 w-5" />
-                              </span>
-                              <Input
-                                {...field}
-                                placeholder="Last name"
-                                className="pl-10"
-                                disabled={isLoading}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="middlename"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Middle Name (Optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="Middle name"
-                              disabled={isLoading}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="extension_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Extension (Optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="Jr., Sr., III, etc."
-                              disabled={isLoading}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
                     control={form.control}
-                    name="username"
+                    name="firstname"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Username</FormLabel>
+                        <FormLabel>First name *</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -311,7 +188,8 @@ const Register: React.FC = () => {
                             </span>
                             <Input
                               {...field}
-                              placeholder="Choose a username"
+                              type="text"
+                              placeholder="Firstname"
                               className="pl-10"
                               disabled={isLoading}
                             />
@@ -322,21 +200,21 @@ const Register: React.FC = () => {
                     )}
                   />
 
-                  <FormField
+                    <FormField
                     control={form.control}
-                    name="email"
+                    name="middlename"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address</FormLabel>
+                        <FormLabel>Middle name</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                              <Mail className="h-5 w-5" />
+                              <User className="h-5 w-5" />
                             </span>
                             <Input
                               {...field}
-                              type="email"
-                              placeholder="you@example.com"
+                              type="text"
+                              placeholder="Middlename"
                               className="pl-10"
                               disabled={isLoading}
                             />
@@ -347,12 +225,92 @@ const Register: React.FC = () => {
                     )}
                   />
 
-                  <FormField
+                    <FormField
+                    control={form.control}
+                    name="lastname"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last name *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <User className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="Lastname"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                    <FormField
+                    control={form.control}
+                    name="extension_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Extension Name</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <User className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="e.g. Jr, III"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  </div>
+
+                  {/* Account Details Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Account Details</h3>
+                    
+                    <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <User className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="Username"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                    <FormField
                     control={form.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel>Password *</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -361,9 +319,13 @@ const Register: React.FC = () => {
                             <Input
                               {...field}
                               type={showPassword ? "text" : "password"}
-                              placeholder="Create a strong password"
+                              placeholder="Password"
                               className="pl-10 pr-10"
                               disabled={isLoading}
+                              onChange={e => {
+                                field.onChange(e);
+                                checkPasswordStrength(e.target.value);
+                              }}
                             />
                             <button
                               type="button"
@@ -374,17 +336,29 @@ const Register: React.FC = () => {
                             </button>
                           </div>
                         </FormControl>
+                        {passwordStrength && (
+                          <div className="mt-2">
+                            <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full ${passwordStrengthColors[passwordStrength]} ${passwordStrength === "weak" ? "w-1/3" : passwordStrength === "medium" ? "w-2/3" : "w-full"}`}
+                              />
+                            </div>
+                            <p className="text-xs mt-1 text-gray-600">
+                              Password strength: {passwordStrength}
+                            </p>
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
+                    <FormField
                     control={form.control}
-                    name="confirmPassword"
+                    name="verifyPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
+                        <FormLabel>Verify Password *</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -392,17 +366,17 @@ const Register: React.FC = () => {
                             </span>
                             <Input
                               {...field}
-                              type={showConfirmPassword ? "text" : "password"}
-                              placeholder="Confirm your password"
+                              type={showVerifyPassword ? "text" : "password"}
+                              placeholder="Verify Password"
                               className="pl-10 pr-10"
                               disabled={isLoading}
                             />
                             <button
                               type="button"
                               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              onClick={() => setShowVerifyPassword(!showVerifyPassword)}
                             >
-                              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                              {showVerifyPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                           </div>
                         </FormControl>
@@ -411,27 +385,84 @@ const Register: React.FC = () => {
                     )}
                   />
 
-                  <div className="pt-2">
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Creating Account..." : "Create Account"}
-                    </Button>
+                    <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                              <Mail className="h-5 w-5" />
+                            </span>
+                            <Input
+                              {...field}
+                              type="email"
+                              placeholder="Email Address"
+                              className="pl-10"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   </div>
+
+                  {/* Terms & Conditions */}
+                  <FormField
+                  control={form.control}
+                  name="agreeToTerms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal">
+                          I agree to the{" "}
+                          <a href="#" className="text-primary hover:text-primary/80">
+                            Terms of Service
+                          </a>{" "}
+                          and{" "}
+                          <a href="#" className="text-primary hover:text-primary/80">
+                            Privacy Policy
+                          </a>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                  {/* Call-to-Action */}
+                  <Button
+                    type="submit"
+                    className="w-full flex items-center justify-center gap-2"
+                    disabled={isLoading}
+                  >
+                    <UserPlus className="h-5 w-5" />
+                    {isLoading ? "Registering..." : "Register"}
+                  </Button>
                 </form>
               </Form>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
+              <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                <HelpCircle className="h-4 w-4" />
+                <p>Need help? <a href="#" className="text-primary hover:text-primary/80">Contact Support</a></p>
+              </div>
               <p className="text-sm text-center text-gray-600">
                 Already have an account?{" "}
                 <Link to="/signin" className="font-medium text-primary hover:text-primary/80">
                   Sign in here
                 </Link>
-              </p>
-              <p className="text-xs text-center text-gray-500">
-                By creating an account, you agree to our Terms of Service and Privacy Policy.
               </p>
             </CardFooter>
           </Card>
@@ -441,9 +472,11 @@ const Register: React.FC = () => {
       {/* Footer */}
       <footer className="bg-white border-t">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <p className="text-sm text-gray-400 text-center">
-            &copy; {new Date().getFullYear()} eLUNSAD. All rights reserved.
-          </p>
+          <div className="mt-8 border-t border-gray-200 pt-8">
+            <p className="text-sm text-gray-400 text-center">
+              &copy; {new Date().getFullYear()} eLUNSAD. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
