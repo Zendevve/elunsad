@@ -539,10 +539,6 @@ export type Database = {
         Args: { application_id: string }
         Returns: string
       }
-      get_user_role: {
-        Args: { user_id: string; role_name: string }
-        Returns: boolean
-      }
       is_application_draft: {
         Args: { application_id: string }
         Returns: boolean

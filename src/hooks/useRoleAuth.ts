@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
-import { useToast } from '@/components/ui/use-toast';
 
 export function useRoleAuth() {
   const [roles, setRoles] = useState<UserRole[]>([]);
@@ -11,7 +10,6 @@ export function useRoleAuth() {
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState<boolean>(false);
-  const { toast } = useToast();
 
   // Fetch user roles function that can be called as needed
   const fetchUserRoles = useCallback(async () => {
@@ -36,44 +34,32 @@ export function useRoleAuth() {
         
         console.log("[useRoleAuth] Fetching roles for user:", user.id);
         
-        try {
-          // Use direct query with the fixed RLS policies
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id);
-            
-          if (roleError) {
-            console.error("[useRoleAuth] Error fetching user roles:", roleError);
-            toast({
-              title: "Error fetching roles",
-              description: "Your permissions couldn't be loaded. Please try again or contact support.",
-              variant: "destructive",
-            });
-            throw roleError;
-          }
+        // Explicitly query user roles from the database
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
           
-          console.log("[useRoleAuth] User role data received:", roleData);
-          
-          // Extract roles from the data
-          const userRoles: UserRole[] = roleData ? 
-            roleData.map(item => item.role as UserRole) : [];
-            
-          console.log("[useRoleAuth] Parsed user roles:", userRoles);
-          
-          setRoles(userRoles);
-          
-          // Check if admin (office_staff role)
-          const adminStatus = userRoles.includes('office_staff');
-          console.log("[useRoleAuth] Admin status determined:", adminStatus);
-          
-          setIsAdminUser(adminStatus);
-        } catch (roleError) {
-          // Handle role fetching error separately to continue the app flow
-          console.error("[useRoleAuth] Failed to fetch roles, defaulting to regular user:", roleError);
-          setRoles([]);
-          setIsAdminUser(false);
+        if (roleError) {
+          console.error("[useRoleAuth] Error fetching user roles:", roleError);
+          throw roleError;
         }
+        
+        console.log("[useRoleAuth] User role data received:", roleData);
+        
+        // Extract roles from the data
+        const userRoles: UserRole[] = roleData ? 
+          roleData.map(item => item.role as UserRole) : [];
+          
+        console.log("[useRoleAuth] Parsed user roles:", userRoles);
+        
+        setRoles(userRoles);
+        
+        // Check if admin (office_staff role)
+        const adminStatus = userRoles.includes('office_staff');
+        console.log("[useRoleAuth] Admin status determined:", adminStatus);
+        
+        setIsAdminUser(adminStatus);
       } else {
         console.log("[useRoleAuth] No user found, clearing roles");
         setRoles([]);
@@ -88,7 +74,7 @@ export function useRoleAuth() {
     } finally {
       setIsLoading(false);
     }
-  }, [hasAttemptedFetch, toast]);
+  }, [hasAttemptedFetch]);
 
   // Initial fetch and auth state change subscription
   useEffect(() => {

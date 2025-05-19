@@ -1,26 +1,14 @@
 
 import React, { useEffect } from 'react';
-import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { safeRedirectByRole } from '@/utils/authUtils';
 
 const AuthGuard: React.FC = () => {
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Debug logging
-  useEffect(() => {
-    console.log("[AuthGuard] Current state:", { 
-      isAuthenticated, 
-      isAdmin, 
-      isLoading, 
-      path: location.pathname 
-    });
-  }, [isAuthenticated, isAdmin, isLoading, location.pathname]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -32,28 +20,6 @@ const AuthGuard: React.FC = () => {
       });
     }
   }, [isLoading, isAuthenticated, toast]);
-
-  // Effect to handle admin redirection if needed
-  useEffect(() => {
-    // Only run this effect when we have determined authentication and admin status
-    if (!isLoading && isAuthenticated) {
-      const isAdminRoute = location.pathname.startsWith('/admin') || 
-                          location.pathname === '/admin-dashboard' || 
-                          location.pathname.startsWith('/analytics');
-      
-      // If admin on regular route or regular user on admin route, redirect appropriately
-      if ((isAdmin && !isAdminRoute) || (!isAdmin && isAdminRoute)) {
-        console.log("[AuthGuard] Role mismatch detected, redirecting...", {
-          isAdmin,
-          isAdminRoute,
-          currentPath: location.pathname
-        });
-        
-        // Use safe redirect to handle potential errors
-        safeRedirectByRole(isAdmin, navigate);
-      }
-    }
-  }, [isAuthenticated, isAdmin, isLoading, location.pathname, navigate]);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -72,8 +38,7 @@ const AuthGuard: React.FC = () => {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  // User is authenticated, render children (other guards will handle specific permissions)
-  console.log("[AuthGuard] User has proper access for this route - rendering content");
+  // User is authenticated, render the protected content
   return <Outlet />;
 };
 
