@@ -7,20 +7,7 @@ import { Loader2 } from 'lucide-react';
 
 const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [showToast, setShowToast] = useState<boolean>(false);
   const { toast } = useToast();
-
-  // Show toast when user is not an admin and needs to be redirected
-  useEffect(() => {
-    if (isAdmin === false && showToast) {
-      toast({
-        title: 'Access Denied',
-        description: 'You do not have permission to access the admin area',
-        variant: 'destructive',
-      });
-      setShowToast(false);
-    }
-  }, [isAdmin, showToast, toast]);
 
   // Simplified check for admin status
   useEffect(() => {
@@ -32,7 +19,6 @@ const AdminRoute: React.FC = () => {
         if (!sessionData.session) {
           console.log("No authenticated user found");
           setIsAdmin(false);
-          setShowToast(true);
           return;
         }
         
@@ -50,7 +36,6 @@ const AdminRoute: React.FC = () => {
         if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
           console.error("Error checking admin role:", error);
           setIsAdmin(false);
-          setShowToast(true);
           return;
         }
         
@@ -59,14 +44,9 @@ const AdminRoute: React.FC = () => {
         console.log("User admin status:", hasAdminRole);
         setIsAdmin(hasAdminRole);
         
-        if (!hasAdminRole) {
-          setShowToast(true);
-        }
-        
       } catch (error) {
         console.error("Error checking admin status:", error);
         setIsAdmin(false);
-        setShowToast(true);
       }
     };
 
@@ -85,6 +65,12 @@ const AdminRoute: React.FC = () => {
 
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
+    toast({
+      title: 'Access Denied',
+      description: 'You do not have permission to access the admin area',
+      variant: 'destructive',
+    });
+    
     return <Navigate to="/dashboard" replace />;
   }
 

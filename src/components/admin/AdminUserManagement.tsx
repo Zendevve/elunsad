@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, Shield, X } from "lucide-react";
+import { Search, UserPlus, Edit, Trash2, Lock, Check, X, Shield } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,7 @@ import {
 import { UserRole } from "@/types/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { addRoleToUser, removeRoleFromUser } from "@/utils/roleUtils";
 
 interface User {
   id: string;
@@ -51,40 +52,21 @@ const AdminUserManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Fetch users and their roles using the edge function
+  // Fetch users and their roles
   const fetchUsers = async () => {
     setLoading(true);
-    setError(null);
-    
     try {
-      // Get auth token for the edge function call
-      const { data: { session } } = await supabase.auth.getSession();
+      // Fetch all users
+      const { data, error } = await supabase.auth.admin.listUsers();
       
-      if (!session) {
-        throw new Error("No authentication session found");
-      }
-      
-      // Call our edge function to list users
-      const { data: usersResponse, error: fetchError } = await supabase.functions.invoke('admin-users/list-users', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        }
-      });
-      
-      if (fetchError) {
-        throw fetchError;
-      }
-      
-      if (!usersResponse || !usersResponse.users) {
-        throw new Error("Invalid response from server");
+      if (error) {
+        throw error;
       }
       
       // Convert to our User interface with empty roles array
-      const usersData: User[] = usersResponse.users.map((user: any) => ({
+      const usersData: User[] = data.users.map((user) => ({
         id: user.id,
         email: user.email || '',
         created_at: user.created_at || '',
@@ -109,7 +91,6 @@ const AdminUserManagement = () => {
       setUsers(usersData);
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError("Failed to load users. Please try again.");
       toast({
         title: "Error",
         description: "Failed to load users. Please try again.",
@@ -127,34 +108,17 @@ const AdminUserManagement = () => {
   // Handle adding a role to a user
   const handleAddRole = async (userId: string, role: UserRole) => {
     try {
-      // Get auth token for the edge function call
-      const { data: { session } } = await supabase.auth.getSession();
+      const success = await addRoleToUser(userId, role);
       
-      if (!session) {
-        throw new Error("No authentication session found");
+      if (success) {
+        toast({
+          title: "Role Added",
+          description: `User has been granted ${role} role.`
+        });
+        await fetchUsers(); // Refresh data
+      } else {
+        throw new Error("Failed to add role");
       }
-      
-      // Call edge function to add role
-      const { data, error } = await supabase.functions.invoke('admin-users/add-role', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: { userId, role }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast({
-        title: "Role Added",
-        description: `User has been granted ${role} role.`
-      });
-      
-      // Refresh data
-      await fetchUsers();
-      
     } catch (error) {
       console.error("Error adding role:", error);
       toast({
@@ -168,34 +132,17 @@ const AdminUserManagement = () => {
   // Handle removing a role from a user
   const handleRemoveRole = async (userId: string, role: UserRole) => {
     try {
-      // Get auth token for the edge function call
-      const { data: { session } } = await supabase.auth.getSession();
+      const success = await removeRoleFromUser(userId, role);
       
-      if (!session) {
-        throw new Error("No authentication session found");
+      if (success) {
+        toast({
+          title: "Role Removed",
+          description: `${role} role has been removed from user.`
+        });
+        await fetchUsers(); // Refresh data
+      } else {
+        throw new Error("Failed to remove role");
       }
-      
-      // Call edge function to remove role
-      const { data, error } = await supabase.functions.invoke('admin-users/remove-role', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: { userId, role }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast({
-        title: "Role Removed",
-        description: `${role} role has been removed from user.`
-      });
-      
-      // Refresh data
-      await fetchUsers();
-      
     } catch (error) {
       console.error("Error removing role:", error);
       toast({
@@ -274,24 +221,6 @@ const AdminUserManagement = () => {
       day: 'numeric'
     });
   };
-
-  // Show error state if needed
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8">
-        <div className="text-red-500 mb-4 text-center">
-          <p className="font-bold">Error loading users</p>
-          <p>{error}</p>
-        </div>
-        <Button 
-          onClick={() => fetchUsers()}
-          variant="outline"
-        >
-          Retry
-        </Button>
-      </div>
-    );
-  }
   
   return (
     <div>
