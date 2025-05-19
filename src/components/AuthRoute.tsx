@@ -9,6 +9,7 @@ const AuthRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const location = useLocation();
   const { toast } = useToast();
+  const [shouldShowToast, setShouldShowToast] = useState(false);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -24,9 +25,14 @@ const AuthRoute: React.FC = () => {
         const authenticated = !!data.session;
         console.log("AuthRoute: User authenticated:", authenticated);
         setIsAuthenticated(authenticated);
+        
+        if (!authenticated) {
+          setShouldShowToast(true);
+        }
       } catch (error) {
         console.error('AuthRoute: Error checking authentication:', error);
         setIsAuthenticated(false);
+        setShouldShowToast(true);
       }
     };
 
@@ -36,12 +42,27 @@ const AuthRoute: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("AuthRoute: Auth state changed:", !!session);
       setIsAuthenticated(!!session);
+      if (!session) {
+        setShouldShowToast(true);
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Effect for showing toast notification
+  useEffect(() => {
+    if (shouldShowToast && isAuthenticated === false) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to access this page',
+        variant: 'destructive',
+      });
+      setShouldShowToast(false);
+    }
+  }, [shouldShowToast, isAuthenticated, toast]);
 
   // Show loading while checking authentication
   if (isAuthenticated === null) {
@@ -56,14 +77,6 @@ const AuthRoute: React.FC = () => {
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
     console.log("AuthRoute: Not authenticated, redirecting to /signin from", location.pathname);
-    
-    // Show toast notification when redirecting to login
-    toast({
-      title: 'Authentication Required',
-      description: 'Please sign in to access this page',
-      variant: 'destructive',
-    });
-    
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 

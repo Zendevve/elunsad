@@ -9,6 +9,7 @@ const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
   const location = useLocation();
+  const [shouldShowToast, setShouldShowToast] = useState(false);
 
   // Simplified check for admin status with improved logging
   useEffect(() => {
@@ -26,6 +27,7 @@ const AdminRoute: React.FC = () => {
         if (!sessionData.session) {
           console.log("AdminRoute: No authenticated user found");
           setIsAdmin(false);
+          setShouldShowToast(true);
           return;
         }
         
@@ -43,6 +45,7 @@ const AdminRoute: React.FC = () => {
         if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
           console.error("AdminRoute: Error checking admin role:", error);
           setIsAdmin(false);
+          setShouldShowToast(true);
           return;
         }
         
@@ -51,14 +54,31 @@ const AdminRoute: React.FC = () => {
         console.log("AdminRoute: User admin status:", hasAdminRole);
         setIsAdmin(hasAdminRole);
         
+        if (!hasAdminRole) {
+          setShouldShowToast(true);
+        }
+        
       } catch (error) {
         console.error("AdminRoute: Error checking admin status:", error);
         setIsAdmin(false);
+        setShouldShowToast(true);
       }
     };
 
     checkAdminStatus();
   }, []);
+
+  // Effect for showing toast notification - separate from the render cycle
+  useEffect(() => {
+    if (shouldShowToast && isAdmin === false) {
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access the admin area',
+        variant: 'destructive',
+      });
+      setShouldShowToast(false);
+    }
+  }, [shouldShowToast, isAdmin, toast]);
 
   // Show loading while checking admin status
   if (isAdmin === null) {
@@ -70,14 +90,8 @@ const AdminRoute: React.FC = () => {
     );
   }
 
-  // If not an admin, redirect to dashboard with a message
+  // If not an admin, redirect to dashboard
   if (!isAdmin) {
-    toast({
-      title: 'Access Denied',
-      description: 'You do not have permission to access the admin area',
-      variant: 'destructive',
-    });
-    
     console.log("AdminRoute: Access denied, redirecting from", location.pathname, "to /dashboard");
     return <Navigate to="/dashboard" replace state={{ from: location }} />;
   }
