@@ -67,31 +67,34 @@ const App = () => (
               </Route>
             </Route>
             
-            {/* Admin routes using AdminLayout as a component wrapper */}
-            <Route path="/admin-dashboard" element={
-              <AdminLayout>
-                <AdminDashboard />
-              </AdminLayout>
-            } />
-            
-            <Route path="/admin/*" element={
-              <AdminLayout>
-                <Administration />
-              </AdminLayout>
-            } />
+            {/* Admin routes properly wrapped with AdminRoute */}
+            <Route element={<AuthRoute />}>
+              <Route element={<AdminRoute />}>
+                <Route path="/admin-dashboard" element={
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
+                } />
+                
+                <Route path="/admin/*" element={
+                  <AdminLayout>
+                    <Administration />
+                  </AdminLayout>
+                } />
 
-            {/* Add route for admin application detail view */}
-            <Route path="/admin/applications/:id" element={
-              <AdminLayout>
-                <AdminApplicationDetail />
-              </AdminLayout>
-            } />
-            
-            <Route path="/analytics/*" element={
-              <AdminLayout>
-                <Analytics />
-              </AdminLayout>
-            } />
+                <Route path="/admin/applications/:id" element={
+                  <AdminLayout>
+                    <AdminApplicationDetail />
+                  </AdminLayout>
+                } />
+                
+                <Route path="/analytics/*" element={
+                  <AdminLayout>
+                    <Analytics />
+                  </AdminLayout>
+                } />
+              </Route>
+            </Route>
             
             {/* Redirect /admin to /admin-dashboard */}
             <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />

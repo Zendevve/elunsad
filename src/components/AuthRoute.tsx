@@ -7,8 +7,21 @@ import { Loader2 } from 'lucide-react';
 
 const AuthRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [showToast, setShowToast] = useState<boolean>(false);
   const location = useLocation();
   const { toast } = useToast();
+
+  // Show toast when user is not authenticated and needs to be redirected
+  useEffect(() => {
+    if (isAuthenticated === false && showToast) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to access this page',
+        variant: 'destructive',
+      });
+      setShowToast(false);
+    }
+  }, [isAuthenticated, showToast, toast]);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -20,9 +33,13 @@ const AuthRoute: React.FC = () => {
           throw error;
         }
         setIsAuthenticated(!!data.session);
+        if (!data.session) {
+          setShowToast(true);
+        }
       } catch (error) {
         console.error('Error checking authentication:', error);
         setIsAuthenticated(false);
+        setShowToast(true);
       }
     };
 
@@ -32,6 +49,9 @@ const AuthRoute: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", !!session);
       setIsAuthenticated(!!session);
+      if (!session) {
+        setShowToast(true);
+      }
     });
 
     return () => {
@@ -51,15 +71,6 @@ const AuthRoute: React.FC = () => {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    // Show toast notification when redirecting to login
-    useEffect(() => {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access this page',
-        variant: 'destructive',
-      });
-    }, [toast]);
-    
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
