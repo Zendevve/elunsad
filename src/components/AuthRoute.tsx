@@ -4,11 +4,25 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import useRoleAuth from '@/hooks/useRoleAuth';
 
 const AuthRoute: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [showAuthToast, setShowAuthToast] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
+  const { isAdmin, isLoading: isRoleLoading } = useRoleAuth();
+
+  // Effect to show toast when redirecting to login
+  useEffect(() => {
+    if (showAuthToast) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to access this page',
+        variant: 'destructive',
+      });
+    }
+  }, [showAuthToast, toast]);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -40,7 +54,7 @@ const AuthRoute: React.FC = () => {
   }, []);
 
   // Show loading while checking authentication
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null || (isAuthenticated && isRoleLoading)) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -51,19 +65,21 @@ const AuthRoute: React.FC = () => {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    // Show toast notification when redirecting to login
-    useEffect(() => {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access this page',
-        variant: 'destructive',
-      });
-    }, [toast]);
+    // Set flag to show toast on next render
+    if (!showAuthToast) {
+      setShowAuthToast(true);
+    }
     
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  // Render the child routes
+  // If user is admin, redirect to admin dashboard
+  if (isAdmin) {
+    console.log("User is admin, redirecting to admin dashboard");
+    return <Navigate to="/admin-dashboard" replace />;
+  }
+
+  // Render the child routes for regular authenticated non-admin users
   return <Outlet />;
 };
 
