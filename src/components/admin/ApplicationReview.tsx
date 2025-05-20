@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, 
@@ -6,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { adminApplicationService } from "@/services/applicationService";
+import { adminApplicationService } from "@/services/application/applicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
 import { 
@@ -15,6 +16,8 @@ import {
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import ApplicationTableRow from "./ApplicationTableRow";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 
 interface Application {
   id: string;
@@ -32,103 +35,128 @@ const ApplicationReview = () => {
   const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
   const [activeTab, setActiveTab] = useState<string>("submitted");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [debugMode, setDebugMode] = useState(false);
   const [rawResponse, setRawResponse] = useState<any>(null);
   const { toast } = useToast();
+  const location = useLocation();
 
+  // Check if we have a refresh param from a return navigation
   useEffect(() => {
-    fetchApplications();
-  }, [activeTab]);
+    // Check for state passed from application detail page
+    const locationState = location.state as { refreshData?: boolean, activeTab?: string } | undefined;
+    
+    if (locationState?.activeTab) {
+      setActiveTab(locationState.activeTab);
+    }
+  }, [location]);
 
-  const fetchApplications = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      console.log(`Fetching applications for tab: ${activeTab}`);
-      let data;
-      
+  // Use React Query for data fetching
+  const { 
+    isLoading,
+    refetch 
+  } = useQuery({
+    queryKey: ['applications', activeTab],
+    queryFn: async () => {
+      setError(null);
       try {
-        // First try to get applications by the selected status
-        if (activeTab === "all") {
+        console.log(`Fetching applications for tab: ${activeTab}`);
+        let data;
+        
+        try {
+          // First try to get applications by the selected status
+          if (activeTab === "all") {
+            const response = await adminApplicationService.getAllApplications();
+            setRawResponse(response); // Store raw response for debug mode
+            data = response;
+          } else {
+            const response = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
+            setRawResponse(response); // Store raw response for debug mode
+            data = response;
+          }
+          
+          // Check if we actually got data back
+          if (data && data.length > 0) {
+            console.log("Applications fetched successfully:", data.length);
+            toast({
+              title: "Applications loaded",
+              description: `Successfully loaded ${data.length} applications`
+            });
+          } else {
+            console.log("No applications found for the selected status.");
+          }
+        } catch (statusError: any) {
+          console.error("Error fetching applications by status:", statusError);
+          
+          // Show more descriptive error message based on error type
+          if (statusError.code === "42702") {
+            toast({
+              variant: "warning",
+              title: "Database column reference issue",
+              description: "There's an ambiguous column reference in the database query. The admin is working on fixing this."
+            });
+          } else {
+            toast({
+              variant: "warning",
+              title: "Using local filtering",
+              description: "There was an issue with the database query, showing filtered results instead."
+            });
+          }
+          
+          // Fallback to fetching all applications if fetching by status fails
+          console.log("Attempting to fetch all applications as fallback");
           const response = await adminApplicationService.getAllApplications();
           setRawResponse(response); // Store raw response for debug mode
           data = response;
+          
+          // If we're on a specific tab, filter on the client side
+          if (activeTab !== "all" && data) {
+            data = data.filter(app => app.application_status === activeTab);
+          }
+        }
+        
+        console.log("Applications fetched:", data?.length || 0);
+        
+        if (!data || data.length === 0) {
+          console.log(`No applications found for status: ${activeTab}`);
         } else {
-          const response = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
-          setRawResponse(response); // Store raw response for debug mode
-          data = response;
+          console.log("Sample application data:", data[0]?.id, data[0]?.application_status);
         }
         
-        // Check if we actually got data back
-        if (data && data.length > 0) {
-          console.log("Applications fetched successfully:", data.length);
-          toast({
-            title: "Applications loaded",
-            description: `Successfully loaded ${data.length} applications`
-          });
-        } else {
-          console.log("No applications found for the selected status.");
-        }
-      } catch (statusError: any) {
-        console.error("Error fetching applications by status:", statusError);
-        
-        // Show more descriptive error message based on error type
-        if (statusError.code === "42702") {
-          toast({
-            variant: "warning",
-            title: "Database column reference issue",
-            description: "There's an ambiguous column reference in the database query. The admin is working on fixing this."
-          });
-        } else {
-          toast({
-            variant: "warning",
-            title: "Using local filtering",
-            description: "There was an issue with the database query, showing filtered results instead."
-          });
-        }
-        
-        // Fallback to fetching all applications if fetching by status fails
-        console.log("Attempting to fetch all applications as fallback");
-        const response = await adminApplicationService.getAllApplications();
-        setRawResponse(response); // Store raw response for debug mode
-        data = response;
-        
-        // If we're on a specific tab, filter on the client side
-        if (activeTab !== "all" && data) {
-          data = data.filter(app => app.application_status === activeTab);
-        }
+        setApplications(data || []);
+        setFilteredApplications(data || []);
+        return data || [];
+      } catch (error: any) {
+        console.error("Error fetching applications:", error);
+        setError(error.message || "Failed to load applications. See console for details.");
+        toast({
+          variant: "destructive",
+          title: "Failed to load applications",
+          description: "There was a problem loading the applications. Please try again."
+        });
+        throw error;
       }
+    },
+    // Automatically refetch on mount and when coming back to the page
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true
+  });
+  
+  // Effect to handle initial loading and refresh from navigation
+  useEffect(() => {
+    const locationState = location.state as { refreshData?: boolean, activeTab?: string } | undefined;
+    if (locationState?.refreshData) {
+      console.log('Detected return navigation with refresh flag, refetching data...');
+      refetch();
       
-      console.log("Applications fetched:", data?.length || 0);
-      
-      if (!data || data.length === 0) {
-        console.log(`No applications found for status: ${activeTab}`);
-      } else {
-        console.log("Sample application data:", data[0]?.id, data[0]?.application_status);
-      }
-      
-      setApplications(data || []);
-      setFilteredApplications(data || []);
-    } catch (error: any) {
-      console.error("Error fetching applications:", error);
-      setError(error.message || "Failed to load applications. See console for details.");
-      toast({
-        variant: "destructive",
-        title: "Failed to load applications",
-        description: "There was a problem loading the applications. Please try again."
-      });
-    } finally {
-      setIsLoading(false);
+      // Clear the state to prevent repeated refreshes
+      window.history.replaceState({}, document.title);
     }
-  };
+  }, [location.state, refetch]);
 
   const handleRetryWithAllApplications = async () => {
     setRetryCount(prev => prev + 1);
-    setIsLoading(true);
-    setError(null);
     
     try {
       console.log("Attempting to fetch all applications regardless of status");
@@ -154,8 +182,6 @@ const ApplicationReview = () => {
     } catch (error: any) {
       console.error("Error in retry attempt:", error);
       setError(error.message || "Failed to load applications after multiple attempts");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -207,7 +233,7 @@ const ApplicationReview = () => {
           
           <Button 
             variant="outline" 
-            onClick={fetchApplications}
+            onClick={() => refetch()}
             className="flex items-center gap-1"
           >
             <RefreshCcw className="h-4 w-4" />
@@ -254,7 +280,7 @@ const ApplicationReview = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={fetchApplications} 
+                onClick={() => refetch()}
                 className="text-red-700"
               >
                 <RefreshCcw className="h-3 w-3 mr-1" />
@@ -307,7 +333,7 @@ const ApplicationReview = () => {
               <div className="flex flex-col gap-3 items-center">
                 <Button 
                   variant="outline" 
-                  onClick={fetchApplications}
+                  onClick={() => refetch()}
                   className="flex items-center gap-1"
                 >
                   <RefreshCcw className="h-4 w-4" />
