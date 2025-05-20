@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
+import { logDatabaseError } from "@/utils/supabaseUtils";
 
 export const adminApplicationService = {
   // Get all applications for admin review
@@ -11,7 +12,7 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information:business_information(*)
+          business_information:business_information(*),
           owner_information:owner_information(*),
           business_operations:business_operations(*),
           business_lines:business_lines(*),
@@ -21,6 +22,7 @@ export const adminApplicationService = {
       
       if (error) {
         console.error('SQL Error fetching applications:', error);
+        logDatabaseError('getAllApplications', error);
         throw error;
       }
       
@@ -51,6 +53,7 @@ export const adminApplicationService = {
       
       if (error) {
         console.error(`SQL Error fetching ${status} applications:`, error);
+        logDatabaseError(`getApplicationsByStatus:${status}`, error);
         throw error;
       }
       
@@ -92,6 +95,7 @@ export const adminApplicationService = {
       
       if (error) {
         console.error('SQL Error fetching application details:', error);
+        logDatabaseError('getApplicationDetails', error);
         throw error;
       }
       
@@ -124,6 +128,7 @@ export const adminApplicationService = {
       
       if (error) {
         console.error('SQL Error updating application status:', error);
+        logDatabaseError('updateApplicationStatus', error);
         throw error;
       }
       
@@ -148,6 +153,7 @@ export const adminApplicationService = {
         
       if (totalError) {
         console.error('SQL Error getting total count:', totalError);
+        logDatabaseError('getApplicationCounts:total', totalError);
         throw totalError;
       }
       
@@ -162,6 +168,7 @@ export const adminApplicationService = {
         
         if (error) {
           console.error(`SQL Error getting count for ${status}:`, error);
+          logDatabaseError(`getApplicationCounts:${status}`, error);
           throw error;
         }
         

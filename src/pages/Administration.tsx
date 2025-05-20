@@ -6,7 +6,7 @@ import AdminUserManagement from "@/components/admin/AdminUserManagement";
 import ApplicationReview from "@/components/admin/ApplicationReview";
 
 const Administration = () => {
-  const [activeTab, setActiveTab] = useState("users");
+  const [activeTab, setActiveTab] = useState("applications");
 
   // Define auditLogs array (empty for now)
   const auditLogs: any[] = [];
@@ -15,7 +15,7 @@ const Administration = () => {
     <div className="p-6 space-y-4 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold">Administration</h1>
       
-      <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs defaultValue="applications" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="applications">Applications</TabsTrigger>
