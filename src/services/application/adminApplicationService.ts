@@ -10,12 +10,19 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
-          business_information!inner(*),
-          owner_information!inner(*),
-          business_operations!inner(*),
-          business_lines(*),
-          declarations(*)
+          id,
+          submission_date,
+          created_at,
+          updated_at,
+          application_type,
+          application_status,
+          admin_notes,
+          user_id,
+          business_information!inner(id, business_name, application_id),
+          owner_information!inner(id, surname, given_name, application_id),
+          business_operations!inner(id, application_id),
+          business_lines(id, application_id, line_of_business),
+          declarations(id, application_id)
         `)
         .order('submission_date', { ascending: false });
       
@@ -35,12 +42,19 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
-          business_information!inner(*),
-          owner_information!inner(*),
-          business_operations!inner(*),
-          business_lines(*),
-          declarations(*)
+          id,
+          submission_date,
+          created_at,
+          updated_at,
+          application_type,
+          application_status,
+          admin_notes,
+          user_id,
+          business_information!inner(id, business_name, application_id),
+          owner_information!inner(id, surname, given_name, application_id),
+          business_operations!inner(id, application_id),
+          business_lines(id, application_id, line_of_business),
+          declarations(id, application_id)
         `)
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
@@ -72,12 +86,19 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
-          business_information!inner(*),
-          owner_information!inner(*),
-          business_operations!inner(*),
-          business_lines(*),
-          declarations(*)
+          id,
+          submission_date,
+          created_at,
+          updated_at,
+          application_type,
+          application_status,
+          admin_notes,
+          user_id,
+          business_information!inner(id, application_id, business_name, trade_name, registration_number, tin_number, ownership_type, email_address, mobile_no),
+          owner_information!inner(id, application_id, surname, given_name, middle_name, suffix, nationality),
+          business_operations!inner(id, application_id, business_area, capitalization),
+          business_lines(id, application_id, line_of_business, products_services, psic_code),
+          declarations(id, application_id, is_agreed, signature)
         `)
         .eq('id', id)
         .single();
@@ -121,7 +142,7 @@ export const adminApplicationService = {
       // Get total count
       const { count: totalCount, error: totalError } = await supabase
         .from('applications')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
         
       if (totalError) throw totalError;
       counts.total = totalCount || 0;
@@ -130,7 +151,7 @@ export const adminApplicationService = {
       for (const status of statuses) {
         const { count, error } = await supabase
           .from('applications')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('application_status', status);
         
         if (error) throw error;
