@@ -71,8 +71,8 @@ const App = () => (
             <Route element={<AdminRoute />}>
               <Route element={<AdminLayout />}>
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
-                <Route path="/admin/*" element={<Administration />} />
+                <Route path="/admin" element={<Administration />} />
+                <Route path="/admin/users" element={<Navigate to="/admin" replace />} />
                 <Route path="/admin/applications/:id" element={<AdminApplicationDetail />} />
                 <Route path="/analytics/*" element={<Analytics />} />
               </Route>

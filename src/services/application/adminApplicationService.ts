@@ -12,11 +12,11 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information:business_information(*),
-          owner_information:owner_information(*),
-          business_operations:business_operations(*),
-          business_lines:business_lines(*),
-          declarations:declarations(*)
+          business_information:business_information!left(*),
+          owner_information:owner_information!left(*),
+          business_operations:business_operations!left(*),
+          business_lines:business_lines!left(*),
+          declarations:declarations!left(*)
         `)
         .order('submission_date', { ascending: false });
       
@@ -42,11 +42,11 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information:business_information(*),
-          owner_information:owner_information(*),
-          business_operations:business_operations(*),
-          business_lines:business_lines(*),
-          declarations:declarations(*)
+          business_information:business_information!left(*),
+          owner_information:owner_information!left(*),
+          business_operations:business_operations!left(*),
+          business_lines:business_lines!left(*),
+          declarations:declarations!left(*)
         `)
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
@@ -84,11 +84,11 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information:business_information(*),
-          owner_information:owner_information(*),
-          business_operations:business_operations(*),
-          business_lines:business_lines(*),
-          declarations:declarations(*)
+          business_information:business_information!left(*),
+          owner_information:owner_information!left(*),
+          business_operations:business_operations!left(*),
+          business_lines:business_lines!left(*),
+          declarations:declarations!left(*)
         `)
         .eq('id', id)
         .maybeSingle();
