@@ -11,7 +11,14 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          applications:id,
+          applications:application_type,
+          applications:application_status,
+          applications:submission_date,
+          applications:user_id,
+          applications:created_at,
+          applications:updated_at,
+          applications:admin_notes,
           business_information(*),
           owner_information(*),
           business_operations(*),
@@ -41,7 +48,14 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          applications:id,
+          applications:application_type,
+          applications:application_status,
+          applications:submission_date,
+          applications:user_id,
+          applications:created_at,
+          applications:updated_at,
+          applications:admin_notes,
           business_information(*),
           owner_information(*),
           business_operations(*),
@@ -83,7 +97,14 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          applications:id,
+          applications:application_type,
+          applications:application_status,
+          applications:submission_date,
+          applications:user_id,
+          applications:created_at,
+          applications:updated_at,
+          applications:admin_notes,
           business_information(*),
           owner_information(*),
           business_operations(*),
@@ -145,7 +166,7 @@ export const adminApplicationService = {
       // Get total count
       const { count: totalCount, error: totalError } = await supabase
         .from('applications')
-        .select('*', { count: 'exact', head: true });
+        .select('applications.id', { count: 'exact', head: true });
         
       if (totalError) {
         console.error('Error getting total application count:', totalError);
@@ -160,7 +181,7 @@ export const adminApplicationService = {
       for (const status of statuses) {
         const { count, error } = await supabase
           .from('applications')
-          .select('*', { count: 'exact', head: true })
+          .select('applications.id', { count: 'exact', head: true })
           .eq('application_status', status);
         
         if (error) {

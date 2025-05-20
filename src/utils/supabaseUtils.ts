@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -5,10 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
-    // Try a simple query to test the connection
+    // Try a simple query using fully qualified column names to test the connection
     const { data, error } = await supabase
       .from('applications')
-      .select('id')
+      .select('applications.id')
       .limit(1);
     
     if (error) {

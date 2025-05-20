@@ -9,7 +9,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     // Fetch the application record
     const { data: application, error: appError } = await supabase
       .from('applications')
-      .select('*')
+      .select('applications.id, applications.application_type, applications.application_status, applications.submission_date, applications.user_id, applications.created_at, applications.updated_at, applications.admin_notes')
       .eq('id', applicationId)
       .single();
     
@@ -77,10 +77,10 @@ export const getApplicationFullDetails = async (applicationId: string) => {
       console.error("Error fetching declaration:", declError);
     }
     
-    // Fetch applicant profile details
+    // Fetch applicant profile details - use fully qualified column names
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('firstname, lastname, middlename, extension_name')
+      .select('profiles.firstname, profiles.lastname, profiles.middlename, profiles.extension_name')
       .eq('id', application.user_id)
       .maybeSingle();
       
