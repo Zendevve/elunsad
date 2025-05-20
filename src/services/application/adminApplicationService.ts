@@ -1,5 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
+import { logDatabaseError } from "@/utils/supabaseUtils";
 
 export const adminApplicationService = {
   // Get all applications for admin review
@@ -9,7 +11,14 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          created_at,
+          updated_at,
+          applications.user_id,
+          admin_notes,
           business_information(*),
           owner_information(*),
           business_operations(*),
@@ -18,8 +27,12 @@ export const adminApplicationService = {
         `)
         .order('submission_date', { ascending: false });
       
-      if (error) throw error;
-      console.log('Applications data:', data);
+      if (error) {
+        logDatabaseError('getAllApplications', error);
+        throw error;
+      }
+      
+      console.log('Applications data retrieved:', data?.length || 0, 'records');
       return data;
     } catch (error) {
       console.error('Error fetching all applications:', error);
@@ -34,7 +47,14 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          created_at,
+          updated_at,
+          applications.user_id,
+          admin_notes,
           business_information(*),
           owner_information(*),
           business_operations(*),
@@ -44,8 +64,12 @@ export const adminApplicationService = {
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
       
-      if (error) throw error;
-      console.log(`Applications with status ${status}:`, data);
+      if (error) {
+        logDatabaseError('getApplicationsByStatus', error, { status });
+        throw error;
+      }
+      
+      console.log(`Applications with status ${status}:`, data?.length || 0, 'records');
       return data;
     } catch (error) {
       console.error(`Error fetching ${status} applications:`, error);
@@ -71,7 +95,14 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          created_at,
+          updated_at,
+          applications.user_id,
+          admin_notes,
           business_information(*),
           owner_information(*),
           business_operations(*),
@@ -79,10 +110,19 @@ export const adminApplicationService = {
           declarations(*)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
-      console.log('Application details:', data);
+      if (error) {
+        logDatabaseError('getApplicationDetails', error, { id });
+        throw error;
+      }
+      
+      if (!data) {
+        console.warn(`No application found with ID: ${id}`);
+        throw new Error(`Application not found: ${id}`);
+      }
+      
+      console.log('Application details retrieved successfully');
       return data;
     } catch (error) {
       console.error('Error fetching application details:', error);
@@ -101,9 +141,14 @@ export const adminApplicationService = {
         })
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        logDatabaseError('updateApplicationStatus', error, { id, status, adminNotes });
+        throw error;
+      }
+      
+      console.log(`Application ${id} status updated to ${status}`);
       return data;
     } catch (error) {
       console.error('Error updating application status:', error);
@@ -122,7 +167,11 @@ export const adminApplicationService = {
         .from('applications')
         .select('*', { count: 'exact', head: true });
         
-      if (totalError) throw totalError;
+      if (totalError) {
+        logDatabaseError('getApplicationCounts', totalError, { operation: 'total count' });
+        throw totalError;
+      }
+      
       counts.total = totalCount || 0;
       
       // Get counts for each status
@@ -132,10 +181,15 @@ export const adminApplicationService = {
           .select('*', { count: 'exact', head: true })
           .eq('application_status', status);
         
-        if (error) throw error;
+        if (error) {
+          logDatabaseError('getApplicationCounts', error, { status });
+          throw error;
+        }
+        
         counts[status] = count || 0;
       }
       
+      console.log('Application counts retrieved:', counts);
       return counts;
     } catch (error) {
       console.error('Error getting application counts:', error);

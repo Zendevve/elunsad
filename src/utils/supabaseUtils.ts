@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -29,15 +30,31 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
  */
 export const logDatabaseError = async (operation: string, error: any, data?: any) => {
   console.error(`Database error during ${operation}:`, error);
-  console.error("Error details:", {
+  
+  // Log specific details about the error
+  const errorDetails = {
     message: error.message,
     code: error.code,
     details: error.details,
-    hint: error.hint
-  });
+    hint: error.hint,
+    query: error.query
+  };
+  
+  console.error("Error details:", errorDetails);
   
   if (data) {
     console.error("Data that caused the error:", data);
+  }
+  
+  // Check for specific error types and provide more helpful information
+  if (error.code === '42703') {
+    console.error("Column does not exist. Check for typos or ensure the column exists in the table.");
+  } else if (error.code === '42P01') {
+    console.error("Table does not exist. Check for typos or ensure the table exists.");
+  } else if (error.code === '23505') {
+    console.error("Unique constraint violation. Try updating the record instead of inserting a new one.");
+  } else if (error.code === '42702') {
+    console.error("Ambiguous column reference. Qualify column names with table names (e.g., 'table_name.column_name').");
   }
 };
 
@@ -85,4 +102,78 @@ export const cleanupAuthState = () => {
   });
   
   console.log("Auth state cleanup completed");
+};
+
+/**
+ * Helper to debug Supabase queries
+ * This will log the SQL that would be executed
+ */
+export const debugSupabaseQuery = (builder: any) => {
+  // Only use in development
+  if (process.env.NODE_ENV !== 'production') {
+    const query = builder.toSQL();
+    console.log('SQL Query:', query.sql);
+    console.log('SQL Parameters:', query.parameters);
+  }
+  return builder;
+};
+
+/**
+ * Check if database is connected and basic tables are accessible
+ */
+export const checkDatabaseHealth = async () => {
+  try {
+    const tables = ['applications', 'business_information', 'owner_information', 'profiles', 'user_roles'];
+    const results = {};
+    
+    for (const table of tables) {
+      const { data, error } = await supabase
+        .from(table)
+        .select('count(*)', { count: 'exact', head: true });
+      
+      results[table] = {
+        accessible: !error,
+        error: error ? error.message : null
+      };
+      
+      if (error) {
+        console.error(`Error accessing ${table}:`, error);
+      }
+    }
+    
+    console.log('Database health check results:', results);
+    return results;
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    return { error: error.message };
+  }
+};
+
+/**
+ * Utility to retry a failed Supabase operation
+ */
+export const retryOperation = async <T>(
+  operation: () => Promise<T>, 
+  maxRetries: number = 3, 
+  delayMs: number = 1000
+): Promise<T> => {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.warn(`Operation failed (attempt ${attempt}/${maxRetries}):`, error);
+      lastError = error;
+      
+      if (attempt < maxRetries) {
+        console.log(`Retrying in ${delayMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        // Increase delay for next retry (exponential backoff)
+        delayMs *= 2;
+      }
+    }
+  }
+  
+  throw lastError;
 };
