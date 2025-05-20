@@ -16,11 +16,7 @@ import {
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { 
-  FileText, Eye, CheckCircle, XCircle, 
-  AlertCircle, Search, Loader2, RefreshCw 
-} from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search } from "lucide-react";
 
 interface Application {
   id: string;
@@ -29,20 +25,16 @@ interface Application {
   submission_date: string | null;
   created_at: string;
   user_id: string;
-  business_information?: any[] | null;
-  owner_information?: any[] | null;
-  business_operations?: any[] | null;
-  business_lines?: any[] | null;
-  declarations?: any[] | null;
+  business_information?: any;
+  owner_information?: any;
 }
 
 const ApplicationReview = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("submitted");
+  const [activeTab, setActiveTab] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,11 +44,8 @@ const ApplicationReview = () => {
 
   const fetchApplications = async () => {
     setIsLoading(true);
-    setError(null);
-    
     try {
       let data;
-      console.log(`Fetching applications for tab: ${activeTab}`);
       
       if (activeTab === "all") {
         data = await adminApplicationService.getAllApplications();
@@ -64,17 +53,15 @@ const ApplicationReview = () => {
         data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
       }
       
-      console.log(`Fetched ${data?.length || 0} applications:`, data);
-      setApplications(data || []);
-      setFilteredApplications(data || []);
-    } catch (error: any) {
+      setApplications(data);
+      setFilteredApplications(data);
+      console.log("Fetched applications with types:", data?.map(app => app.application_type));
+    } catch (error) {
       console.error("Error fetching applications:", error);
-      const errorMessage = error.message || "Failed to load applications. Please try again.";
-      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Failed to load applications",
-        description: errorMessage
+        description: "There was a problem loading the applications. Please try again."
       });
     } finally {
       setIsLoading(false);
@@ -90,12 +77,9 @@ const ApplicationReview = () => {
     
     // Filter applications based on search term
     const filtered = applications.filter(app => {
-      const businessInfo = app.business_information?.[0];
-      const ownerInfo = app.owner_information?.[0];
-      
-      const businessName = businessInfo?.business_name || "";
-      const ownerName = ownerInfo ? 
-        `${ownerInfo.surname || ""}, ${ownerInfo.given_name || ""}` : "";
+      const businessName = app.business_information?.business_name || "";
+      const ownerName = app.owner_information ? 
+        `${app.owner_information.surname}, ${app.owner_information.given_name}` : "";
       
       return (
         app.id.toLowerCase().includes(value.toLowerCase()) ||
@@ -167,16 +151,13 @@ const ApplicationReview = () => {
           <Button 
             variant="outline" 
             onClick={fetchApplications}
-            disabled={isLoading}
-            className="flex items-center gap-2"
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Refresh
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="submitted" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="submitted">Submitted</TabsTrigger>
@@ -187,20 +168,9 @@ const ApplicationReview = () => {
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-4">
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="text-center">
-                <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-primary" />
-                <p>Loading applications...</p>
-              </div>
+              <p>Loading applications...</p>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
@@ -231,12 +201,10 @@ const ApplicationReview = () => {
                 {filteredApplications.map((app) => (
                   <TableRow key={app.id}>
                     <TableCell className="font-medium">{app.id.substring(0, 8)}</TableCell>
+                    <TableCell>{app.business_information?.business_name || "-"}</TableCell>
                     <TableCell>
-                      {app.business_information?.[0]?.business_name || "-"}
-                    </TableCell>
-                    <TableCell>
-                      {app.owner_information?.[0] ? 
-                        `${app.owner_information[0].surname || ""}, ${app.owner_information[0].given_name || ""}` : "-"}
+                      {app.owner_information ? 
+                        `${app.owner_information.surname}, ${app.owner_information.given_name}` : "-"}
                     </TableCell>
                     <TableCell>
                       {getApplicationTypeLabel(app.application_type)}
