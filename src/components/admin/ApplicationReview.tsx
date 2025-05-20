@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { adminApplicationService } from "@/services/application/adminApplicationService";
+import { adminApplicationService } from "@/services/applicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, Search } from "lucide-react";
+import { FileText, Eye, Search, RefreshCcw } from "lucide-react";
 
 interface Application {
   id: string;
@@ -41,6 +41,7 @@ const ApplicationReview = () => {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
+      console.log(`Fetching applications for tab: ${activeTab}`);
       let data;
       
       if (activeTab === "all") {
@@ -49,7 +50,14 @@ const ApplicationReview = () => {
         data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
       }
       
-      console.log("Raw fetched applications data:", data);
+      console.log("Applications fetched:", data?.length || 0);
+      
+      if (!data || data.length === 0) {
+        console.log(`No applications found for status: ${activeTab}`);
+      } else {
+        console.log("Sample application data:", data[0]?.id);
+      }
+      
       setApplications(data || []);
       setFilteredApplications(data || []);
     } catch (error) {
@@ -78,9 +86,10 @@ const ApplicationReview = () => {
       const ownerGivenName = app.owner_information?.given_name || "";
       const ownerName = ownerSurname && ownerGivenName ? 
         `${ownerSurname}, ${ownerGivenName}` : "";
+      const applicationId = app.id || "";
       
       return (
-        app.id.toLowerCase().includes(value.toLowerCase()) ||
+        applicationId.toLowerCase().includes(value.toLowerCase()) ||
         businessName.toLowerCase().includes(value.toLowerCase()) ||
         ownerName.toLowerCase().includes(value.toLowerCase())
       );
@@ -149,14 +158,16 @@ const ApplicationReview = () => {
           <Button 
             variant="outline" 
             onClick={fetchApplications}
+            className="flex items-center gap-1"
           >
+            <RefreshCcw className="h-4 w-4" />
             Refresh
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="submitted" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="mb-4">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="submitted">Submitted</TabsTrigger>
           <TabsTrigger value="under_review">Under Review</TabsTrigger>
@@ -165,10 +176,13 @@ const ApplicationReview = () => {
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={activeTab} className="mt-4">
+        <TabsContent value={activeTab} className="mt-0">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <p>Loading applications...</p>
+              <div className="flex flex-col items-center">
+                <RefreshCcw className="h-8 w-8 animate-spin text-primary mb-2" />
+                <p>Loading applications...</p>
+              </div>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
@@ -176,11 +190,19 @@ const ApplicationReview = () => {
                 <FileText className="h-6 w-6 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-              <p className="text-gray-500">
+              <p className="text-gray-500 mb-4">
                 {activeTab === "all" 
                   ? "There are no applications in the system yet."
                   : `There are no applications with the status "${activeTab.replace('_', ' ')}".`}
               </p>
+              <Button 
+                variant="outline" 
+                onClick={fetchApplications}
+                className="flex items-center gap-1 mx-auto"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Try Again
+              </Button>
             </div>
           ) : (
             <Table>
@@ -198,11 +220,11 @@ const ApplicationReview = () => {
               <TableBody>
                 {filteredApplications.map((app) => (
                   <TableRow key={app.id}>
-                    <TableCell className="font-medium">{app.id.substring(0, 8)}</TableCell>
+                    <TableCell className="font-medium">{app.id.substring(0, 8)}...</TableCell>
                     <TableCell>{app.business_information?.business_name || "-"}</TableCell>
                     <TableCell>
                       {app.owner_information ? 
-                        `${app.owner_information.surname || ''}, ${app.owner_information.given_name || ''}`.replace(', ', '') : "-"}
+                        `${app.owner_information.surname || ''}, ${app.owner_information.given_name || ''}`.trim().replace(/^,\s*/, '') : "-"}
                     </TableCell>
                     <TableCell>
                       {getApplicationTypeLabel(app.application_type)}

@@ -11,11 +11,11 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
-          business_lines(*),
-          declarations(*)
+          business_information:business_information(*)
+          owner_information:owner_information(*),
+          business_operations:business_operations(*),
+          business_lines:business_lines(*),
+          declarations:declarations(*)
         `)
         .order('submission_date', { ascending: false });
       
@@ -24,8 +24,8 @@ export const adminApplicationService = {
         throw error;
       }
       
-      console.log('Applications data:', data);
-      return data;
+      console.log('Applications data retrieved:', data?.length || 0);
+      return data || [];
     } catch (error) {
       console.error('Error fetching all applications:', error);
       throw error;
@@ -40,11 +40,11 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
-          business_lines(*),
-          declarations(*)
+          business_information:business_information(*),
+          owner_information:owner_information(*),
+          business_operations:business_operations(*),
+          business_lines:business_lines(*),
+          declarations:declarations(*)
         `)
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
@@ -54,7 +54,7 @@ export const adminApplicationService = {
         throw error;
       }
       
-      console.log(`Applications with status ${status}:`, data);
+      console.log(`Retrieved ${data?.length || 0} applications with status ${status}`);
       return data || [];
     } catch (error) {
       console.error(`Error fetching ${status} applications:`, error);
@@ -81,14 +81,14 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
-          business_lines(*),
-          declarations(*)
+          business_information:business_information(*),
+          owner_information:owner_information(*),
+          business_operations:business_operations(*),
+          business_lines:business_lines(*),
+          declarations:declarations(*)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('SQL Error fetching application details:', error);
@@ -96,10 +96,11 @@ export const adminApplicationService = {
       }
       
       if (!data) {
+        console.error(`No application found with ID: ${id}`);
         throw new Error(`No application found with ID: ${id}`);
       }
       
-      console.log('Application details:', data);
+      console.log('Application details retrieved successfully');
       return data;
     } catch (error) {
       console.error('Error fetching application details:', error);
@@ -110,6 +111,7 @@ export const adminApplicationService = {
   // Update application status
   async updateApplicationStatus(id: string, status: ApplicationStatus, adminNotes?: string) {
     try {
+      console.log(`Updating application ${id} status to ${status}`);
       const { data, error } = await supabase
         .from('applications')
         .update({ 
@@ -125,6 +127,7 @@ export const adminApplicationService = {
         throw error;
       }
       
+      console.log('Application status updated successfully');
       return data;
     } catch (error) {
       console.error('Error updating application status:', error);
