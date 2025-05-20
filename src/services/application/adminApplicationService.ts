@@ -2,10 +2,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
 import { logDatabaseError } from "@/utils/supabaseUtils";
+import { ApplicationListItem } from "./adminApplicationTypes";
 
 export const adminApplicationService = {
   // Get all applications for admin review
-  async getAllApplications() {
+  async getAllApplications(): Promise<ApplicationListItem[]> {
     try {
       console.log('Fetching all applications with full details');
       const { data, error } = await supabase
@@ -18,11 +19,8 @@ export const adminApplicationService = {
           created_at,
           user_id,
           admin_notes,
-          business_information:business_information!left(*),
-          owner_information:owner_information!left(*),
-          business_operations:business_operations!left(*),
-          business_lines:business_lines!left(*),
-          declarations:declarations!left(*)
+          business_information:business_information!left(business_name),
+          owner_information:owner_information!left(surname, given_name)
         `)
         .order('submission_date', { ascending: false });
       
@@ -47,7 +45,7 @@ export const adminApplicationService = {
   },
 
   // Get applications by status
-  async getApplicationsByStatus(status: ApplicationStatus) {
+  async getApplicationsByStatus(status: ApplicationStatus): Promise<ApplicationListItem[]> {
     try {
       console.log(`Fetching applications with status: ${status}`);
       const { data, error } = await supabase
@@ -60,11 +58,8 @@ export const adminApplicationService = {
           created_at, 
           user_id,
           admin_notes,
-          business_information:business_information!left(*),
-          owner_information:owner_information!left(*),
-          business_operations:business_operations!left(*),
-          business_lines:business_lines!left(*),
-          declarations:declarations!left(*)
+          business_information:business_information!left(business_name),
+          owner_information:owner_information!left(surname, given_name)
         `)
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
@@ -88,7 +83,7 @@ export const adminApplicationService = {
   },
 
   // Get submitted applications that need review
-  async getSubmittedApplications() {
+  async getSubmittedApplications(): Promise<ApplicationListItem[]> {
     return this.getApplicationsByStatus('submitted');
   },
   

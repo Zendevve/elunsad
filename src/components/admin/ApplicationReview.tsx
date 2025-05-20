@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { adminApplicationService } from "@/services/applicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, Search, RefreshCcw, AlertCircle, Check } from "lucide-react";
+import { FileText, Eye, Search, RefreshCcw, AlertCircle, Check, AlertTriangle } from "lucide-react";
 
 interface Application {
   id: string;
@@ -32,6 +32,7 @@ const ApplicationReview = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -46,10 +47,29 @@ const ApplicationReview = () => {
       console.log(`Fetching applications for tab: ${activeTab}`);
       let data;
       
-      if (activeTab === "all") {
+      try {
+        // First try to get applications by the selected status
+        if (activeTab === "all") {
+          data = await adminApplicationService.getAllApplications();
+        } else {
+          data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
+        }
+      } catch (statusError) {
+        console.error("Error fetching applications by status:", statusError);
+        // Fallback to fetching all applications if fetching by status fails
+        console.log("Attempting to fetch all applications as fallback");
         data = await adminApplicationService.getAllApplications();
-      } else {
-        data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
+        
+        // If we're on a specific tab, filter on the client side
+        if (activeTab !== "all" && data) {
+          data = data.filter(app => app.application_status === activeTab);
+        }
+        
+        toast({
+          variant: "warning",
+          title: "Using local filtering",
+          description: "There was an issue with the database query, showing filtered results instead."
+        });
       }
       
       console.log("Applications fetched:", data?.length || 0);
@@ -70,6 +90,39 @@ const ApplicationReview = () => {
         title: "Failed to load applications",
         description: "There was a problem loading the applications. Please try again."
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRetryWithAllApplications = async () => {
+    setRetryCount(prev => prev + 1);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log("Attempting to fetch all applications regardless of status");
+      const data = await adminApplicationService.getAllApplications();
+      
+      console.log(`Retrieved ${data?.length || 0} total applications`);
+      setApplications(data || []);
+      setFilteredApplications(data || []);
+      
+      if (data && data.length > 0) {
+        toast({
+          title: "Applications loaded",
+          description: `Successfully loaded ${data.length} applications`
+        });
+      } else {
+        toast({
+          variant: "warning",
+          title: "No applications found",
+          description: "No applications were found in the database."
+        });
+      }
+    } catch (error) {
+      console.error("Error in retry attempt:", error);
+      setError("Failed to load applications after multiple attempts. Please check the console for details.");
     } finally {
       setIsLoading(false);
     }
@@ -172,17 +225,30 @@ const ApplicationReview = () => {
       {error && (
         <div className="bg-red-50 border border-red-200 p-4 rounded-md flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <h3 className="text-sm font-medium text-red-800">Error loading applications</h3>
             <p className="text-sm text-red-700">{error}</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={fetchApplications} 
-              className="mt-2 text-red-700"
-            >
-              Try again
-            </Button>
+            <div className="flex gap-2 mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={fetchApplications} 
+                className="text-red-700"
+              >
+                <RefreshCcw className="h-3 w-3 mr-1" />
+                Try again
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRetryWithAllApplications} 
+                className="text-amber-700"
+              >
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                Try fetching all applications
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -226,14 +292,28 @@ const ApplicationReview = () => {
                   Try Again
                 </Button>
                 
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => setActiveTab("all")}
-                  className="text-primary"
-                >
-                  View all applications instead
-                </Button>
+                {activeTab !== "all" && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setActiveTab("all")}
+                    className="text-primary"
+                  >
+                    View all applications instead
+                  </Button>
+                )}
+                
+                {retryCount < 1 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetryWithAllApplications}
+                    className="text-amber-700 border-amber-300 hover:bg-amber-50"
+                  >
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Try fetching all applications
+                  </Button>
+                )}
               </div>
             </div>
           ) : (

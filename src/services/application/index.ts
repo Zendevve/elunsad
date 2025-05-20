@@ -8,3 +8,4 @@ export * from './businessOperationsService';
 export * from './businessLinesService';
 export * from './declarationService';
 export * from './adminApplicationService';
+export * from './adminApplicationTypes';
