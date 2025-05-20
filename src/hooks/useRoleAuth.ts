@@ -73,10 +73,13 @@ export function useRoleAuth() {
     
     // Get initial user session
     const initializeUserSession = async () => {
+      console.log("Initializing user session in useRoleAuth");
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData.session) {
+        console.log("Found active session, fetching user roles");
         fetchUserRoles();
       } else {
+        console.log("No active session found, skipping role fetch");
         setIsLoading(false);
       }
     };

@@ -16,7 +16,7 @@ import {
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search, RefreshCw } from "lucide-react";
+import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search, RefreshCw, DatabaseIcon } from "lucide-react";
 import { useRoleAuth } from "@/hooks/useRoleAuth";
 import { checkSupabaseConnection } from "@/utils/supabaseUtils";
 
@@ -39,24 +39,34 @@ const ApplicationReview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [connectionChecked, setConnectionChecked] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin } = useRoleAuth();
+  const { isAdmin, isLoading: isRoleLoading } = useRoleAuth();
 
   useEffect(() => {
     async function checkConnection() {
       try {
+        console.log("Checking Supabase connection...");
         const isConnected = await checkSupabaseConnection();
+        setConnectionChecked(true);
+        
         if (!isConnected) {
-          setConnectionError("Could not connect to database. Please check your connection.");
+          const errorMsg = "Could not connect to database. Please check your connection.";
+          setConnectionError(errorMsg);
           toast({
             variant: "destructive",
             title: "Connection Error",
-            description: "Could not connect to database. Please check your connection."
+            description: errorMsg
           });
+        } else {
+          console.log("Supabase connection successful!");
+          setConnectionError(null);
         }
       } catch (error) {
         console.error("Connection check failed:", error);
+        setConnectionError("Connection check failed. See console for details.");
+        setConnectionChecked(true);
       }
     }
     
@@ -66,21 +76,31 @@ const ApplicationReview = () => {
   useEffect(() => {
     console.log("ApplicationReview - useEffect triggered with activeTab:", activeTab);
     console.log("ApplicationReview - isAdmin status:", isAdmin);
+    console.log("ApplicationReview - isRoleLoading status:", isRoleLoading);
     
-    if (isAdmin) {
-      fetchApplications();
-    } else {
-      console.warn("User does not have admin privileges");
-      toast({
-        variant: "destructive",
-        title: "Access Denied",
-        description: "You do not have permission to view applications."
-      });
+    // Only proceed if connection was checked and role loading is complete
+    if (connectionChecked && !isRoleLoading) {
+      if (isAdmin) {
+        fetchApplications();
+      } else {
+        console.warn("User does not have admin privileges");
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You do not have permission to view applications."
+        });
+        
+        // Set error message for UI to display
+        setConnectionError("Access denied: You do not have admin privileges to view applications.");
+        setIsLoading(false);
+      }
     }
-  }, [activeTab, isAdmin]);
+  }, [activeTab, isAdmin, isRoleLoading, connectionChecked, toast]);
 
   const fetchApplications = async () => {
     setIsLoading(true);
+    setConnectionError(null);
+    
     try {
       console.log("Fetching applications with status:", activeTab);
       let data;
@@ -100,7 +120,7 @@ const ApplicationReview = () => {
       toast({
         variant: "destructive",
         title: "Failed to load applications",
-        description: "There was a problem loading the applications. Please try again."
+        description: "There was a problem loading the applications. Please check console for details."
       });
       setConnectionError("Failed to fetch applications. See console for details.");
     } finally {
@@ -211,7 +231,7 @@ const ApplicationReview = () => {
           <Button 
             variant="outline" 
             onClick={refreshApplications}
-            disabled={refreshing}
+            disabled={refreshing || isLoading}
             className="flex items-center gap-2"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -222,8 +242,21 @@ const ApplicationReview = () => {
 
       {connectionError && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-          <p className="font-medium">Connection Error</p>
-          <p className="text-sm">{connectionError}</p>
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <p className="font-medium">Connection Error</p>
+          </div>
+          <p className="text-sm mt-1">{connectionError}</p>
+          <div className="mt-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-white text-red-700 border-red-300 hover:bg-red-50"
+              onClick={refreshApplications}
+            >
+              Try Again
+            </Button>
+          </div>
         </div>
       )}
 

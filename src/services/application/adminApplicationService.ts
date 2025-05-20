@@ -15,10 +15,10 @@ export const adminApplicationService = {
           application_type,
           application_status,
           submission_date,
-          user_id,
           created_at,
           updated_at,
           admin_notes,
+          user_id,
           business_information(*)
         `)
         .order('submission_date', { ascending: false });
@@ -45,13 +45,13 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           id,
-          application_type,
+          application_type, 
           application_status,
           submission_date,
-          user_id,
           created_at,
           updated_at,
           admin_notes,
+          user_id,
           business_information(*)
         `)
         .eq('application_status', status)
