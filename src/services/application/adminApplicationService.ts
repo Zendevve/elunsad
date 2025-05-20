@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { ApplicationStatus } from "./types";
+import { ApplicationStatus, ApplicationData } from "./types";
 
 export const adminApplicationService = {
   // Get all applications for admin review
@@ -58,7 +57,7 @@ export const adminApplicationService = {
   async getSubmittedApplications() {
     return this.getApplicationsByStatus('submitted');
   },
-
+  
   // Get application details by ID with all related data
   async getApplicationDetails(id: string): Promise<ApplicationData & {
     business_information?: any;
