@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -8,16 +8,25 @@ import { Loader2 } from 'lucide-react';
 const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
+  const location = useLocation();
 
-  // Simplified check for admin status
+  // Improved check for admin status with better error handling
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
+        console.log("Checking admin access rights...");
+        
         // Get current user session
-        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          setIsAdmin(false);
+          return;
+        }
         
         if (!sessionData.session) {
-          console.log("No authenticated user found");
+          console.log("No authenticated user session found");
           setIsAdmin(false);
           return;
         }
@@ -31,9 +40,9 @@ const AdminRoute: React.FC = () => {
           .select('id')
           .eq('user_id', userId)
           .eq('role', 'office_staff')
-          .single();
+          .maybeSingle();
         
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error code
+        if (error) {
           console.error("Error checking admin role:", error);
           setIsAdmin(false);
           return;
@@ -71,7 +80,7 @@ const AdminRoute: React.FC = () => {
       variant: 'destructive',
     });
     
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 
   // User is an admin, render the admin layout and routes

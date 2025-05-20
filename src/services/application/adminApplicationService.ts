@@ -1,11 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ApplicationData, ApplicationStatus } from "./types";
+import { ApplicationStatus } from "./types";
 
 export const adminApplicationService = {
   // Get all applications for admin review
   async getAllApplications() {
     try {
+      console.log('Fetching all applications with full details');
       const { data, error } = await supabase
         .from('applications')
         .select(`
@@ -19,6 +20,7 @@ export const adminApplicationService = {
         .order('submission_date', { ascending: false });
       
       if (error) throw error;
+      console.log('Applications data:', data);
       return data;
     } catch (error) {
       console.error('Error fetching all applications:', error);
@@ -29,6 +31,7 @@ export const adminApplicationService = {
   // Get applications by status
   async getApplicationsByStatus(status: ApplicationStatus) {
     try {
+      console.log(`Fetching applications with status: ${status}`);
       const { data, error } = await supabase
         .from('applications')
         .select(`
@@ -43,6 +46,7 @@ export const adminApplicationService = {
         .order('submission_date', { ascending: false });
       
       if (error) throw error;
+      console.log(`Applications with status ${status}:`, data);
       return data;
     } catch (error) {
       console.error(`Error fetching ${status} applications:`, error);
@@ -64,6 +68,7 @@ export const adminApplicationService = {
     declarations?: any;
   }> {
     try {
+      console.log(`Fetching application details for ID: ${id}`);
       const { data, error } = await supabase
         .from('applications')
         .select(`
@@ -78,6 +83,7 @@ export const adminApplicationService = {
         .single();
       
       if (error) throw error;
+      console.log('Application details:', data);
       return data;
     } catch (error) {
       console.error('Error fetching application details:', error);

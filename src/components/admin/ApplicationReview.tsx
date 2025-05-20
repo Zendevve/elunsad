@@ -55,6 +55,7 @@ const ApplicationReview = () => {
       
       setApplications(data);
       setFilteredApplications(data);
+      console.log("Fetched applications with types:", data?.map(app => app.application_type));
     } catch (error) {
       console.error("Error fetching applications:", error);
       toast({
@@ -118,7 +119,7 @@ const ApplicationReview = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getApplicationTypeLabel = (type: string) => {
+  const getApplicationTypeLabel = (type: ApplicationType) => {
     switch (type) {
       case "newApplication":
         return "New Business";
@@ -205,7 +206,9 @@ const ApplicationReview = () => {
                       {app.owner_information ? 
                         `${app.owner_information.surname}, ${app.owner_information.given_name}` : "-"}
                     </TableCell>
-                    <TableCell>{getApplicationTypeLabel(app.application_type)}</TableCell>
+                    <TableCell>
+                      {getApplicationTypeLabel(app.application_type)}
+                    </TableCell>
                     <TableCell>{formatDate(app.submission_date)}</TableCell>
                     <TableCell>
                       <Badge className={getStatusBadgeColor(app.application_status)}>
