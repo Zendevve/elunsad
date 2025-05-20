@@ -9,6 +9,9 @@ const AdminRoute: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
   const location = useLocation();
+  
+  // To track if we should show the access denied toast
+  const [showAccessDenied, setShowAccessDenied] = useState(false);
 
   // Improved check for admin status with better error handling
   useEffect(() => {
@@ -53,6 +56,11 @@ const AdminRoute: React.FC = () => {
         console.log("User admin status:", hasAdminRole);
         setIsAdmin(hasAdminRole);
         
+        // Set flag to show toast if not admin
+        if (!hasAdminRole) {
+          setShowAccessDenied(true);
+        }
+        
       } catch (error) {
         console.error("Error checking admin status:", error);
         setIsAdmin(false);
@@ -61,6 +69,19 @@ const AdminRoute: React.FC = () => {
 
     checkAdminStatus();
   }, []);
+
+  // Show access denied toast when needed
+  // This hook is ALWAYS called, not conditionally
+  useEffect(() => {
+    // Only show toast when isAdmin is confirmed to be false (not null)
+    if (isAdmin === false && showAccessDenied) {
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access the admin area',
+        variant: 'destructive',
+      });
+    }
+  }, [isAdmin, showAccessDenied, toast]);
 
   // Show loading while checking admin status
   if (isAdmin === null) {
@@ -74,16 +95,6 @@ const AdminRoute: React.FC = () => {
 
   // If not an admin, redirect to dashboard
   if (!isAdmin) {
-    // Move toast notification to useEffect to avoid render-time side effects
-    // This is critical - do not call toast() directly in the component body
-    useEffect(() => {
-      toast({
-        title: 'Access Denied',
-        description: 'You do not have permission to access the admin area',
-        variant: 'destructive',
-      });
-    }, [toast]);
-    
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 
