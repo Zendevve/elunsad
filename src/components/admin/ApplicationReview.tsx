@@ -29,14 +29,17 @@ interface Application {
   submission_date: string | null;
   created_at: string;
   user_id: string;
-  business_information?: any;
-  owner_information?: any;
+  business_information?: any[] | null;
+  owner_information?: any[] | null;
+  business_operations?: any[] | null;
+  business_lines?: any[] | null;
+  declarations?: any[] | null;
 }
 
 const ApplicationReview = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("submitted");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,8 +65,8 @@ const ApplicationReview = () => {
       }
       
       console.log(`Fetched ${data?.length || 0} applications:`, data);
-      setApplications(data);
-      setFilteredApplications(data);
+      setApplications(data || []);
+      setFilteredApplications(data || []);
     } catch (error) {
       console.error("Error fetching applications:", error);
       setError("Failed to load applications. Please try again.");
@@ -86,9 +89,12 @@ const ApplicationReview = () => {
     
     // Filter applications based on search term
     const filtered = applications.filter(app => {
-      const businessName = app.business_information?.business_name || "";
-      const ownerName = app.owner_information ? 
-        `${app.owner_information.surname}, ${app.owner_information.given_name}` : "";
+      const businessInfo = app.business_information?.[0];
+      const ownerInfo = app.owner_information?.[0];
+      
+      const businessName = businessInfo?.business_name || "";
+      const ownerName = ownerInfo ? 
+        `${ownerInfo.surname}, ${ownerInfo.given_name}` : "";
       
       return (
         app.id.toLowerCase().includes(value.toLowerCase()) ||
@@ -169,7 +175,7 @@ const ApplicationReview = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="submitted" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="submitted">Submitted</TabsTrigger>
@@ -224,10 +230,12 @@ const ApplicationReview = () => {
                 {filteredApplications.map((app) => (
                   <TableRow key={app.id}>
                     <TableCell className="font-medium">{app.id.substring(0, 8)}</TableCell>
-                    <TableCell>{app.business_information?.business_name || "-"}</TableCell>
                     <TableCell>
-                      {app.owner_information ? 
-                        `${app.owner_information.surname}, ${app.owner_information.given_name}` : "-"}
+                      {app.business_information?.[0]?.business_name || "-"}
+                    </TableCell>
+                    <TableCell>
+                      {app.owner_information?.[0] ? 
+                        `${app.owner_information[0].surname}, ${app.owner_information[0].given_name}` : "-"}
                     </TableCell>
                     <TableCell>
                       {getApplicationTypeLabel(app.application_type)}

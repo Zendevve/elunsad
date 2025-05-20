@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
 
@@ -18,9 +17,9 @@ export const adminApplicationService = {
           application_status,
           admin_notes,
           user_id,
-          business_information!inner(id, business_name, application_id),
-          owner_information!inner(id, surname, given_name, application_id),
-          business_operations!inner(id, application_id),
+          business_information(id, business_name, application_id),
+          owner_information(id, surname, given_name, application_id),
+          business_operations(id, application_id),
           business_lines(id, application_id, line_of_business),
           declarations(id, application_id)
         `)
@@ -50,9 +49,9 @@ export const adminApplicationService = {
           application_status,
           admin_notes,
           user_id,
-          business_information!inner(id, business_name, application_id),
-          owner_information!inner(id, surname, given_name, application_id),
-          business_operations!inner(id, application_id),
+          business_information(id, business_name, application_id),
+          owner_information(id, surname, given_name, application_id),
+          business_operations(id, application_id),
           business_lines(id, application_id, line_of_business),
           declarations(id, application_id)
         `)
@@ -94,9 +93,9 @@ export const adminApplicationService = {
           application_status,
           admin_notes,
           user_id,
-          business_information!inner(id, application_id, business_name, trade_name, registration_number, tin_number, ownership_type, email_address, mobile_no),
-          owner_information!inner(id, application_id, surname, given_name, middle_name, suffix, nationality),
-          business_operations!inner(id, application_id, business_area, capitalization),
+          business_information(id, application_id, business_name, trade_name, registration_number, tin_number, ownership_type, email_address, mobile_no),
+          owner_information(id, application_id, surname, given_name, middle_name, suffix, nationality),
+          business_operations(id, application_id, business_area, capitalization),
           business_lines(id, application_id, line_of_business, products_services, psic_code),
           declarations(id, application_id, is_agreed, signature)
         `)
