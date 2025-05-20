@@ -2,6 +2,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 
+// Define types for Promise.allSettled results
+type SupabaseQueryResult = { data: any; error?: any };
+type FulfilledPromiseResult<T> = { status: 'fulfilled'; value: T };
+type RejectedPromiseResult = { status: 'rejected'; reason: any };
+type SettledResult<T> = FulfilledPromiseResult<T> | RejectedPromiseResult;
+type SupabaseSettledResult = SettledResult<SupabaseQueryResult>;
+
 /**
  * Check if the current user has a specific role
  */
@@ -77,7 +84,7 @@ export const isAdmin = async (): Promise<boolean> => {
       
       // RPC to security definer function as a backup
       supabase.rpc('check_admin_role', { user_id: user.user.id })
-    ]);
+    ]) as [SupabaseSettledResult, SupabaseSettledResult];
     
     // Check results from direct query
     if (directQuery.status === 'fulfilled' && !directQuery.value.error) {
@@ -90,12 +97,12 @@ export const isAdmin = async (): Promise<boolean> => {
     }
     
     // Check results from RPC query
-    if (rpcQuery.status === 'fulfilled' && !('error' in rpcQuery.value)) {
+    if (rpcQuery.status === 'fulfilled' && !rpcQuery.value.error) {
       const isAdminRPC = !!rpcQuery.value.data;
       console.log("Admin check via RPC:", isAdminRPC);
       return isAdminRPC;
     } 
-    else if (rpcQuery.status === 'fulfilled' && 'error' in rpcQuery.value) {
+    else if (rpcQuery.status === 'fulfilled' && rpcQuery.value.error) {
       console.error("RPC admin query failed:", rpcQuery.value.error);
     }
     

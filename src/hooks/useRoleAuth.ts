@@ -3,6 +3,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 
+// Define types for Promise.allSettled results
+type SupabaseQueryResult = { data: any; error?: any };
+type FulfilledPromiseResult<T> = { status: 'fulfilled'; value: T };
+type RejectedPromiseResult = { status: 'rejected'; reason: any };
+type SettledResult<T> = FulfilledPromiseResult<T> | RejectedPromiseResult;
+type SupabaseSettledResult = SettledResult<SupabaseQueryResult>;
+
 export function useRoleAuth() {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
@@ -39,12 +46,12 @@ export function useRoleAuth() {
             
           // Check if user is admin using RPC
           supabase.rpc('check_admin_role', { user_id: user.id })
-        ]);
+        ]) as [SupabaseSettledResult, SupabaseSettledResult];
         
         // Process roles results
         if (rolesPromise.status === 'fulfilled' && !rolesPromise.value.error) {
           const userRoles: UserRole[] = rolesPromise.value.data ? 
-            rolesPromise.value.data.map(item => item.role as UserRole) : [];
+            rolesPromise.value.data.map((item: any) => item.role as UserRole) : [];
           
           console.log("Parsed user roles:", userRoles);
           setRoles(userRoles);
@@ -61,14 +68,14 @@ export function useRoleAuth() {
         }
         
         // Process admin check results
-        if (adminCheckPromise.status === 'fulfilled' && !('error' in adminCheckPromise.value)) {
+        if (adminCheckPromise.status === 'fulfilled' && !adminCheckPromise.value.error) {
           const adminStatus = !!adminCheckPromise.value.data;
           console.log("Admin check via RPC:", adminStatus);
           if (adminStatus) {
             setIsAdminUser(true);
           }
         } 
-        else if (adminCheckPromise.status === 'fulfilled' && 'error' in adminCheckPromise.value) {
+        else if (adminCheckPromise.status === 'fulfilled' && adminCheckPromise.value.error) {
           console.error("RPC admin check failed:", adminCheckPromise.value.error);
         }
       } else {
