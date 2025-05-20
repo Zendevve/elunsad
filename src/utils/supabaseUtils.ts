@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -5,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
+    console.log("Checking Supabase connection...");
+    
     // Try a simple query to test the connection
     const { data, error } = await supabase
       .from('applications')
@@ -21,6 +24,71 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
   } catch (error) {
     console.error("Failed to connect to Supabase:", error);
     return false;
+  }
+};
+
+/**
+ * Utility to check the health of the database with detailed diagnostics
+ */
+export const checkDatabaseHealth = async () => {
+  const results: any = {
+    connection: false,
+    auth: false,
+    tables: {},
+  };
+  
+  try {
+    // Test basic connection
+    const { data: connectionData, error: connectionError } = await supabase
+      .from('applications')
+      .select('id')
+      .limit(1);
+    
+    results.connection = !connectionError;
+    
+    if (connectionError) {
+      results.connectionError = connectionError.message;
+      return results;
+    }
+    
+    // Test auth
+    const { data: authData, error: authError } = await supabase.auth.getSession();
+    results.auth = !authError && authData.session !== null;
+    
+    if (authError) {
+      results.authError = authError.message;
+    }
+    
+    // Test common tables
+    const tables = [
+      'applications', 
+      'business_information', 
+      'owner_information', 
+      'business_operations'
+    ];
+    
+    for (const table of tables) {
+      try {
+        const { data: tableData, error: tableError } = await supabase
+          .from(table as any) // Type assertion to handle string parameter
+          .select('id')
+          .limit(1);
+        
+        results.tables[table] = !tableError;
+        
+        if (tableError) {
+          results.tables[`${table}Error`] = tableError.message;
+        }
+      } catch (error: any) {
+        results.tables[table] = false;
+        results.tables[`${table}Error`] = error.message;
+      }
+    }
+    
+    return results;
+  } catch (error: any) {
+    results.criticalError = error.message;
+    return results;
   }
 };
 

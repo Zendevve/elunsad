@@ -1,10 +1,18 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
+import { checkSupabaseConnection } from "@/utils/supabaseUtils";
 
 export const adminApplicationService = {
   // Get all applications for admin review
   async getAllApplications() {
     try {
+      // Verify connection first
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        throw new Error("Database connection issue. Please try again later.");
+      }
+
       console.log('Fetching all applications with full details');
       const { data, error } = await supabase
         .from('applications')
@@ -18,7 +26,10 @@ export const adminApplicationService = {
         `)
         .order('submission_date', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching all applications:', error);
+        throw error;
+      }
       console.log('Applications data:', data);
       return data;
     } catch (error) {
@@ -30,6 +41,12 @@ export const adminApplicationService = {
   // Get applications by status
   async getApplicationsByStatus(status: ApplicationStatus) {
     try {
+      // Verify connection first
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        throw new Error("Database connection issue. Please try again later.");
+      }
+
       console.log(`Fetching applications with status: ${status}`);
       const { data, error } = await supabase
         .from('applications')
@@ -41,10 +58,13 @@ export const adminApplicationService = {
           business_lines(*),
           declarations(*)
         `)
-        .eq('application_status', status)
-        .order('submission_date', { ascending: false });
+        .eq('applications.application_status', status) // Explicitly reference the table
+        .order('applications.submission_date', { ascending: false }); // Explicitly reference the table
       
-      if (error) throw error;
+      if (error) {
+        console.error(`Error fetching ${status} applications:`, error);
+        throw error;
+      }
       console.log(`Applications with status ${status}:`, data);
       return data;
     } catch (error) {
@@ -67,6 +87,12 @@ export const adminApplicationService = {
     declarations?: any;
   }> {
     try {
+      // Verify connection first
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        throw new Error("Database connection issue. Please try again later.");
+      }
+
       console.log(`Fetching application details for ID: ${id}`);
       const { data, error } = await supabase
         .from('applications')
@@ -78,12 +104,21 @@ export const adminApplicationService = {
           business_lines(*),
           declarations(*)
         `)
-        .eq('id', id)
+        .eq('applications.id', id) // Explicitly reference the table
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching application details:', error);
+        throw error;
+      }
       console.log('Application details:', data);
-      return data;
+      return data as ApplicationData & {
+        business_information?: any;
+        owner_information?: any;
+        business_operations?: any;
+        business_lines?: any[];
+        declarations?: any;
+      };
     } catch (error) {
       console.error('Error fetching application details:', error);
       throw error;
@@ -93,17 +128,26 @@ export const adminApplicationService = {
   // Update application status
   async updateApplicationStatus(id: string, status: ApplicationStatus, adminNotes?: string) {
     try {
+      // Verify connection first
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        throw new Error("Database connection issue. Please try again later.");
+      }
+
       const { data, error } = await supabase
         .from('applications')
         .update({ 
           application_status: status,
           admin_notes: adminNotes
         })
-        .eq('id', id)
+        .eq('applications.id', id) // Explicitly reference the table
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating application status:', error);
+        throw error;
+      }
       return data;
     } catch (error) {
       console.error('Error updating application status:', error);
@@ -114,6 +158,12 @@ export const adminApplicationService = {
   // Get application counts by status
   async getApplicationCounts() {
     try {
+      // Verify connection first
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        throw new Error("Database connection issue. Please try again later.");
+      }
+
       const statuses: ApplicationStatus[] = ['draft', 'submitted', 'under_review', 'approved', 'rejected', 'requires_additional_info'];
       const counts: Record<string, number> = {};
       
@@ -130,7 +180,7 @@ export const adminApplicationService = {
         const { count, error } = await supabase
           .from('applications')
           .select('*', { count: 'exact', head: true })
-          .eq('application_status', status);
+          .eq('applications.application_status', status); // Explicitly reference the table
         
         if (error) throw error;
         counts[status] = count || 0;

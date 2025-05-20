@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -16,7 +15,8 @@ import {
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search } from "lucide-react";
+import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search, Loader2, RefreshCw } from "lucide-react";
+import { checkSupabaseConnection } from "@/utils/supabaseUtils";
 
 interface Application {
   id: string;
@@ -35,6 +35,7 @@ const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,7 +45,25 @@ const ApplicationReview = () => {
 
   const fetchApplications = async () => {
     setIsLoading(true);
+    setConnectionError(false);
+    
     try {
+      // First check for database connection
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        console.error("Database connection error");
+        setConnectionError(true);
+        toast({
+          variant: "destructive",
+          title: "Connection Error",
+          description: "Unable to connect to the database. Please try again later."
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log("Database connection verified, fetching applications...");
+      
       let data;
       
       if (activeTab === "all") {
@@ -53,9 +72,11 @@ const ApplicationReview = () => {
         data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
       }
       
-      setApplications(data);
-      setFilteredApplications(data);
+      console.log(`Fetched ${data?.length || 0} applications for tab: ${activeTab}`);
       console.log("Fetched applications with types:", data?.map(app => app.application_type));
+      
+      setApplications(data || []);
+      setFilteredApplications(data || []);
     } catch (error) {
       console.error("Error fetching applications:", error);
       toast({
@@ -151,7 +172,9 @@ const ApplicationReview = () => {
           <Button 
             variant="outline" 
             onClick={fetchApplications}
+            className="flex items-center gap-1"
           >
+            <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
         </div>
@@ -169,8 +192,20 @@ const ApplicationReview = () => {
 
         <TabsContent value={activeTab} className="mt-4">
           {isLoading ? (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
               <p>Loading applications...</p>
+            </div>
+          ) : connectionError ? (
+            <div className="bg-white rounded-lg border border-red-200 p-8 text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Database Connection Error</h3>
+              <p className="text-gray-500 mb-6">
+                We're having trouble connecting to our database. This might be temporary.
+              </p>
+              <Button onClick={fetchApplications} className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" /> Try Again
+              </Button>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
