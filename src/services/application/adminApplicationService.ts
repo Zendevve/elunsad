@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
-import { logDatabaseError } from "@/utils/supabaseUtils";
+import { logDatabaseError, forceUpdateApplicationStatus } from "@/utils/supabaseUtils";
 import { ApplicationListItem } from "./adminApplicationTypes";
 
 export const adminApplicationService = {
@@ -180,26 +179,19 @@ export const adminApplicationService = {
         // Additional debugging for RLS policies
         console.log('Update payload:', updatePayload);
         
-        // Try a fallback method using RPC if direct update fails
+        // Try a fallback method using direct function call if direct update fails
         if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
-          console.log('Attempting fallback update via RPC...');
+          console.log('Attempting fallback update via direct function...');
           
-          const { data: rpcData, error: rpcError } = await supabase.rpc(
-            'admin_update_application_status',
-            { 
-              application_id: id, 
-              new_status: status,
-              notes: adminNotes || null
-            }
-          );
+          // Use the forceUpdateApplicationStatus utility instead of RPC
+          const forcedUpdateResult = await forceUpdateApplicationStatus(id, status, adminNotes);
           
-          if (rpcError) {
-            console.error('RPC fallback failed:', rpcError);
-            throw rpcError;
+          if (!forcedUpdateResult) {
+            throw new Error('Forced update failed');
           }
           
-          console.log('Application status updated via RPC:', rpcData);
-          return rpcData;
+          console.log('Application status updated via forced update:', forcedUpdateResult);
+          return forcedUpdateResult;
         }
         
         throw error;
