@@ -17,7 +17,7 @@ export const adminApplicationService = {
           application_status,
           submission_date,
           created_at,
-          applications.user_id,
+          user_id,
           admin_notes,
           business_information:business_information!left(business_name),
           owner_information:owner_information!left(surname, given_name)
@@ -37,7 +37,8 @@ export const adminApplicationService = {
         console.log('No applications found in database');
       }
       
-      return data || [];
+      // Type assertion to ensure TypeScript recognizes the correct return type
+      return (data || []) as ApplicationListItem[];
     } catch (error) {
       console.error('Error fetching all applications:', error);
       throw error;
@@ -56,7 +57,7 @@ export const adminApplicationService = {
           application_status,
           submission_date,
           created_at, 
-          applications.user_id,
+          user_id,
           admin_notes,
           business_information:business_information!left(business_name),
           owner_information:owner_information!left(surname, given_name)
@@ -75,7 +76,8 @@ export const adminApplicationService = {
         console.log('Sample application data:', data[0].id, data[0].application_status);
       }
       
-      return data || [];
+      // Type assertion to ensure TypeScript recognizes the correct return type
+      return (data || []) as ApplicationListItem[];
     } catch (error) {
       console.error(`Error fetching ${status} applications:`, error);
       throw error;
@@ -105,7 +107,7 @@ export const adminApplicationService = {
           application_status,
           submission_date,
           created_at,
-          applications.user_id,
+          user_id,
           admin_notes,
           business_information:business_information!left(*),
           owner_information:owner_information!left(*),
@@ -128,7 +130,14 @@ export const adminApplicationService = {
       }
       
       console.log('Application details retrieved successfully');
-      return data;
+      // Type assertion to ensure TypeScript recognizes the correct return type
+      return data as (ApplicationData & {
+        business_information?: any;
+        owner_information?: any;
+        business_operations?: any;
+        business_lines?: any[];
+        declarations?: any;
+      });
     } catch (error) {
       console.error('Error fetching application details:', error);
       throw error;
