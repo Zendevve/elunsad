@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
 
@@ -16,12 +17,12 @@ export const adminApplicationService = {
           application_type,
           application_status,
           admin_notes,
-          user_id,
-          business_information(id, business_name, application_id),
-          owner_information(id, surname, given_name, application_id),
-          business_operations(id, application_id),
-          business_lines(id, application_id, line_of_business),
-          declarations(id, application_id)
+          applications.user_id,
+          business_information:business_information!left(id, business_name, application_id),
+          owner_information:owner_information!left(id, surname, given_name, application_id),
+          business_operations:business_operations!left(id, application_id),
+          business_lines:business_lines!left(id, application_id, line_of_business),
+          declarations:declarations!left(id, application_id)
         `)
         .order('submission_date', { ascending: false });
       
@@ -48,12 +49,12 @@ export const adminApplicationService = {
           application_type,
           application_status,
           admin_notes,
-          user_id,
-          business_information(id, business_name, application_id),
-          owner_information(id, surname, given_name, application_id),
-          business_operations(id, application_id),
-          business_lines(id, application_id, line_of_business),
-          declarations(id, application_id)
+          applications.user_id,
+          business_information:business_information!left(id, business_name, application_id),
+          owner_information:owner_information!left(id, surname, given_name, application_id),
+          business_operations:business_operations!left(id, application_id),
+          business_lines:business_lines!left(id, application_id, line_of_business),
+          declarations:declarations!left(id, application_id)
         `)
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
@@ -92,12 +93,12 @@ export const adminApplicationService = {
           application_type,
           application_status,
           admin_notes,
-          user_id,
-          business_information(id, application_id, business_name, trade_name, registration_number, tin_number, ownership_type, email_address, mobile_no),
-          owner_information(id, application_id, surname, given_name, middle_name, suffix, nationality),
-          business_operations(id, application_id, business_area, capitalization),
-          business_lines(id, application_id, line_of_business, products_services, psic_code),
-          declarations(id, application_id, is_agreed, signature)
+          applications.user_id,
+          business_information:business_information!left(id, application_id, business_name, trade_name, registration_number, tin_number, ownership_type, email_address, mobile_no),
+          owner_information:owner_information!left(id, application_id, surname, given_name, middle_name, suffix, nationality),
+          business_operations:business_operations!left(id, application_id, business_area, capitalization),
+          business_lines:business_lines!left(id, application_id, line_of_business, products_services, psic_code),
+          declarations:declarations!left(id, application_id, is_agreed, signature)
         `)
         .eq('id', id)
         .single();

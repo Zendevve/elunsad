@@ -67,13 +67,14 @@ const ApplicationReview = () => {
       console.log(`Fetched ${data?.length || 0} applications:`, data);
       setApplications(data || []);
       setFilteredApplications(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching applications:", error);
-      setError("Failed to load applications. Please try again.");
+      const errorMessage = error.message || "Failed to load applications. Please try again.";
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Failed to load applications",
-        description: "There was a problem loading the applications. Please try again."
+        description: errorMessage
       });
     } finally {
       setIsLoading(false);
@@ -94,7 +95,7 @@ const ApplicationReview = () => {
       
       const businessName = businessInfo?.business_name || "";
       const ownerName = ownerInfo ? 
-        `${ownerInfo.surname}, ${ownerInfo.given_name}` : "";
+        `${ownerInfo.surname || ""}, ${ownerInfo.given_name || ""}` : "";
       
       return (
         app.id.toLowerCase().includes(value.toLowerCase()) ||
@@ -235,7 +236,7 @@ const ApplicationReview = () => {
                     </TableCell>
                     <TableCell>
                       {app.owner_information?.[0] ? 
-                        `${app.owner_information[0].surname}, ${app.owner_information[0].given_name}` : "-"}
+                        `${app.owner_information[0].surname || ""}, ${app.owner_information[0].given_name || ""}` : "-"}
                     </TableCell>
                     <TableCell>
                       {getApplicationTypeLabel(app.application_type)}
