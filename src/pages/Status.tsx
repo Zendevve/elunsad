@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { applicationService } from "@/services/applicationService";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ArrowRight, FileText, Calendar, Info, Loader2 } from "lucide-react";
-import { checkSupabaseConnection } from "@/utils/supabaseUtils";
+import { ArrowLeft, ArrowRight, FileText, Calendar, Info } from "lucide-react";
 
 interface Application {
   id: string;
@@ -23,49 +23,21 @@ const Status = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("all");
-  const [connectionError, setConnectionError] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        // First check the database connection
-        const isConnected = await checkSupabaseConnection();
-        if (!isConnected) {
-          setConnectionError(true);
-          toast({
-            title: "Database Connection Error",
-            description: "Unable to connect to the database. Please try again later.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-
-        // Check authentication
-        const { data, error } = await supabase.auth.getUser();
-        if (error || !data.user) {
-          console.error("Authentication error:", error);
-          toast({
-            title: "Authentication Required",
-            description: "Please sign in to view your applications.",
-            variant: "destructive",
-          });
-          // Redirect to login page
-          window.location.href = "/auth";
-          return;
-        }
-        
-        console.log("Authenticated as user:", data.user.id);
-        fetchApplications();
-      } catch (err) {
-        console.error("Error during auth check:", err);
-        setLoading(false);
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
         toast({
-          title: "Authentication Error",
-          description: "There was a problem verifying your account. Please try again.",
+          title: "Authentication Required",
+          description: "Please sign in to view your applications.",
           variant: "destructive",
         });
+        // Redirect to login page
+        window.location.href = "/auth";
+      } else {
+        fetchApplications();
       }
     };
     
@@ -75,11 +47,7 @@ const Status = () => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      console.log("Fetching applications...");
-      
       const apps = await applicationService.getUserApplications();
-      console.log("Retrieved applications:", apps);
-      
       setApplications(apps || []);
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -136,10 +104,6 @@ const Status = () => {
   };
 
   const displayApplications = getApplicationsByStatus(activeTab);
-  
-  const handleRetry = () => {
-    fetchApplications();
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -181,18 +145,8 @@ const Status = () => {
 
           <TabsContent value={activeTab} className="mt-0">
             {loading ? (
-              <div className="flex flex-col justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+              <div className="flex justify-center items-center h-64">
                 <p>Loading applications...</p>
-              </div>
-            ) : connectionError ? (
-              <div className="bg-white rounded-lg border border-red-200 p-8 text-center">
-                <Info className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Database Connection Error</h3>
-                <p className="text-gray-500 mb-6">
-                  We're having trouble connecting to our servers. This might be temporary.
-                </p>
-                <Button onClick={handleRetry}>Retry Connection</Button>
               </div>
             ) : displayApplications.length === 0 ? (
               <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">

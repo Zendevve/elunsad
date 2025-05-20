@@ -1,23 +1,16 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationData, BusinessInformationData, OwnerInformationData, BusinessOperationsData, BusinessLinesData, DeclarationData } from "@/services/application/types";
-import { checkSupabaseConnection } from "@/utils/supabaseUtils";
 
 export const getApplicationFullDetails = async (applicationId: string) => {
   try {
-    // Verify connection first
-    const isConnected = await checkSupabaseConnection();
-    if (!isConnected) {
-      throw new Error("Database connection issue. Please try again later.");
-    }
-
     console.log("Fetching full application details for:", applicationId);
     
     // Fetch the application record
     const { data: application, error: appError } = await supabase
       .from('applications')
       .select('*')
-      .eq('applications.id', applicationId) // Explicitly reference the table
+      .eq('id', applicationId)
       .single();
     
     if (appError) {
@@ -34,7 +27,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     const { data: businessInfo, error: bizError } = await supabase
       .from('business_information')
       .select('*')
-      .eq('business_information.application_id', applicationId) // Explicitly reference the table
+      .eq('application_id', applicationId)
       .maybeSingle();
     
     if (bizError) {
@@ -45,7 +38,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     const { data: ownerInfo, error: ownerError } = await supabase
       .from('owner_information')
       .select('*')
-      .eq('owner_information.application_id', applicationId) // Explicitly reference the table
+      .eq('application_id', applicationId)
       .maybeSingle();
     
     if (ownerError) {
@@ -56,7 +49,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     const { data: operations, error: opsError } = await supabase
       .from('business_operations')
       .select('*')
-      .eq('business_operations.application_id', applicationId) // Explicitly reference the table
+      .eq('application_id', applicationId)
       .maybeSingle();
     
     if (opsError) {
@@ -67,7 +60,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     const { data: businessLines, error: linesError } = await supabase
       .from('business_lines')
       .select('*')
-      .eq('business_lines.application_id', applicationId); // Explicitly reference the table
+      .eq('application_id', applicationId);
     
     if (linesError) {
       console.error("Error fetching business lines:", linesError);
@@ -77,7 +70,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     const { data: declaration, error: declError } = await supabase
       .from('declarations')
       .select('*')
-      .eq('declarations.application_id', applicationId) // Explicitly reference the table
+      .eq('application_id', applicationId)
       .maybeSingle();
     
     if (declError) {
@@ -88,7 +81,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('firstname, lastname, middlename, extension_name')
-      .eq('profiles.id', application.user_id) // Explicitly reference the table
+      .eq('id', application.user_id)
       .maybeSingle();
       
     if (profileError) {
