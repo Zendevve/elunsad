@@ -17,7 +17,7 @@ export const adminApplicationService = {
           submission_date,
           created_at,
           updated_at,
-          applications.user_id,
+          user_id,
           admin_notes,
           business_information(*),
           owner_information(*),
@@ -53,7 +53,7 @@ export const adminApplicationService = {
           submission_date,
           created_at,
           updated_at,
-          applications.user_id,
+          user_id,
           admin_notes,
           business_information(*),
           owner_information(*),
@@ -101,7 +101,7 @@ export const adminApplicationService = {
           submission_date,
           created_at,
           updated_at,
-          applications.user_id,
+          user_id,
           admin_notes,
           business_information(*),
           owner_information(*),
@@ -123,7 +123,13 @@ export const adminApplicationService = {
       }
       
       console.log('Application details retrieved successfully');
-      return data;
+      return data as ApplicationData & {
+        business_information?: any;
+        owner_information?: any;
+        business_operations?: any;
+        business_lines?: any[];
+        declarations?: any;
+      };
     } catch (error) {
       console.error('Error fetching application details:', error);
       throw error;

@@ -17,7 +17,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
         submission_date,
         created_at,
         updated_at,
-        applications.user_id,
+        user_id,
         admin_notes
       `)
       .eq('id', applicationId)
@@ -88,14 +88,14 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     }
     
     // Fetch applicant profile details
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = application ? await supabase
       .from('profiles')
       .select('firstname, lastname, middlename, extension_name')
       .eq('id', application.user_id)
-      .maybeSingle();
+      .maybeSingle() : { data: null, error: null };
       
     if (profileError) {
-      logDatabaseError("getApplicationFullDetails", profileError, { userId: application.user_id, section: "profiles" });
+      logDatabaseError("getApplicationFullDetails", profileError, { userId: application?.user_id, section: "profiles" });
     }
     
     console.log("Successfully fetched all application details for:", applicationId);

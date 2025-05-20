@@ -123,29 +123,40 @@ export const debugSupabaseQuery = (builder: any) => {
  */
 export const checkDatabaseHealth = async () => {
   try {
-    const tables = ['applications', 'business_information', 'owner_information', 'profiles', 'user_roles'];
-    const results = {};
+    const tablesToCheck = ['applications', 'business_information', 'owner_information', 'profiles', 'user_roles'];
+    const results: Record<string, { accessible: boolean, error: string | null }> = {};
     
-    for (const table of tables) {
-      const { data, error } = await supabase
-        .from(table)
-        .select('count(*)', { count: 'exact', head: true });
-      
-      results[table] = {
-        accessible: !error,
-        error: error ? error.message : null
-      };
-      
-      if (error) {
-        console.error(`Error accessing ${table}:`, error);
+    for (const table of tablesToCheck) {
+      try {
+        // Use type assertion to handle the dynamic table name
+        const { data, error } = await supabase
+          .from(table as any)
+          .select('count(*)', { count: 'exact', head: true });
+        
+        results[table] = {
+          accessible: !error,
+          error: error ? error.message : null
+        };
+        
+        if (error) {
+          console.error(`Error accessing ${table}:`, error);
+        }
+      } catch (err) {
+        const error = err as Error;
+        results[table] = {
+          accessible: false,
+          error: error.message
+        };
+        console.error(`Exception accessing ${table}:`, error);
       }
     }
     
     console.log('Database health check results:', results);
     return results;
   } catch (error) {
-    console.error('Database health check failed:', error);
-    return { error: error.message };
+    const err = error as Error;
+    console.error('Database health check failed:', err);
+    return { error: err.message };
   }
 };
 
