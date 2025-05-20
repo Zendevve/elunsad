@@ -12,7 +12,11 @@ import { Input } from "@/components/ui/input";
 import { adminApplicationService } from "@/services/applicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, Search, RefreshCcw, AlertCircle, Check, AlertTriangle } from "lucide-react";
+import { 
+  FileText, Eye, Search, RefreshCcw, AlertCircle, 
+  Check, AlertTriangle, Bug, Database 
+} from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface Application {
   id: string;
@@ -33,6 +37,8 @@ const ApplicationReview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [debugMode, setDebugMode] = useState(false);
+  const [rawResponse, setRawResponse] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -50,26 +56,42 @@ const ApplicationReview = () => {
       try {
         // First try to get applications by the selected status
         if (activeTab === "all") {
-          data = await adminApplicationService.getAllApplications();
+          const response = await adminApplicationService.getAllApplications();
+          setRawResponse(response); // Store raw response for debug mode
+          data = response;
         } else {
-          data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
+          const response = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
+          setRawResponse(response); // Store raw response for debug mode
+          data = response;
         }
-      } catch (statusError) {
+      } catch (statusError: any) {
         console.error("Error fetching applications by status:", statusError);
+        
+        // Show more descriptive error message based on error type
+        if (statusError.code === "42702") {
+          toast({
+            variant: "warning",
+            title: "Database column reference issue",
+            description: "There's an ambiguous column reference in the database query. The admin is working on fixing this."
+          });
+        } else {
+          toast({
+            variant: "warning",
+            title: "Using local filtering",
+            description: "There was an issue with the database query, showing filtered results instead."
+          });
+        }
+        
         // Fallback to fetching all applications if fetching by status fails
         console.log("Attempting to fetch all applications as fallback");
-        data = await adminApplicationService.getAllApplications();
+        const response = await adminApplicationService.getAllApplications();
+        setRawResponse(response); // Store raw response for debug mode
+        data = response;
         
         // If we're on a specific tab, filter on the client side
         if (activeTab !== "all" && data) {
           data = data.filter(app => app.application_status === activeTab);
         }
-        
-        toast({
-          variant: "warning",
-          title: "Using local filtering",
-          description: "There was an issue with the database query, showing filtered results instead."
-        });
       }
       
       console.log("Applications fetched:", data?.length || 0);
@@ -82,9 +104,9 @@ const ApplicationReview = () => {
       
       setApplications(data || []);
       setFilteredApplications(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching applications:", error);
-      setError("Failed to load applications. See console for details.");
+      setError(error.message || "Failed to load applications. See console for details.");
       toast({
         variant: "destructive",
         title: "Failed to load applications",
@@ -103,6 +125,7 @@ const ApplicationReview = () => {
     try {
       console.log("Attempting to fetch all applications regardless of status");
       const data = await adminApplicationService.getAllApplications();
+      setRawResponse(data); // Store raw response for debug mode
       
       console.log(`Retrieved ${data?.length || 0} total applications`);
       setApplications(data || []);
@@ -120,12 +143,16 @@ const ApplicationReview = () => {
           description: "No applications were found in the database."
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in retry attempt:", error);
-      setError("Failed to load applications after multiple attempts. Please check the console for details.");
+      setError(error.message || "Failed to load applications after multiple attempts");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
   };
 
   const handleSearch = (value: string) => {
@@ -219,8 +246,36 @@ const ApplicationReview = () => {
             <RefreshCcw className="h-4 w-4" />
             Refresh
           </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleDebugMode}
+            className="flex items-center gap-1"
+          >
+            <Bug className="h-4 w-4" />
+            {debugMode ? "Hide Debug" : "Debug Mode"}
+          </Button>
         </div>
       </div>
+      
+      {debugMode && (
+        <Alert variant="warning" className="bg-amber-50 border-amber-300">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertTitle>Debug Mode Enabled</AlertTitle>
+          <AlertDescription>
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center gap-2">
+                <Database className="h-4 w-4 text-amber-600" />
+                <span className="font-semibold">Raw Data:</span>
+              </div>
+              <div className="bg-slate-900 text-white p-3 rounded-md text-sm overflow-auto max-h-60">
+                <pre>{JSON.stringify(rawResponse, null, 2)}</pre>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 p-4 rounded-md flex items-start gap-3">
