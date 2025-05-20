@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { getApplicationFullDetails } from "./ApplicationDetailsService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,12 +5,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, CheckCircle, XCircle, AlertCircle, Clock } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, AlertCircle, Clock, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationData, ApplicationStatus, BusinessInformationData, OwnerInformationData, BusinessOperationsData, BusinessLinesData, DeclarationData } from "@/services/application/types";
+import { adminApplicationService } from "@/services/application/adminApplicationService";
 
 interface ApplicationDetailsProps {
   applicationId: string;
@@ -67,12 +67,8 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
 
   const handleUpdateStatus = async (status: ApplicationStatus) => {
     try {
-      const { error } = await supabase
-        .from('applications')
-        .update({ application_status: status })
-        .eq('id', applicationId);
-      
-      if (error) throw error;
+      // Update the application status using the adminApplicationService
+      await adminApplicationService.updateApplicationStatus(applicationId, status);
       
       // Update local state
       setData(prev => prev.application ? {
@@ -83,9 +79,44 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         }
       } : prev);
       
+      // Generate user-friendly status text
+      const statusText = status.replace(/_/g, ' ');
+      
+      // Show appropriate toast message with navigation hint
+      let toastTitle = "Status Updated";
+      let toastDescription = `Application has been marked as ${statusText}`;
+      let toastVariant: "default" | "destructive" | "warning" = "default";
+      
+      switch (status) {
+        case 'under_review':
+          toastDescription = `Application is now under review and can be found in the "Under Review" tab`;
+          break;
+        case 'requires_additional_info':
+          toastDescription = `Application requires more information and can be found in the "Requires Info" tab`;
+          toastVariant = "warning";
+          break;
+        case 'approved':
+          toastDescription = `Application has been approved and can be found in the "Approved" tab`;
+          break;
+        case 'rejected':
+          toastDescription = `Application has been rejected and can be found in the "Rejected" tab`;
+          toastVariant = "destructive";
+          break;
+      }
+      
       toast({
-        title: "Status Updated",
-        description: `Application status has been changed to ${status.replace(/_/g, ' ')}`,
+        variant: toastVariant,
+        title: toastTitle,
+        description: toastDescription,
+        action: (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/admin-dashboard', { state: { activeTab: status } })}
+          >
+            Go to Tab
+          </Button>
+        )
       });
     } catch (err) {
       console.error("Error updating status:", err);
@@ -99,12 +130,12 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
 
   const handleSaveNotes = async (notes: string) => {
     try {
-      const { error } = await supabase
-        .from('applications')
-        .update({ admin_notes: notes })
-        .eq('id', applicationId);
-      
-      if (error) throw error;
+      // Update through adminApplicationService
+      await adminApplicationService.updateApplicationStatus(
+        applicationId, 
+        data.application?.application_status as ApplicationStatus, 
+        notes
+      );
       
       // Update local state
       setData(prev => prev.application ? {
@@ -214,9 +245,13 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
           {getStatusBadge(application.application_status)}
           <Button
             variant="outline"
-            onClick={() => navigate('/admin-dashboard')}
+            onClick={() => navigate('/admin-dashboard', { 
+              state: { activeTab: application.application_status } 
+            })}
+            className="flex items-center gap-1"
           >
-            Back to Dashboard
+            <ArrowLeft className="h-4 w-4" />
+            Back to {application.application_status.replace(/_/g, ' ')} Tab
           </Button>
         </div>
       </div>
@@ -542,29 +577,33 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
             <Button 
               variant={application.application_status === 'under_review' ? 'default' : 'outline'}
               onClick={() => handleUpdateStatus('under_review')}
+              className="flex items-center gap-1"
             >
+              <Clock className="h-4 w-4" />
               Mark Under Review
             </Button>
             <Button 
               variant={application.application_status === 'requires_additional_info' ? 'default' : 'outline'}
               onClick={() => handleUpdateStatus('requires_additional_info')}
+              className="flex items-center gap-1"
             >
+              <AlertCircle className="h-4 w-4" />
               Request More Info
             </Button>
             <Button 
               variant={application.application_status === 'approved' ? 'default' : 'outline'}
-              className={application.application_status === 'approved' ? 'bg-green-600 hover:bg-green-700' : ''}
+              className={application.application_status === 'approved' ? 'bg-green-600 hover:bg-green-700 flex items-center gap-1' : 'flex items-center gap-1'}
               onClick={() => handleUpdateStatus('approved')}
             >
-              <CheckCircle className="mr-2 h-4 w-4" />
+              <CheckCircle className="h-4 w-4" />
               Approve
             </Button>
             <Button 
               variant={application.application_status === 'rejected' ? 'default' : 'outline'}
-              className={application.application_status === 'rejected' ? 'bg-red-600 hover:bg-red-700' : ''}
+              className={application.application_status === 'rejected' ? 'bg-red-600 hover:bg-red-700 flex items-center gap-1' : 'flex items-center gap-1'}
               onClick={() => handleUpdateStatus('rejected')}
             >
-              <XCircle className="mr-2 h-4 w-4" />
+              <XCircle className="h-4 w-4" />
               Reject
             </Button>
           </div>
