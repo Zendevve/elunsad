@@ -1,12 +1,9 @@
-
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { 
   Table, TableHeader, TableRow, TableHead, 
-  TableBody, TableCell 
+  TableBody
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { adminApplicationService } from "@/services/applicationService";
@@ -17,6 +14,7 @@ import {
   Check, AlertTriangle, Bug, Database 
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import ApplicationTableRow from "./ApplicationTableRow";
 
 interface Application {
   id: string;
@@ -39,7 +37,6 @@ const ApplicationReview = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [debugMode, setDebugMode] = useState(false);
   const [rawResponse, setRawResponse] = useState<any>(null);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -63,6 +60,17 @@ const ApplicationReview = () => {
           const response = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
           setRawResponse(response); // Store raw response for debug mode
           data = response;
+        }
+        
+        // Check if we actually got data back
+        if (data && data.length > 0) {
+          console.log("Applications fetched successfully:", data.length);
+          toast({
+            title: "Applications loaded",
+            description: `Successfully loaded ${data.length} applications`
+          });
+        } else {
+          console.log("No applications found for the selected status.");
         }
       } catch (statusError: any) {
         console.error("Error fetching applications by status:", statusError);
@@ -179,47 +187,6 @@ const ApplicationReview = () => {
     });
     
     setFilteredApplications(filtered);
-  };
-
-  const viewApplicationDetails = (id: string) => {
-    navigate(`/admin/applications/${id}`);
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "draft":
-        return "bg-gray-500";
-      case "submitted":
-        return "bg-blue-500";
-      case "under_review":
-        return "bg-amber-500";
-      case "approved":
-        return "bg-green-500";
-      case "rejected":
-        return "bg-red-500";
-      case "requires_additional_info":
-        return "bg-purple-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const getApplicationTypeLabel = (type: ApplicationType) => {
-    switch (type) {
-      case "newApplication":
-        return "New Business";
-      case "renewalApplication":
-        return "Renewal";
-      case "amendmentApplication":
-        return "Amendment";
-      default:
-        return type;
-    }
   };
 
   return (
@@ -392,34 +359,19 @@ const ApplicationReview = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredApplications.map((app) => (
-                    <TableRow key={app.id}>
-                      <TableCell className="font-medium">{app.id.substring(0, 8)}...</TableCell>
-                      <TableCell>{app.business_information?.business_name || "-"}</TableCell>
-                      <TableCell>
-                        {app.owner_information ? 
-                          `${app.owner_information.surname || ''}, ${app.owner_information.given_name || ''}`.trim().replace(/^,\s*/, '') : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {getApplicationTypeLabel(app.application_type)}
-                      </TableCell>
-                      <TableCell>{formatDate(app.submission_date)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusBadgeColor(app.application_status)}>
-                          {app.application_status.replace("_", " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => viewApplicationDetails(app.id)}
-                          className="flex items-center"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                    <ApplicationTableRow 
+                      key={app.id}
+                      id={app.id}
+                      businessName={app.business_information?.business_name || null}
+                      ownerName={
+                        app.owner_information ? 
+                          `${app.owner_information.surname || ''}, ${app.owner_information.given_name || ''}`.trim().replace(/^,\s*/, '') : 
+                          null
+                      }
+                      applicationType={app.application_type}
+                      submissionDate={app.submission_date}
+                      applicationStatus={app.application_status}
+                    />
                   ))}
                 </TableBody>
               </Table>

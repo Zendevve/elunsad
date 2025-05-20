@@ -17,7 +17,7 @@ export const adminApplicationService = {
           application_status,
           submission_date,
           created_at,
-          user_id,
+          applications.user_id,
           admin_notes,
           business_information:business_information!left(business_name),
           owner_information:owner_information!left(surname, given_name)
@@ -56,7 +56,7 @@ export const adminApplicationService = {
           application_status,
           submission_date,
           created_at, 
-          user_id,
+          applications.user_id,
           admin_notes,
           business_information:business_information!left(business_name),
           owner_information:owner_information!left(surname, given_name)
@@ -105,7 +105,7 @@ export const adminApplicationService = {
           application_status,
           submission_date,
           created_at,
-          user_id,
+          applications.user_id,
           admin_notes,
           business_information:business_information!left(*),
           owner_information:owner_information!left(*),

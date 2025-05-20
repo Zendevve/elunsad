@@ -82,7 +82,7 @@ export const isAdmin = async (): Promise<boolean> => {
         .eq('role', 'office_staff')
         .maybeSingle(),
       
-      // RPC to security definer function as a backup
+      // RPC to security definer function as a backup - we've fixed this function
       supabase.rpc('check_admin_role', { user_id: user.user.id })
     ]) as [SupabaseSettledResult, SupabaseSettledResult];
     
@@ -96,7 +96,7 @@ export const isAdmin = async (): Promise<boolean> => {
       console.error("Direct admin query failed:", directQuery.value.error);
     }
     
-    // Check results from RPC query
+    // Check results from RPC query - this should now work after fixing the function
     if (rpcQuery.status === 'fulfilled' && !rpcQuery.value.error) {
       const isAdminRPC = !!rpcQuery.value.data;
       console.log("Admin check via RPC:", isAdminRPC);
