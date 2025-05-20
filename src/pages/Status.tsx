@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { applicationService } from "@/services/applicationService";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ArrowRight, FileText, Calendar, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Calendar, Info, Loader2 } from "lucide-react";
 
 interface Application {
   id: string;
@@ -23,21 +23,33 @@ const Status = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (!data.user) {
+          setIsAuthenticated(false);
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to view your applications.",
+            variant: "destructive",
+          });
+          // Redirect to login page
+          window.location.href = "/signin";
+        } else {
+          setIsAuthenticated(true);
+          fetchApplications();
+        }
+      } catch (error) {
+        console.error("Authentication check error:", error);
         toast({
-          title: "Authentication Required",
-          description: "Please sign in to view your applications.",
+          title: "Authentication Error",
+          description: "There was a problem checking your login status.",
           variant: "destructive",
         });
-        // Redirect to login page
-        window.location.href = "/auth";
-      } else {
-        fetchApplications();
       }
     };
     
@@ -48,6 +60,7 @@ const Status = () => {
     try {
       setLoading(true);
       const apps = await applicationService.getUserApplications();
+      console.log("Applications fetched:", apps);
       setApplications(apps || []);
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -105,6 +118,10 @@ const Status = () => {
 
   const displayApplications = getApplicationsByStatus(activeTab);
 
+  if (isAuthenticated === false) {
+    return null; // Already redirecting in checkAuth
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
@@ -146,7 +163,8 @@ const Status = () => {
           <TabsContent value={activeTab} className="mt-0">
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <p>Loading applications...</p>
+                <Loader2 className="h-8 w-8 text-primary animate-spin mr-2" />
+                <p className="text-lg">Loading applications...</p>
               </div>
             ) : displayApplications.length === 0 ? (
               <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">

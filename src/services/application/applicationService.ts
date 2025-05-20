@@ -50,12 +50,20 @@ export const applicationService = {
   // Get all applications for the current user
   async getUserApplications() {
     try {
+      // Get current user
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Not authenticated");
+      
+      // Query applications table with explicit user_id filter
       const { data, error } = await supabase
         .from('applications')
         .select('*')
+        .eq('user_id', authData.user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
+      console.log('User applications fetched:', data); // Debug log
       return data;
     } catch (error) {
       console.error('Error fetching user applications:', error);
