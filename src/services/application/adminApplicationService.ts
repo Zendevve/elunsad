@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
 
@@ -18,7 +19,11 @@ export const adminApplicationService = {
         `)
         .order('submission_date', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('SQL Error fetching applications:', error);
+        throw error;
+      }
+      
       console.log('Applications data:', data);
       return data;
     } catch (error) {
@@ -44,9 +49,13 @@ export const adminApplicationService = {
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error(`SQL Error fetching ${status} applications:`, error);
+        throw error;
+      }
+      
       console.log(`Applications with status ${status}:`, data);
-      return data;
+      return data || [];
     } catch (error) {
       console.error(`Error fetching ${status} applications:`, error);
       throw error;
@@ -81,7 +90,15 @@ export const adminApplicationService = {
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('SQL Error fetching application details:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error(`No application found with ID: ${id}`);
+      }
+      
       console.log('Application details:', data);
       return data;
     } catch (error) {
@@ -103,7 +120,11 @@ export const adminApplicationService = {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('SQL Error updating application status:', error);
+        throw error;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error updating application status:', error);
@@ -122,7 +143,11 @@ export const adminApplicationService = {
         .from('applications')
         .select('*', { count: 'exact', head: true });
         
-      if (totalError) throw totalError;
+      if (totalError) {
+        console.error('SQL Error getting total count:', totalError);
+        throw totalError;
+      }
+      
       counts.total = totalCount || 0;
       
       // Get counts for each status
@@ -132,7 +157,11 @@ export const adminApplicationService = {
           .select('*', { count: 'exact', head: true })
           .eq('application_status', status);
         
-        if (error) throw error;
+        if (error) {
+          console.error(`SQL Error getting count for ${status}:`, error);
+          throw error;
+        }
+        
         counts[status] = count || 0;
       }
       

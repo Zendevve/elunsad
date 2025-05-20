@@ -9,14 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, SelectContent, SelectGroup, SelectItem, 
-  SelectTrigger, SelectValue 
-} from "@/components/ui/select";
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search } from "lucide-react";
+import { FileText, Eye, Search } from "lucide-react";
 
 interface Application {
   id: string;
@@ -32,7 +28,7 @@ interface Application {
 const ApplicationReview = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("submitted");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -53,9 +49,9 @@ const ApplicationReview = () => {
         data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
       }
       
-      setApplications(data);
-      setFilteredApplications(data);
-      console.log("Fetched applications with types:", data?.map(app => app.application_type));
+      console.log("Raw fetched applications data:", data);
+      setApplications(data || []);
+      setFilteredApplications(data || []);
     } catch (error) {
       console.error("Error fetching applications:", error);
       toast({
@@ -78,8 +74,10 @@ const ApplicationReview = () => {
     // Filter applications based on search term
     const filtered = applications.filter(app => {
       const businessName = app.business_information?.business_name || "";
-      const ownerName = app.owner_information ? 
-        `${app.owner_information.surname}, ${app.owner_information.given_name}` : "";
+      const ownerSurname = app.owner_information?.surname || "";
+      const ownerGivenName = app.owner_information?.given_name || "";
+      const ownerName = ownerSurname && ownerGivenName ? 
+        `${ownerSurname}, ${ownerGivenName}` : "";
       
       return (
         app.id.toLowerCase().includes(value.toLowerCase()) ||
@@ -157,7 +155,7 @@ const ApplicationReview = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="submitted" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="submitted">Submitted</TabsTrigger>
@@ -204,7 +202,7 @@ const ApplicationReview = () => {
                     <TableCell>{app.business_information?.business_name || "-"}</TableCell>
                     <TableCell>
                       {app.owner_information ? 
-                        `${app.owner_information.surname}, ${app.owner_information.given_name}` : "-"}
+                        `${app.owner_information.surname || ''}, ${app.owner_information.given_name || ''}`.replace(', ', '') : "-"}
                     </TableCell>
                     <TableCell>
                       {getApplicationTypeLabel(app.application_type)}
