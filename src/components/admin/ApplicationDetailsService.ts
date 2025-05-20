@@ -6,7 +6,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
   try {
     console.log("Fetching full application details for:", applicationId);
     
-    // Fetch the application record with simplified column selection
+    // Fetch the application record with simple column selection
     const { data: application, error: appError } = await supabase
       .from('applications')
       .select('id, application_type, application_status, submission_date, user_id, created_at, updated_at, admin_notes')
@@ -77,10 +77,9 @@ export const getApplicationFullDetails = async (applicationId: string) => {
       console.error("Error fetching declaration:", declError);
     }
     
-    // Fetch applicant profile details with simplified query
-    // Only if we have a valid user_id from the application
+    // Fetch applicant profile details
     let profileData = null;
-    if (application && application.user_id) {
+    if (application.user_id) {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('firstname, lastname, middlename, extension_name')

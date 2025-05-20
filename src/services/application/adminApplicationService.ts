@@ -11,19 +11,19 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          applications:id,
-          applications:application_type,
-          applications:application_status,
-          applications:submission_date,
-          applications:user_id,
-          applications:created_at,
-          applications:updated_at,
-          applications:admin_notes,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
-          business_lines(*),
-          declarations(*)
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          user_id,
+          created_at,
+          updated_at,
+          admin_notes,
+          business_information:business_information(*),
+          owner_information:owner_information(*),
+          business_operations:business_operations(*),
+          business_lines:business_lines(*),
+          declarations:declarations(*)
         `)
         .order('submission_date', { ascending: false });
       
@@ -48,19 +48,19 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          applications:id,
-          applications:application_type,
-          applications:application_status,
-          applications:submission_date,
-          applications:user_id,
-          applications:created_at,
-          applications:updated_at,
-          applications:admin_notes,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
-          business_lines(*),
-          declarations(*)
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          user_id,
+          created_at,
+          updated_at,
+          admin_notes,
+          business_information:business_information(*),
+          owner_information:owner_information(*),
+          business_operations:business_operations(*),
+          business_lines:business_lines(*),
+          declarations:declarations(*)
         `)
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
@@ -97,19 +97,19 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          applications:id,
-          applications:application_type,
-          applications:application_status,
-          applications:submission_date,
-          applications:user_id,
-          applications:created_at,
-          applications:updated_at,
-          applications:admin_notes,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
-          business_lines(*),
-          declarations(*)
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          user_id,
+          created_at,
+          updated_at,
+          admin_notes,
+          business_information:business_information(*),
+          owner_information:owner_information(*),
+          business_operations:business_operations(*),
+          business_lines:business_lines(*),
+          declarations:declarations(*)
         `)
         .eq('id', id)
         .single();
@@ -166,7 +166,7 @@ export const adminApplicationService = {
       // Get total count
       const { count: totalCount, error: totalError } = await supabase
         .from('applications')
-        .select('applications.id', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
         
       if (totalError) {
         console.error('Error getting total application count:', totalError);
@@ -181,7 +181,7 @@ export const adminApplicationService = {
       for (const status of statuses) {
         const { count, error } = await supabase
           .from('applications')
-          .select('applications.id', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('application_status', status);
         
         if (error) {
