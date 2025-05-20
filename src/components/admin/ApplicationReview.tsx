@@ -16,7 +16,8 @@ import {
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search } from "lucide-react";
+import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search, RefreshCw } from "lucide-react";
+import { useRoleAuth } from "@/hooks/useRoleAuth";
 
 interface Application {
   id: string;
@@ -35,12 +36,16 @@ const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAdmin } = useRoleAuth();
 
   useEffect(() => {
-    fetchApplications();
-  }, [activeTab]);
+    if (isAdmin) {
+      fetchApplications();
+    }
+  }, [activeTab, isAdmin]);
 
   const fetchApplications = async () => {
     setIsLoading(true);
@@ -55,7 +60,7 @@ const ApplicationReview = () => {
       
       setApplications(data);
       setFilteredApplications(data);
-      console.log("Fetched applications with types:", data?.map(app => app.application_type));
+      console.log(`Fetched ${data?.length || 0} applications with status: ${activeTab}`);
     } catch (error) {
       console.error("Error fetching applications:", error);
       toast({
@@ -65,6 +70,21 @@ const ApplicationReview = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const refreshApplications = async () => {
+    setRefreshing(true);
+    try {
+      await fetchApplications();
+      toast({
+        title: "Refreshed",
+        description: "Applications data has been refreshed."
+      });
+    } catch (error) {
+      console.error("Error refreshing applications:", error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -150,9 +170,12 @@ const ApplicationReview = () => {
           
           <Button 
             variant="outline" 
-            onClick={fetchApplications}
+            onClick={refreshApplications}
+            disabled={refreshing}
+            className="flex items-center gap-2"
           >
-            Refresh
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
       </div>
@@ -170,7 +193,10 @@ const ApplicationReview = () => {
         <TabsContent value={activeTab} className="mt-4">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <p>Loading applications...</p>
+              <div className="flex flex-col items-center gap-2">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+                <p>Loading applications...</p>
+              </div>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
@@ -183,6 +209,13 @@ const ApplicationReview = () => {
                   ? "There are no applications in the system yet."
                   : `There are no applications with the status "${activeTab.replace('_', ' ')}".`}
               </p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={refreshApplications}
+              >
+                Refresh Data
+              </Button>
             </div>
           ) : (
             <Table>
