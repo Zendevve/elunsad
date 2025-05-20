@@ -3,7 +3,7 @@ import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
+import ApplicationStatusBadge from "./ApplicationStatusBadge";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
 import { Eye } from "lucide-react";
 
@@ -48,7 +48,7 @@ const ApplicationTableRow: React.FC<ApplicationTableRowProps> = ({
         {ownerName || <span className="text-gray-400 italic">Unknown</span>}
       </TableCell>
       <TableCell>
-        {applicationType === "new" ? "New Application" : "Renewal"}
+        {applicationType === "newApplication" ? "New Application" : "Renewal"}
       </TableCell>
       <TableCell>
         {formatDate(submissionDate)}

@@ -1,4 +1,6 @@
 
+// Re-export all services from the application folder
+import { applicationService } from "@/services/application/applicationService";
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 
-export { adminApplicationService };
+export { applicationService, adminApplicationService };

@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { adminApplicationService } from "@/services/application/applicationService";
+import { adminApplicationService } from "@/services/applicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
 import { 

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
-import { adminApplicationService } from "@/services/application/adminApplicationService";
+import { adminApplicationService } from "@/services/applicationService";
 import { ApplicationStatus } from "@/services/application/types";
 import {
   CheckCircle,
@@ -53,7 +53,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
       setError(null);
       try {
         const data = await adminApplicationService.getApplicationDetails(applicationId);
-        setApplicationData(data);
+        setApplicationData(data as ApplicationData);
         setAdminNotes(data.admin_notes || "");
         // Check if declarations exist and if they are accepted
         if (data.declarations && data.declarations.accepted) {
@@ -253,7 +253,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
               <p>
                 <Checkbox
                   checked={declarationsAccepted}
-                  onCheckedChange={setDeclarationsAccepted}
+                  onCheckedChange={(checked) => setDeclarationsAccepted(checked === true)}
                   id="declaration-checkbox"
                 />
                 <label htmlFor="declaration-checkbox" className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
