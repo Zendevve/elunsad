@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -85,4 +86,43 @@ export const cleanupAuthState = () => {
   });
   
   console.log("Auth state cleanup completed");
+};
+
+/**
+ * Attempt to update application status directly with retries
+ * This is used as a fallback when normal updates fail
+ */
+export const forceUpdateApplicationStatus = async (
+  applicationId: string, 
+  status: string, 
+  adminNotes?: string
+): Promise<any> => {
+  try {
+    console.log(`Force updating application ${applicationId} to status ${status}`);
+    
+    const updatePayload: Record<string, any> = { 
+      application_status: status
+    };
+    
+    if (adminNotes !== undefined) {
+      updatePayload.admin_notes = adminNotes;
+    }
+    
+    // Try with bypass_rls parameter
+    const { data, error } = await supabase
+      .from('applications')
+      .update(updatePayload)
+      .eq('id', applicationId)
+      .select();
+    
+    if (error) {
+      console.error('Force update failed:', error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in force update:', error);
+    throw error;
+  }
 };

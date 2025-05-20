@@ -67,8 +67,21 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
 
   const handleUpdateStatus = async (status: ApplicationStatus) => {
     try {
+      console.log(`Attempting to update application ${applicationId} to status: ${status}`);
+      
+      // Show loading toast
+      toast({
+        title: "Updating Status",
+        description: "Please wait while we update the application status...",
+      });
+
       // Update the application status using the adminApplicationService
-      await adminApplicationService.updateApplicationStatus(applicationId, status);
+      const result = await adminApplicationService.updateApplicationStatus(applicationId, status);
+      console.log("Update result:", result);
+      
+      if (!result) {
+        throw new Error("No result returned from update operation");
+      }
       
       // Update local state
       setData(prev => prev.application ? {
@@ -123,7 +136,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description: "Could not update application status",
+        description: "Could not update application status. Please try again."
       });
     }
   };

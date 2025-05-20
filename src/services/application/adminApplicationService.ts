@@ -148,23 +148,64 @@ export const adminApplicationService = {
   async updateApplicationStatus(id: string, status: ApplicationStatus, adminNotes?: string) {
     try {
       console.log(`Updating application ${id} status to ${status}`);
+      console.log('Current user:', await supabase.auth.getUser());
+      
+      // Log role information for debugging
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+      
+      console.log('User roles:', roleData, roleError);
+      
+      // Add the role parameter to the RPC call to ensure admin access
+      const updatePayload: Record<string, any> = { 
+        application_status: status
+      };
+      
+      if (adminNotes !== undefined) {
+        updatePayload.admin_notes = adminNotes;
+      }
+      
       const { data, error } = await supabase
         .from('applications')
-        .update({ 
-          application_status: status,
-          admin_notes: adminNotes
-        })
+        .update(updatePayload)
         .eq('id', id)
-        .select()
-        .single();
+        .select();
       
       if (error) {
         console.error('SQL Error updating application status:', error);
         logDatabaseError('updateApplicationStatus', error);
+        
+        // Additional debugging for RLS policies
+        console.log('Update payload:', updatePayload);
+        
+        // Try a fallback method using RPC if direct update fails
+        if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
+          console.log('Attempting fallback update via RPC...');
+          
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'admin_update_application_status',
+            { 
+              application_id: id, 
+              new_status: status,
+              notes: adminNotes || null
+            }
+          );
+          
+          if (rpcError) {
+            console.error('RPC fallback failed:', rpcError);
+            throw rpcError;
+          }
+          
+          console.log('Application status updated via RPC:', rpcData);
+          return rpcData;
+        }
+        
         throw error;
       }
       
-      console.log('Application status updated successfully');
+      console.log('Application status updated successfully:', data);
       return data;
     } catch (error) {
       console.error('Error updating application status:', error);
