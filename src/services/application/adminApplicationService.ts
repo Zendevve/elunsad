@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
 
@@ -10,9 +11,9 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
+          business_information!inner(*),
+          owner_information!inner(*),
+          business_operations!inner(*),
           business_lines(*),
           declarations(*)
         `)
@@ -35,9 +36,9 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
+          business_information!inner(*),
+          owner_information!inner(*),
+          business_operations!inner(*),
           business_lines(*),
           declarations(*)
         `)
@@ -72,9 +73,9 @@ export const adminApplicationService = {
         .from('applications')
         .select(`
           *,
-          business_information(*),
-          owner_information(*),
-          business_operations(*),
+          business_information!inner(*),
+          owner_information!inner(*),
+          business_operations!inner(*),
           business_lines(*),
           declarations(*)
         `)

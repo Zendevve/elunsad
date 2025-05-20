@@ -16,7 +16,11 @@ import {
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search } from "lucide-react";
+import { 
+  FileText, Eye, CheckCircle, XCircle, 
+  AlertCircle, Search, Loader2, RefreshCw 
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Application {
   id: string;
@@ -35,6 +39,7 @@ const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,8 +49,11 @@ const ApplicationReview = () => {
 
   const fetchApplications = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
       let data;
+      console.log(`Fetching applications for tab: ${activeTab}`);
       
       if (activeTab === "all") {
         data = await adminApplicationService.getAllApplications();
@@ -53,11 +61,12 @@ const ApplicationReview = () => {
         data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
       }
       
+      console.log(`Fetched ${data?.length || 0} applications:`, data);
       setApplications(data);
       setFilteredApplications(data);
-      console.log("Fetched applications with types:", data?.map(app => app.application_type));
     } catch (error) {
       console.error("Error fetching applications:", error);
+      setError("Failed to load applications. Please try again.");
       toast({
         variant: "destructive",
         title: "Failed to load applications",
@@ -151,7 +160,10 @@ const ApplicationReview = () => {
           <Button 
             variant="outline" 
             onClick={fetchApplications}
+            disabled={isLoading}
+            className="flex items-center gap-2"
           >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Refresh
           </Button>
         </div>
@@ -168,9 +180,20 @@ const ApplicationReview = () => {
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-4">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <p>Loading applications...</p>
+              <div className="text-center">
+                <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-primary" />
+                <p>Loading applications...</p>
+              </div>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
