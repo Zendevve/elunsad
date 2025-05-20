@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -17,7 +16,7 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
       return false;
     }
     
-    console.log("Supabase connection is working correctly", data);
+    console.log("Supabase connection is working correctly");
     return true;
   } catch (error) {
     console.error("Failed to connect to Supabase:", error);
@@ -39,11 +38,6 @@ export const logDatabaseError = async (operation: string, error: any, data?: any
   
   if (data) {
     console.error("Data that caused the error:", data);
-  }
-
-  // If it's a column ambiguity error, provide more helpful information
-  if (error.code === '42702' && error.message.includes('ambiguous')) {
-    console.error("COLUMN AMBIGUITY ERROR: This likely means multiple tables in your query have the same column name. Try specifying the table name for each column, e.g., 'applications.user_id' instead of just 'user_id'.");
   }
 };
 

@@ -16,9 +16,7 @@ import {
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search, RefreshCw, DatabaseIcon } from "lucide-react";
-import { useRoleAuth } from "@/hooks/useRoleAuth";
-import { checkSupabaseConnection } from "@/utils/supabaseUtils";
+import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search } from "lucide-react";
 
 interface Application {
   id: string;
@@ -37,72 +35,16 @@ const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [connectionChecked, setConnectionChecked] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin, isLoading: isRoleLoading } = useRoleAuth();
 
   useEffect(() => {
-    async function checkConnection() {
-      try {
-        console.log("Checking Supabase connection...");
-        const isConnected = await checkSupabaseConnection();
-        setConnectionChecked(true);
-        
-        if (!isConnected) {
-          const errorMsg = "Could not connect to database. Please check your connection.";
-          setConnectionError(errorMsg);
-          toast({
-            variant: "destructive",
-            title: "Connection Error",
-            description: errorMsg
-          });
-        } else {
-          console.log("Supabase connection successful!");
-          setConnectionError(null);
-        }
-      } catch (error) {
-        console.error("Connection check failed:", error);
-        setConnectionError("Connection check failed. See console for details.");
-        setConnectionChecked(true);
-      }
-    }
-    
-    checkConnection();
-  }, [toast]);
-
-  useEffect(() => {
-    console.log("ApplicationReview - useEffect triggered with activeTab:", activeTab);
-    console.log("ApplicationReview - isAdmin status:", isAdmin);
-    console.log("ApplicationReview - isRoleLoading status:", isRoleLoading);
-    
-    // Only proceed if connection was checked and role loading is complete
-    if (connectionChecked && !isRoleLoading) {
-      if (isAdmin) {
-        fetchApplications();
-      } else {
-        console.warn("User does not have admin privileges");
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "You do not have permission to view applications."
-        });
-        
-        // Set error message for UI to display
-        setConnectionError("Access denied: You do not have admin privileges to view applications.");
-        setIsLoading(false);
-      }
-    }
-  }, [activeTab, isAdmin, isRoleLoading, connectionChecked, toast]);
+    fetchApplications();
+  }, [activeTab]);
 
   const fetchApplications = async () => {
     setIsLoading(true);
-    setConnectionError(null);
-    
     try {
-      console.log("Fetching applications with status:", activeTab);
       let data;
       
       if (activeTab === "all") {
@@ -111,40 +53,18 @@ const ApplicationReview = () => {
         data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
       }
       
-      console.log("Fetched applications data:", data);
       setApplications(data);
       setFilteredApplications(data);
-      console.log(`Fetched ${data?.length || 0} applications with status: ${activeTab}`);
+      console.log("Fetched applications with types:", data?.map(app => app.application_type));
     } catch (error) {
       console.error("Error fetching applications:", error);
       toast({
         variant: "destructive",
         title: "Failed to load applications",
-        description: "There was a problem loading the applications. Please check console for details."
+        description: "There was a problem loading the applications. Please try again."
       });
-      setConnectionError("Failed to fetch applications. See console for details.");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const refreshApplications = async () => {
-    setRefreshing(true);
-    try {
-      await fetchApplications();
-      toast({
-        title: "Refreshed",
-        description: "Applications data has been refreshed."
-      });
-    } catch (error) {
-      console.error("Error refreshing applications:", error);
-      toast({
-        variant: "destructive",
-        title: "Refresh Failed",
-        description: "Could not refresh application data."
-      });
-    } finally {
-      setRefreshing(false);
     }
   };
 
@@ -230,35 +150,12 @@ const ApplicationReview = () => {
           
           <Button 
             variant="outline" 
-            onClick={refreshApplications}
-            disabled={refreshing || isLoading}
-            className="flex items-center gap-2"
+            onClick={fetchApplications}
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            Refresh
           </Button>
         </div>
       </div>
-
-      {connectionError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-          <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <p className="font-medium">Connection Error</p>
-          </div>
-          <p className="text-sm mt-1">{connectionError}</p>
-          <div className="mt-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-white text-red-700 border-red-300 hover:bg-red-50"
-              onClick={refreshApplications}
-            >
-              Try Again
-            </Button>
-          </div>
-        </div>
-      )}
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
@@ -273,10 +170,7 @@ const ApplicationReview = () => {
         <TabsContent value={activeTab} className="mt-4">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="flex flex-col items-center gap-2">
-                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-                <p>Loading applications...</p>
-              </div>
+              <p>Loading applications...</p>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
@@ -289,13 +183,6 @@ const ApplicationReview = () => {
                   ? "There are no applications in the system yet."
                   : `There are no applications with the status "${activeTab.replace('_', ' ')}".`}
               </p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={refreshApplications}
-              >
-                Refresh Data
-              </Button>
             </div>
           ) : (
             <Table>

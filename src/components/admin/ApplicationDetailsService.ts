@@ -6,10 +6,10 @@ export const getApplicationFullDetails = async (applicationId: string) => {
   try {
     console.log("Fetching full application details for:", applicationId);
     
-    // Fetch the application record with explicit column selection
+    // Fetch the application record
     const { data: application, error: appError } = await supabase
       .from('applications')
-      .select('id, application_type, application_status, submission_date, user_id, created_at, updated_at, admin_notes')
+      .select('*')
       .eq('id', applicationId)
       .single();
     
@@ -78,19 +78,14 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     }
     
     // Fetch applicant profile details
-    let profileData = null;
-    if (application.user_id) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('firstname, lastname, middlename, extension_name')
-        .eq('id', application.user_id)
-        .maybeSingle();
-        
-      if (profileError) {
-        console.error("Error fetching user profile:", profileError);
-      } else {
-        profileData = profile;
-      }
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('firstname, lastname, middlename, extension_name')
+      .eq('id', application.user_id)
+      .maybeSingle();
+      
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError);
     }
     
     return {

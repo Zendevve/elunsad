@@ -3,6 +3,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 
+// Define types for Promise.allSettled results
+type SupabaseQueryResult = { data: any; error?: any };
+type FulfilledPromiseResult<T> = { status: 'fulfilled'; value: T };
+type RejectedPromiseResult = { status: 'rejected'; reason: any };
+type SettledResult<T> = FulfilledPromiseResult<T> | RejectedPromiseResult;
+type SupabaseSettledResult = SettledResult<SupabaseQueryResult>;
+
 export function useRoleAuth() {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
@@ -29,27 +36,47 @@ export function useRoleAuth() {
         
         console.log("Fetching roles for user:", user.id);
         
-        // Fetch roles directly
-        const { data: rolesData, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-          
-        if (rolesError) {
-          console.error("Error fetching user roles:", rolesError);
-          setRoles([]);
-          setIsAdminUser(false);
-        } else {
-          const userRoles: UserRole[] = rolesData ? 
-            rolesData.map((item: any) => item.role as UserRole) : [];
+        // Run two checks in parallel for better reliability
+        const [rolesPromise, adminCheckPromise] = await Promise.allSettled([
+          // Direct query for roles
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id),
+            
+          // Check if user is admin using RPC
+          supabase.rpc('check_admin_role', { user_id: user.id })
+        ]) as [SupabaseSettledResult, SupabaseSettledResult];
+        
+        // Process roles results
+        if (rolesPromise.status === 'fulfilled' && !rolesPromise.value.error) {
+          const userRoles: UserRole[] = rolesPromise.value.data ? 
+            rolesPromise.value.data.map((item: any) => item.role as UserRole) : [];
           
           console.log("Parsed user roles:", userRoles);
           setRoles(userRoles);
           
           // Set admin status from roles
           const adminStatus = userRoles.includes('office_staff');
-          console.log("Admin status determined from roles:", adminStatus);
-          setIsAdminUser(adminStatus);
+          if (adminStatus) {
+            console.log("Admin status determined from roles:", true);
+            setIsAdminUser(true);
+          }
+        } 
+        else if (rolesPromise.status === 'fulfilled' && rolesPromise.value.error) {
+          console.error("Error fetching user roles:", rolesPromise.value.error);
+        }
+        
+        // Process admin check results
+        if (adminCheckPromise.status === 'fulfilled' && !adminCheckPromise.value.error) {
+          const adminStatus = !!adminCheckPromise.value.data;
+          console.log("Admin check via RPC:", adminStatus);
+          if (adminStatus) {
+            setIsAdminUser(true);
+          }
+        } 
+        else if (adminCheckPromise.status === 'fulfilled' && adminCheckPromise.value.error) {
+          console.error("RPC admin check failed:", adminCheckPromise.value.error);
         }
       } else {
         console.log("No user found, clearing roles");
@@ -70,21 +97,7 @@ export function useRoleAuth() {
   // Initial fetch and auth state change subscription
   useEffect(() => {
     console.log("useRoleAuth hook initialized");
-    
-    // Get initial user session
-    const initializeUserSession = async () => {
-      console.log("Initializing user session in useRoleAuth");
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) {
-        console.log("Found active session, fetching user roles");
-        fetchUserRoles();
-      } else {
-        console.log("No active session found, skipping role fetch");
-        setIsLoading(false);
-      }
-    };
-    
-    initializeUserSession();
+    fetchUserRoles();
 
     // Listen for auth state changes and update roles accordingly
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -99,7 +112,6 @@ export function useRoleAuth() {
         setRoles([]);
         setIsAdminUser(false);
         setUserId(null);
-        setIsLoading(false);
       }
     });
 
@@ -112,17 +124,6 @@ export function useRoleAuth() {
   const hasRole = useCallback((role: UserRole): boolean => {
     return roles.includes(role);
   }, [roles]);
-
-  // Debugging output
-  useEffect(() => {
-    console.log("useRoleAuth state updated:", {
-      roles,
-      isAdmin: isAdminUser,
-      isLoading,
-      userId,
-      error: error ? error.message : null
-    });
-  }, [roles, isAdminUser, isLoading, userId, error]);
 
   return {
     roles,
