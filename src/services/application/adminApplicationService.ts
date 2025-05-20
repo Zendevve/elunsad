@@ -19,11 +19,7 @@ export const adminApplicationService = {
           created_at,
           updated_at,
           admin_notes,
-          business_information:business_information(*),
-          owner_information:owner_information(*),
-          business_operations:business_operations(*),
-          business_lines:business_lines(*),
-          declarations:declarations(*)
+          business_information(*)
         `)
         .order('submission_date', { ascending: false });
       
@@ -33,7 +29,7 @@ export const adminApplicationService = {
         throw error;
       }
       
-      console.log(`Applications data: Found ${data?.length || 0} applications`);
+      console.log(`Applications data: Found ${data?.length || 0} applications`, data);
       return data || [];
     } catch (error) {
       console.error('Error in getAllApplications:', error);
@@ -56,11 +52,7 @@ export const adminApplicationService = {
           created_at,
           updated_at,
           admin_notes,
-          business_information:business_information(*),
-          owner_information:owner_information(*),
-          business_operations:business_operations(*),
-          business_lines:business_lines(*),
-          declarations:declarations(*)
+          business_information(*)
         `)
         .eq('application_status', status)
         .order('submission_date', { ascending: false });
@@ -71,7 +63,7 @@ export const adminApplicationService = {
         throw error;
       }
       
-      console.log(`Applications with status ${status}: Found ${data?.length || 0} applications`);
+      console.log(`Applications with status ${status}: Found ${data?.length || 0} applications`, data);
       return data || [];
     } catch (error) {
       console.error(`Error in getApplicationsByStatus for ${status}:`, error);
@@ -105,11 +97,11 @@ export const adminApplicationService = {
           created_at,
           updated_at,
           admin_notes,
-          business_information:business_information(*),
-          owner_information:owner_information(*),
-          business_operations:business_operations(*),
-          business_lines:business_lines(*),
-          declarations:declarations(*)
+          business_information(*),
+          owner_information(*),
+          business_operations(*),
+          business_lines(*),
+          declarations(*)
         `)
         .eq('id', id)
         .single();
@@ -120,7 +112,7 @@ export const adminApplicationService = {
         throw error;
       }
       
-      console.log('Application details retrieved successfully');
+      console.log('Application details retrieved successfully', data);
       return data;
     } catch (error) {
       console.error('Error in getApplicationDetails:', error);

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 
@@ -72,42 +71,25 @@ export const isAdmin = async (): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    // Run two parallel checks to improve reliability
-    const [directQuery, rpcQuery] = await Promise.allSettled([
-      // Direct query to user_roles table (works now that RLS is fixed)
-      supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', user.user.id)
-        .eq('role', 'office_staff')
-        .maybeSingle(),
-      
-      // RPC to security definer function as a backup
-      supabase.rpc('check_admin_role', { user_id: user.user.id })
-    ]) as [SupabaseSettledResult, SupabaseSettledResult];
+    console.log("Checking admin status for user ID:", user.user.id);
     
-    // Check results from direct query
-    if (directQuery.status === 'fulfilled' && !directQuery.value.error) {
-      const isAdminDirect = !!directQuery.value.data;
-      console.log("Admin check via direct query:", isAdminDirect);
-      if (isAdminDirect) return true;
-    }
-    else if (directQuery.status === 'fulfilled' && directQuery.value.error) {
-      console.error("Direct admin query failed:", directQuery.value.error);
+    // Use direct query to check if user has admin role
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', user.user.id)
+      .eq('role', 'office_staff')
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error checking admin role:", error);
+      return false;
     }
     
-    // Check results from RPC query
-    if (rpcQuery.status === 'fulfilled' && !rpcQuery.value.error) {
-      const isAdminRPC = !!rpcQuery.value.data;
-      console.log("Admin check via RPC:", isAdminRPC);
-      return isAdminRPC;
-    } 
-    else if (rpcQuery.status === 'fulfilled' && rpcQuery.value.error) {
-      console.error("RPC admin query failed:", rpcQuery.value.error);
-    }
+    const hasAdminRole = !!data;
+    console.log("Admin role check result:", hasAdminRole);
     
-    // If both methods failed, return false
-    return false;
+    return hasAdminRole;
   } catch (error) {
     console.error("Error in isAdmin check:", error);
     return false;

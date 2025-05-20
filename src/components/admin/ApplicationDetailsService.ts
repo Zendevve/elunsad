@@ -6,7 +6,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
   try {
     console.log("Fetching full application details for:", applicationId);
     
-    // Fetch the application record with simple column selection
+    // Fetch the application record with explicit column selection
     const { data: application, error: appError } = await supabase
       .from('applications')
       .select('id, application_type, application_status, submission_date, user_id, created_at, updated_at, admin_notes')

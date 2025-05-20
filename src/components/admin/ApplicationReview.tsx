@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
 import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search, RefreshCw } from "lucide-react";
 import { useRoleAuth } from "@/hooks/useRoleAuth";
+import { checkSupabaseConnection } from "@/utils/supabaseUtils";
 
 interface Application {
   id: string;
@@ -37,19 +38,51 @@ const ApplicationReview = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useRoleAuth();
 
   useEffect(() => {
+    async function checkConnection() {
+      try {
+        const isConnected = await checkSupabaseConnection();
+        if (!isConnected) {
+          setConnectionError("Could not connect to database. Please check your connection.");
+          toast({
+            variant: "destructive",
+            title: "Connection Error",
+            description: "Could not connect to database. Please check your connection."
+          });
+        }
+      } catch (error) {
+        console.error("Connection check failed:", error);
+      }
+    }
+    
+    checkConnection();
+  }, [toast]);
+
+  useEffect(() => {
+    console.log("ApplicationReview - useEffect triggered with activeTab:", activeTab);
+    console.log("ApplicationReview - isAdmin status:", isAdmin);
+    
     if (isAdmin) {
       fetchApplications();
+    } else {
+      console.warn("User does not have admin privileges");
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You do not have permission to view applications."
+      });
     }
   }, [activeTab, isAdmin]);
 
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching applications with status:", activeTab);
       let data;
       
       if (activeTab === "all") {
@@ -58,6 +91,7 @@ const ApplicationReview = () => {
         data = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
       }
       
+      console.log("Fetched applications data:", data);
       setApplications(data);
       setFilteredApplications(data);
       console.log(`Fetched ${data?.length || 0} applications with status: ${activeTab}`);
@@ -68,6 +102,7 @@ const ApplicationReview = () => {
         title: "Failed to load applications",
         description: "There was a problem loading the applications. Please try again."
       });
+      setConnectionError("Failed to fetch applications. See console for details.");
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +118,11 @@ const ApplicationReview = () => {
       });
     } catch (error) {
       console.error("Error refreshing applications:", error);
+      toast({
+        variant: "destructive",
+        title: "Refresh Failed",
+        description: "Could not refresh application data."
+      });
     } finally {
       setRefreshing(false);
     }
@@ -179,6 +219,13 @@ const ApplicationReview = () => {
           </Button>
         </div>
       </div>
+
+      {connectionError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <p className="font-medium">Connection Error</p>
+          <p className="text-sm">{connectionError}</p>
+        </div>
+      )}
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>

@@ -17,7 +17,7 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
       return false;
     }
     
-    console.log("Supabase connection is working correctly");
+    console.log("Supabase connection is working correctly", data);
     return true;
   } catch (error) {
     console.error("Failed to connect to Supabase:", error);
