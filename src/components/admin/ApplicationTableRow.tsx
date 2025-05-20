@@ -1,11 +1,11 @@
 
-import React from "react";
+import React from 'react';
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import ApplicationStatusBadge from "./ApplicationStatusBadge";
-import { ApplicationStatus, ApplicationType } from "@/services/application/types";
 import { Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import ApplicationStatusBadge from './ApplicationStatusBadge';
+import { ApplicationType } from "@/services/application/types";
 
 interface ApplicationTableRowProps {
   id: string;
@@ -13,58 +13,62 @@ interface ApplicationTableRowProps {
   ownerName: string | null;
   applicationType: ApplicationType;
   submissionDate: string | null;
-  applicationStatus: ApplicationStatus;
+  applicationStatus: string;
 }
 
-const ApplicationTableRow: React.FC<ApplicationTableRowProps> = ({
+const ApplicationTableRow = ({
   id,
   businessName,
   ownerName,
   applicationType,
   submissionDate,
   applicationStatus
-}) => {
+}: ApplicationTableRowProps) => {
+  const navigate = useNavigate();
+  
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
 
-  const truncateId = (id: string) => {
-    return id.substring(0, 8) + "...";
+  const getApplicationTypeLabel = (type: ApplicationType) => {
+    switch (type) {
+      case "newApplication":
+        return "New Business";
+      case "renewalApplication":
+        return "Renewal";
+      case "amendmentApplication":
+        return "Amendment";
+      default:
+        return type;
+    }
   };
-
-  // Get current tab from application status
-  const currentTab = applicationStatus;
+  
+  const viewApplicationDetails = (id: string) => {
+    navigate(`/admin/applications/${id}`);
+  };
 
   return (
     <TableRow>
-      <TableCell className="font-mono text-xs">
-        {truncateId(id)}
+      <TableCell className="font-medium">{id.substring(0, 8)}...</TableCell>
+      <TableCell>{businessName || "-"}</TableCell>
+      <TableCell>{ownerName || "-"}</TableCell>
+      <TableCell>
+        {getApplicationTypeLabel(applicationType)}
+      </TableCell>
+      <TableCell>{formatDate(submissionDate)}</TableCell>
+      <TableCell>
+        <ApplicationStatusBadge status={applicationStatus as any} />
       </TableCell>
       <TableCell>
-        {businessName || <span className="text-gray-400 italic">Unnamed Business</span>}
-      </TableCell>
-      <TableCell>
-        {ownerName || <span className="text-gray-400 italic">Unknown</span>}
-      </TableCell>
-      <TableCell>
-        {applicationType === "newApplication" ? "New Application" : "Renewal"}
-      </TableCell>
-      <TableCell>
-        {formatDate(submissionDate)}
-      </TableCell>
-      <TableCell>
-        <ApplicationStatusBadge status={applicationStatus} />
-      </TableCell>
-      <TableCell>
-        <Button variant="ghost" size="sm" asChild>
-          <Link 
-            to={`/admin/applications/${id}`}
-            state={{ fromTab: currentTab }}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            View
-          </Link>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => viewApplicationDetails(id)}
+          className="flex items-center"
+        >
+          <Eye className="h-4 w-4 mr-1" />
+          View
         </Button>
       </TableCell>
     </TableRow>

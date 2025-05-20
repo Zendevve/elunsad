@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationData } from "./types";
-import { logDatabaseError, forceUpdateApplicationStatus } from "@/utils/supabaseUtils";
+import { logDatabaseError } from "@/utils/supabaseUtils";
 import { ApplicationListItem } from "./adminApplicationTypes";
 
 export const adminApplicationService = {
@@ -147,57 +148,23 @@ export const adminApplicationService = {
   async updateApplicationStatus(id: string, status: ApplicationStatus, adminNotes?: string) {
     try {
       console.log(`Updating application ${id} status to ${status}`);
-      console.log('Current user:', await supabase.auth.getUser());
-      
-      // Log role information for debugging
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-      
-      console.log('User roles:', roleData, roleError);
-      
-      // Add the role parameter to the RPC call to ensure admin access
-      const updatePayload: Record<string, any> = { 
-        application_status: status
-      };
-      
-      if (adminNotes !== undefined) {
-        updatePayload.admin_notes = adminNotes;
-      }
-      
       const { data, error } = await supabase
         .from('applications')
-        .update(updatePayload)
+        .update({ 
+          application_status: status,
+          admin_notes: adminNotes
+        })
         .eq('id', id)
-        .select();
+        .select()
+        .single();
       
       if (error) {
         console.error('SQL Error updating application status:', error);
         logDatabaseError('updateApplicationStatus', error);
-        
-        // Additional debugging for RLS policies
-        console.log('Update payload:', updatePayload);
-        
-        // Try a fallback method using direct function call if direct update fails
-        if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
-          console.log('Attempting fallback update via direct function...');
-          
-          // Use the forceUpdateApplicationStatus utility instead of RPC
-          const forcedUpdateResult = await forceUpdateApplicationStatus(id, status, adminNotes);
-          
-          if (!forcedUpdateResult) {
-            throw new Error('Forced update failed');
-          }
-          
-          console.log('Application status updated via forced update:', forcedUpdateResult);
-          return forcedUpdateResult;
-        }
-        
         throw error;
       }
       
-      console.log('Application status updated successfully:', data);
+      console.log('Application status updated successfully');
       return data;
     } catch (error) {
       console.error('Error updating application status:', error);

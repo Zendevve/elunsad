@@ -11,21 +11,15 @@ const Administration = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Initialize tab based on URL hash if present and handle state from navigation
+  // Initialize tab based on URL hash if present
   useEffect(() => {
-    // Check location state for application status updates
-    const locationState = location.state as { refreshData?: boolean, activeTab?: string } | undefined;
-    
-    if (locationState?.activeTab) {
-      console.log(`Switching to tab from state: ${locationState.activeTab}`);
-      setActiveTab("applications");
-    } else if (location.hash) {
+    if (location.hash) {
       const hash = location.hash.substring(1); // Remove the # character
       if (["users", "applications", "logs", "settings"].includes(hash)) {
         setActiveTab(hash);
       }
     }
-  }, [location.hash, location.state]);
+  }, [location.hash]);
 
   // Update URL hash when changing tabs
   const handleTabChange = (value: string) => {
