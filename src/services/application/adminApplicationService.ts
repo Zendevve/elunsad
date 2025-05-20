@@ -93,7 +93,7 @@ export const adminApplicationService = {
           application_type,
           application_status,
           admin_notes,
-          applications.user_id,
+          user_id,
           business_information:business_information!left(id, application_id, business_name, trade_name, registration_number, tin_number, ownership_type, email_address, mobile_no),
           owner_information:owner_information!left(id, application_id, surname, given_name, middle_name, suffix, nationality),
           business_operations:business_operations!left(id, application_id, business_area, capitalization),
@@ -103,7 +103,16 @@ export const adminApplicationService = {
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching application details:', error);
+        throw error;
+      }
+      
+      // Make sure we're returning a valid object that matches the return type
+      if (!data) {
+        throw new Error(`Application with ID ${id} not found`);
+      }
+      
       console.log('Application details:', data);
       return data;
     } catch (error) {
