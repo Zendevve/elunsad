@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
-import { logDatabaseError } from "./supabaseUtils";
 
 // Define types for Promise.allSettled results
 type SupabaseQueryResult = { data: any; error?: any };
@@ -18,16 +17,16 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    // Query user_roles table with explicit column reference
+    // Simply query the user_roles table directly since we've fixed the RLS policies
     const { data, error } = await supabase
       .from('user_roles')
       .select('id')
-      .eq('user_roles.user_id', user.user.id)
+      .eq('user_id', user.user.id)
       .eq('role', role)
       .maybeSingle();
     
     if (error) {
-      logDatabaseError("hasRole", error, { role, userId: user.user.id });
+      console.error("Error checking role:", error);
       return false;
     }
     
@@ -46,14 +45,14 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return [];
     
-    // Use explicit column reference in query
+    // Use direct query to get roles since RLS is fixed
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_roles.user_id', user.user.id);
+      .eq('user_id', user.user.id);
     
     if (error) {
-      logDatabaseError("getUserRoles", error, { userId: user.user.id });
+      console.error("Error getting user roles:", error);
       return [];
     }
     
@@ -75,11 +74,11 @@ export const isAdmin = async (): Promise<boolean> => {
     
     // Run two parallel checks to improve reliability
     const [directQuery, rpcQuery] = await Promise.allSettled([
-      // Direct query to user_roles table with explicit column reference
+      // Direct query to user_roles table (works now that RLS is fixed)
       supabase
         .from('user_roles')
         .select('id')
-        .eq('user_roles.user_id', user.user.id)
+        .eq('user_id', user.user.id)
         .eq('role', 'office_staff')
         .maybeSingle(),
       
@@ -94,7 +93,7 @@ export const isAdmin = async (): Promise<boolean> => {
       if (isAdminDirect) return true;
     }
     else if (directQuery.status === 'fulfilled' && directQuery.value.error) {
-      logDatabaseError("isAdmin", directQuery.value.error, { method: "direct query", userId: user.user.id });
+      console.error("Direct admin query failed:", directQuery.value.error);
     }
     
     // Check results from RPC query
@@ -104,7 +103,7 @@ export const isAdmin = async (): Promise<boolean> => {
       return isAdminRPC;
     } 
     else if (rpcQuery.status === 'fulfilled' && rpcQuery.value.error) {
-      logDatabaseError("isAdmin", rpcQuery.value.error, { method: "rpc", userId: user.user.id });
+      console.error("RPC admin query failed:", rpcQuery.value.error);
     }
     
     // If both methods failed, return false
@@ -129,7 +128,7 @@ export const addRoleToUser = async (userId: string, role: UserRole): Promise<boo
       });
     
     if (error) {
-      logDatabaseError("addRoleToUser", error, { userId, role });
+      console.error("Error adding role to user:", error);
       return false;
     }
     
@@ -145,7 +144,7 @@ export const addRoleToUser = async (userId: string, role: UserRole): Promise<boo
  */
 export const removeRoleFromUser = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
-    // Remove role using direct delete with explicit column reference
+    // Remove role using direct delete
     const { error } = await supabase
       .from('user_roles')
       .delete()
@@ -153,7 +152,7 @@ export const removeRoleFromUser = async (userId: string, role: UserRole): Promis
       .eq('role', role);
     
     if (error) {
-      logDatabaseError("removeRoleFromUser", error, { userId, role });
+      console.error("Error removing role from user:", error);
       return false;
     }
     
@@ -178,7 +177,7 @@ export const makeUserAdmin = async (userId: string): Promise<boolean> => {
       });
     
     if (error) {
-      logDatabaseError("makeUserAdmin", error, { userId });
+      console.error("Error making user admin:", error);
       return false;
     }
     

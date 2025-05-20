@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationData, BusinessInformationData, OwnerInformationData, BusinessOperationsData, BusinessLinesData, DeclarationData } from "@/services/application/types";
-import { logDatabaseError } from "@/utils/supabaseUtils";
 
 export const getApplicationFullDetails = async (applicationId: string) => {
   try {
@@ -10,21 +9,12 @@ export const getApplicationFullDetails = async (applicationId: string) => {
     // Fetch the application record
     const { data: application, error: appError } = await supabase
       .from('applications')
-      .select(`
-        id,
-        application_type,
-        application_status,
-        submission_date,
-        created_at,
-        updated_at,
-        user_id,
-        admin_notes
-      `)
+      .select('*')
       .eq('id', applicationId)
-      .maybeSingle();
+      .single();
     
     if (appError) {
-      logDatabaseError("getApplicationFullDetails", appError, { applicationId, section: "application" });
+      console.error("Error fetching application:", appError);
       throw appError;
     }
 
@@ -41,7 +31,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
       .maybeSingle();
     
     if (bizError) {
-      logDatabaseError("getApplicationFullDetails", bizError, { applicationId, section: "business_information" });
+      console.error("Error fetching business information:", bizError);
     }
     
     // Fetch related owner information
@@ -52,7 +42,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
       .maybeSingle();
     
     if (ownerError) {
-      logDatabaseError("getApplicationFullDetails", ownerError, { applicationId, section: "owner_information" });
+      console.error("Error fetching owner information:", ownerError);
     }
     
     // Fetch related business operations
@@ -63,7 +53,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
       .maybeSingle();
     
     if (opsError) {
-      logDatabaseError("getApplicationFullDetails", opsError, { applicationId, section: "business_operations" });
+      console.error("Error fetching business operations:", opsError);
     }
     
     // Fetch related business lines
@@ -73,7 +63,7 @@ export const getApplicationFullDetails = async (applicationId: string) => {
       .eq('application_id', applicationId);
     
     if (linesError) {
-      logDatabaseError("getApplicationFullDetails", linesError, { applicationId, section: "business_lines" });
+      console.error("Error fetching business lines:", linesError);
     }
     
     // Fetch declaration
@@ -84,21 +74,19 @@ export const getApplicationFullDetails = async (applicationId: string) => {
       .maybeSingle();
     
     if (declError) {
-      logDatabaseError("getApplicationFullDetails", declError, { applicationId, section: "declarations" });
+      console.error("Error fetching declaration:", declError);
     }
     
     // Fetch applicant profile details
-    const { data: profileData, error: profileError } = application ? await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('firstname, lastname, middlename, extension_name')
       .eq('id', application.user_id)
-      .maybeSingle() : { data: null, error: null };
+      .maybeSingle();
       
     if (profileError) {
-      logDatabaseError("getApplicationFullDetails", profileError, { userId: application?.user_id, section: "profiles" });
+      console.error("Error fetching user profile:", profileError);
     }
-    
-    console.log("Successfully fetched all application details for:", applicationId);
     
     return {
       application: application as ApplicationData,

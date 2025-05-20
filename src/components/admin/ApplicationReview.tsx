@@ -16,8 +16,7 @@ import {
 import { adminApplicationService } from "@/services/application/adminApplicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search, RefreshCw } from "lucide-react";
-import { checkDatabaseHealth } from "@/utils/supabaseUtils";
+import { FileText, Eye, CheckCircle, XCircle, AlertCircle, Search } from "lucide-react";
 
 interface Application {
   id: string;
@@ -36,55 +35,15 @@ const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingError, setLoadingError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchApplications();
   }, [activeTab]);
-  
-  const checkConnection = async () => {
-    try {
-      setIsLoading(true);
-      setLoadingError(null);
-      const health = await checkDatabaseHealth();
-      
-      const allHealthy = Object.values(health).every((table: any) => table.accessible);
-      
-      if (allHealthy) {
-        toast({
-          title: "Database connection successful",
-          description: "The connection to all tables is working correctly.",
-          variant: "default"
-        });
-      } else {
-        const failedTables = Object.entries(health)
-          .filter(([_, value]: [string, any]) => !value.accessible)
-          .map(([table]) => table)
-          .join(", ");
-          
-        toast({
-          title: "Database connection issues",
-          description: `Problems connecting to tables: ${failedTables}`,
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Connection check failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const fetchApplications = async () => {
     setIsLoading(true);
-    setLoadingError(null);
-    
     try {
       let data;
       
@@ -97,23 +56,12 @@ const ApplicationReview = () => {
       setApplications(data);
       setFilteredApplications(data);
       console.log("Fetched applications with types:", data?.map(app => app.application_type));
-      
-      // Show success notification
-      if (data.length > 0) {
-        toast({
-          title: "Applications loaded",
-          description: `Successfully loaded ${data.length} applications.`,
-        });
-      }
     } catch (error) {
       console.error("Error fetching applications:", error);
-      
-      setLoadingError(error.message || "Failed to load applications");
-      
       toast({
         variant: "destructive",
         title: "Failed to load applications",
-        description: "There was a problem loading the applications. Please check the console for details."
+        description: "There was a problem loading the applications. Please try again."
       });
     } finally {
       setIsLoading(false);
@@ -203,27 +151,8 @@ const ApplicationReview = () => {
           <Button 
             variant="outline" 
             onClick={fetchApplications}
-            disabled={isLoading}
           >
-            {isLoading ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </>
-            )}
-          </Button>
-          
-          <Button
-            variant="secondary"
-            onClick={checkConnection}
-            disabled={isLoading}
-          >
-            Check Connection
+            Refresh
           </Button>
         </div>
       </div>
@@ -240,23 +169,8 @@ const ApplicationReview = () => {
 
         <TabsContent value={activeTab} className="mt-4">
           {isLoading ? (
-            <div className="flex flex-col justify-center items-center h-64">
-              <RefreshCw className="h-12 w-12 animate-spin text-primary mb-4" />
-              <p className="text-lg">Loading applications...</p>
-            </div>
-          ) : loadingError ? (
-            <div className="bg-red-50 rounded-lg border border-red-200 p-8 text-center">
-              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="h-6 w-6 text-red-500" />
-              </div>
-              <h3 className="text-lg font-medium text-red-900 mb-2">Error loading applications</h3>
-              <p className="text-red-700 mb-4">{loadingError}</p>
-              <Button onClick={fetchApplications} variant="outline" className="mr-2">
-                Try Again
-              </Button>
-              <Button onClick={checkConnection} variant="secondary">
-                Check Connection
-              </Button>
+            <div className="flex justify-center items-center h-64">
+              <p>Loading applications...</p>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">

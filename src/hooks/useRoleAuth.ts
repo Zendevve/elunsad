@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
-import { logDatabaseError } from "@/utils/supabaseUtils";
 
 // Define types for Promise.allSettled results
 type SupabaseQueryResult = { data: any; error?: any };
@@ -39,11 +38,11 @@ export function useRoleAuth() {
         
         // Run two checks in parallel for better reliability
         const [rolesPromise, adminCheckPromise] = await Promise.allSettled([
-          // Direct query for roles with explicit column reference
+          // Direct query for roles
           supabase
             .from('user_roles')
             .select('role')
-            .eq('user_roles.user_id', user.id),
+            .eq('user_id', user.id),
             
           // Check if user is admin using RPC
           supabase.rpc('check_admin_role', { user_id: user.id })
@@ -65,7 +64,7 @@ export function useRoleAuth() {
           }
         } 
         else if (rolesPromise.status === 'fulfilled' && rolesPromise.value.error) {
-          logDatabaseError("useRoleAuth.fetchUserRoles", rolesPromise.value.error, { userId: user.id });
+          console.error("Error fetching user roles:", rolesPromise.value.error);
         }
         
         // Process admin check results
@@ -77,7 +76,7 @@ export function useRoleAuth() {
           }
         } 
         else if (adminCheckPromise.status === 'fulfilled' && adminCheckPromise.value.error) {
-          logDatabaseError("useRoleAuth.fetchUserRoles.rpcAdminCheck", adminCheckPromise.value.error, { userId: user.id });
+          console.error("RPC admin check failed:", adminCheckPromise.value.error);
         }
       } else {
         console.log("No user found, clearing roles");
