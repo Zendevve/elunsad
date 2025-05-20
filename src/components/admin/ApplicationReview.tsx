@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { adminApplicationService } from "@/services/applicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
-import { FileText, Eye, Search, RefreshCcw } from "lucide-react";
+import { FileText, Eye, Search, RefreshCcw, AlertCircle, Check } from "lucide-react";
 
 interface Application {
   id: string;
@@ -31,6 +31,7 @@ const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("submitted");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -40,6 +41,7 @@ const ApplicationReview = () => {
 
   const fetchApplications = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       console.log(`Fetching applications for tab: ${activeTab}`);
       let data;
@@ -55,13 +57,14 @@ const ApplicationReview = () => {
       if (!data || data.length === 0) {
         console.log(`No applications found for status: ${activeTab}`);
       } else {
-        console.log("Sample application data:", data[0]?.id);
+        console.log("Sample application data:", data[0]?.id, data[0]?.application_status);
       }
       
       setApplications(data || []);
       setFilteredApplications(data || []);
     } catch (error) {
       console.error("Error fetching applications:", error);
+      setError("Failed to load applications. See console for details.");
       toast({
         variant: "destructive",
         title: "Failed to load applications",
@@ -166,6 +169,24 @@ const ApplicationReview = () => {
         </div>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 p-4 rounded-md flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+          <div>
+            <h3 className="text-sm font-medium text-red-800">Error loading applications</h3>
+            <p className="text-sm text-red-700">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchApplications} 
+              className="mt-2 text-red-700"
+            >
+              Try again
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Tabs defaultValue="submitted" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="all">All</TabsTrigger>
@@ -195,61 +216,79 @@ const ApplicationReview = () => {
                   ? "There are no applications in the system yet."
                   : `There are no applications with the status "${activeTab.replace('_', ' ')}".`}
               </p>
-              <Button 
-                variant="outline" 
-                onClick={fetchApplications}
-                className="flex items-center gap-1 mx-auto"
-              >
-                <RefreshCcw className="h-4 w-4" />
-                Try Again
-              </Button>
+              <div className="flex flex-col gap-3 items-center">
+                <Button 
+                  variant="outline" 
+                  onClick={fetchApplications}
+                  className="flex items-center gap-1"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Try Again
+                </Button>
+                
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setActiveTab("all")}
+                  className="text-primary"
+                >
+                  View all applications instead
+                </Button>
+              </div>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Application ID</TableHead>
-                  <TableHead>Business Name</TableHead>
-                  <TableHead>Owner</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredApplications.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell className="font-medium">{app.id.substring(0, 8)}...</TableCell>
-                    <TableCell>{app.business_information?.business_name || "-"}</TableCell>
-                    <TableCell>
-                      {app.owner_information ? 
-                        `${app.owner_information.surname || ''}, ${app.owner_information.given_name || ''}`.trim().replace(/^,\s*/, '') : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {getApplicationTypeLabel(app.application_type)}
-                    </TableCell>
-                    <TableCell>{formatDate(app.submission_date)}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusBadgeColor(app.application_status)}>
-                        {app.application_status.replace("_", " ")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => viewApplicationDetails(app.id)}
-                        className="flex items-center"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                    </TableCell>
+            <div>
+              <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-4 flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Found <strong>{filteredApplications.length}</strong> application(s)</span>
+              </div>
+              
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Application ID</TableHead>
+                    <TableHead>Business Name</TableHead>
+                    <TableHead>Owner</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Submitted</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredApplications.map((app) => (
+                    <TableRow key={app.id}>
+                      <TableCell className="font-medium">{app.id.substring(0, 8)}...</TableCell>
+                      <TableCell>{app.business_information?.business_name || "-"}</TableCell>
+                      <TableCell>
+                        {app.owner_information ? 
+                          `${app.owner_information.surname || ''}, ${app.owner_information.given_name || ''}`.trim().replace(/^,\s*/, '') : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {getApplicationTypeLabel(app.application_type)}
+                      </TableCell>
+                      <TableCell>{formatDate(app.submission_date)}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadgeColor(app.application_status)}>
+                          {app.application_status.replace("_", " ")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => viewApplicationDetails(app.id)}
+                          className="flex items-center"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </TabsContent>
       </Tabs>

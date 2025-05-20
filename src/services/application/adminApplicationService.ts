@@ -11,7 +11,13 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          created_at,
+          user_id,
+          admin_notes,
           business_information:business_information!left(*),
           owner_information:owner_information!left(*),
           business_operations:business_operations!left(*),
@@ -27,6 +33,12 @@ export const adminApplicationService = {
       }
       
       console.log('Applications data retrieved:', data?.length || 0);
+      if (data && data.length > 0) {
+        console.log('Sample application data:', data[0].id, data[0].application_status);
+      } else {
+        console.log('No applications found in database');
+      }
+      
       return data || [];
     } catch (error) {
       console.error('Error fetching all applications:', error);
@@ -41,7 +53,13 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          created_at, 
+          user_id,
+          admin_notes,
           business_information:business_information!left(*),
           owner_information:owner_information!left(*),
           business_operations:business_operations!left(*),
@@ -58,6 +76,10 @@ export const adminApplicationService = {
       }
       
       console.log(`Retrieved ${data?.length || 0} applications with status ${status}`);
+      if (data && data.length > 0) {
+        console.log('Sample application data:', data[0].id, data[0].application_status);
+      }
+      
       return data || [];
     } catch (error) {
       console.error(`Error fetching ${status} applications:`, error);
@@ -83,7 +105,13 @@ export const adminApplicationService = {
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          *,
+          id,
+          application_type,
+          application_status,
+          submission_date,
+          created_at,
+          user_id,
+          admin_notes,
           business_information:business_information!left(*),
           owner_information:owner_information!left(*),
           business_operations:business_operations!left(*),
@@ -158,6 +186,7 @@ export const adminApplicationService = {
       }
       
       counts.total = totalCount || 0;
+      console.log(`Total applications count: ${counts.total}`);
       
       // Get counts for each status
       for (const status of statuses) {
@@ -173,6 +202,7 @@ export const adminApplicationService = {
         }
         
         counts[status] = count || 0;
+        console.log(`${status} applications count: ${counts[status]}`);
       }
       
       return counts;
