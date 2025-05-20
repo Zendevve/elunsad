@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -28,7 +27,7 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
 /**
  * Utility to log database errors with more context
  */
-export const logDatabaseError = (operation: string, error: any, data?: any) => {
+export const logDatabaseError = async (operation: string, error: any, data?: any) => {
   console.error(`Database error during ${operation}:`, error);
   console.error("Error details:", {
     message: error.message,
@@ -62,4 +61,28 @@ export const extractFilePathFromUrl = (url: string): { bucket: string, path: str
     console.error("Error extracting file path from URL:", error);
     return null;
   }
+};
+
+/**
+ * Clean up Supabase auth state to prevent authentication issues
+ */
+export const cleanupAuthState = () => {
+  // Remove standard auth tokens
+  localStorage.removeItem('supabase.auth.token');
+  
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+  
+  console.log("Auth state cleanup completed");
 };

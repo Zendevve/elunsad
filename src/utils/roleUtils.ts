@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 
@@ -9,34 +10,7 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    if (role === 'office_staff') {
-      // Use the security definer function for admin check
-      const { data, error } = await supabase
-        .rpc('check_admin_role', { user_id: user.user.id });
-        
-      if (error) {
-        console.error("Error checking role with security definer function:", error);
-        
-        // Fallback to direct query
-        const fallbackCheck = await supabase
-          .from('user_roles')
-          .select('id')
-          .eq('user_id', user.user.id)
-          .eq('role', role)
-          .maybeSingle();
-          
-        if (fallbackCheck.error) {
-          console.error("Error in fallback role check:", fallbackCheck.error);
-          return false;
-        }
-        
-        return !!fallbackCheck.data;
-      }
-      
-      return !!data;
-    }
-    
-    // For other roles, use direct query
+    // Simply query the user_roles table directly since we've fixed the RLS policies
     const { data, error } = await supabase
       .from('user_roles')
       .select('id')
@@ -64,7 +38,7 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return [];
     
-    // Use direct query to get roles
+    // Use direct query to get roles since RLS is fixed
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -84,23 +58,53 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
 };
 
 /**
- * Check if the current user is an admin
+ * Check if the current user is an admin with improved reliability
  */
 export const isAdmin = async (): Promise<boolean> => {
-  // Use the security definer function for better performance and reliability
-  const { data: user } = await supabase.auth.getUser();
-  if (!user.user) return false;
-  
-  const { data, error } = await supabase
-    .rpc('check_admin_role', { user_id: user.user.id });
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return false;
     
-  if (error) {
-    console.error("Error checking admin role:", error);
-    // Fallback to the hasRole function
-    return await hasRole('office_staff');
+    // Run two parallel checks to improve reliability
+    const [directQuery, rpcQuery] = await Promise.allSettled([
+      // Direct query to user_roles table (works now that RLS is fixed)
+      supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', user.user.id)
+        .eq('role', 'office_staff')
+        .maybeSingle(),
+      
+      // RPC to security definer function as a backup
+      supabase.rpc('check_admin_role', { user_id: user.user.id })
+    ]);
+    
+    // Check results from direct query
+    if (directQuery.status === 'fulfilled' && !directQuery.value.error) {
+      const isAdminDirect = !!directQuery.value.data;
+      console.log("Admin check via direct query:", isAdminDirect);
+      if (isAdminDirect) return true;
+    }
+    else if (directQuery.status === 'fulfilled' && directQuery.value.error) {
+      console.error("Direct admin query failed:", directQuery.value.error);
+    }
+    
+    // Check results from RPC query
+    if (rpcQuery.status === 'fulfilled' && !('error' in rpcQuery.value)) {
+      const isAdminRPC = !!rpcQuery.value.data;
+      console.log("Admin check via RPC:", isAdminRPC);
+      return isAdminRPC;
+    } 
+    else if (rpcQuery.status === 'fulfilled' && 'error' in rpcQuery.value) {
+      console.error("RPC admin query failed:", rpcQuery.value.error);
+    }
+    
+    // If both methods failed, return false
+    return false;
+  } catch (error) {
+    console.error("Error in isAdmin check:", error);
+    return false;
   }
-  
-  return !!data;
 };
 
 /**

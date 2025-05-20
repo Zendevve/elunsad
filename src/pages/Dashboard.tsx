@@ -1,6 +1,5 @@
-
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Bell, 
   FileText, 
@@ -20,12 +19,37 @@ import {
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import useRoleAuth from "@/hooks/useRoleAuth";
 
 const Dashboard = () => {
   // Get current date
   const currentDate = new Date();
   const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const formattedDate = currentDate.toLocaleDateString('en-US', dateOptions as Intl.DateTimeFormatOptions);
+  
+  // Add role check and navigation
+  const { isAdmin, isLoading } = useRoleAuth();
+  const navigate = useNavigate();
+  
+  // Auto-redirect admin users to admin dashboard
+  useEffect(() => {
+    if (isAdmin && !isLoading) {
+      console.log("Admin user detected, redirecting to admin dashboard");
+      navigate("/admin-dashboard");
+    }
+  }, [isAdmin, isLoading, navigate]);
+  
+  // Show loading state while checking roles
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="w-12 h-12 border-4 border-t-4 border-primary rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="p-6">

@@ -10,7 +10,7 @@ export function useRoleAuth() {
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  // Fetch user roles function that can be called as needed
+  // Improved fetch user roles function with better error handling
   const fetchUserRoles = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -29,51 +29,47 @@ export function useRoleAuth() {
         
         console.log("Fetching roles for user:", user.id);
         
-        // Check admin status first using the security definer function
-        const adminCheckPromise = supabase.rpc('check_admin_role', { user_id: user.id });
-        
-        // Also fetch all roles for the user
-        const rolesPromise = supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-        
-        // Wait for both promises to resolve
-        const [adminCheck, roleData] = await Promise.all([adminCheckPromise, rolesPromise]);
-        
-        // Handle admin check result
-        if (adminCheck.error) {
-          console.error("Error checking admin role:", adminCheck.error);
-          // Don't throw, we'll still try to use the roleData
-        } else {
-          console.log("Admin check result:", adminCheck.data);
-          setIsAdminUser(!!adminCheck.data);
-        }
-        
-        // Handle role data
-        if (roleData.error) {
-          console.error("Error fetching user roles:", roleData.error);
-          // Only throw if both checks failed
-          if (adminCheck.error) {
-            throw roleData.error;
-          }
-        } else {
-          console.log("User role data received:", roleData.data);
-          
-          // Extract roles from the data
-          const userRoles: UserRole[] = roleData.data ? 
-            roleData.data.map(item => item.role as UserRole) : [];
+        // Run two checks in parallel for better reliability
+        const [rolesPromise, adminCheckPromise] = await Promise.allSettled([
+          // Direct query for roles
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id),
             
-          console.log("Parsed user roles:", userRoles);
+          // Check if user is admin using RPC
+          supabase.rpc('check_admin_role', { user_id: user.id })
+        ]);
+        
+        // Process roles results
+        if (rolesPromise.status === 'fulfilled' && !rolesPromise.value.error) {
+          const userRoles: UserRole[] = rolesPromise.value.data ? 
+            rolesPromise.value.data.map(item => item.role as UserRole) : [];
           
+          console.log("Parsed user roles:", userRoles);
           setRoles(userRoles);
           
-          // If admin check failed, determine from roles
-          if (adminCheck.error) {
-            const adminStatus = userRoles.includes('office_staff');
-            console.log("Admin status determined from roles:", adminStatus);
-            setIsAdminUser(adminStatus);
+          // Set admin status from roles
+          const adminStatus = userRoles.includes('office_staff');
+          if (adminStatus) {
+            console.log("Admin status determined from roles:", true);
+            setIsAdminUser(true);
           }
+        } 
+        else if (rolesPromise.status === 'fulfilled' && rolesPromise.value.error) {
+          console.error("Error fetching user roles:", rolesPromise.value.error);
+        }
+        
+        // Process admin check results
+        if (adminCheckPromise.status === 'fulfilled' && !('error' in adminCheckPromise.value)) {
+          const adminStatus = !!adminCheckPromise.value.data;
+          console.log("Admin check via RPC:", adminStatus);
+          if (adminStatus) {
+            setIsAdminUser(true);
+          }
+        } 
+        else if (adminCheckPromise.status === 'fulfilled' && 'error' in adminCheckPromise.value) {
+          console.error("RPC admin check failed:", adminCheckPromise.value.error);
         }
       } else {
         console.log("No user found, clearing roles");
