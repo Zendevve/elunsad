@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 
@@ -10,7 +9,34 @@ export const hasRole = async (role: UserRole): Promise<boolean> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return false;
     
-    // Use a direct query to check user role
+    if (role === 'office_staff') {
+      // Use the security definer function for admin check
+      const { data, error } = await supabase
+        .rpc('check_admin_role', { user_id: user.user.id });
+        
+      if (error) {
+        console.error("Error checking role with security definer function:", error);
+        
+        // Fallback to direct query
+        const fallbackCheck = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', user.user.id)
+          .eq('role', role)
+          .maybeSingle();
+          
+        if (fallbackCheck.error) {
+          console.error("Error in fallback role check:", fallbackCheck.error);
+          return false;
+        }
+        
+        return !!fallbackCheck.data;
+      }
+      
+      return !!data;
+    }
+    
+    // For other roles, use direct query
     const { data, error } = await supabase
       .from('user_roles')
       .select('id')
@@ -61,7 +87,20 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
  * Check if the current user is an admin
  */
 export const isAdmin = async (): Promise<boolean> => {
-  return await hasRole('office_staff');
+  // Use the security definer function for better performance and reliability
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) return false;
+  
+  const { data, error } = await supabase
+    .rpc('check_admin_role', { user_id: user.user.id });
+    
+  if (error) {
+    console.error("Error checking admin role:", error);
+    // Fallback to the hasRole function
+    return await hasRole('office_staff');
+  }
+  
+  return !!data;
 };
 
 /**

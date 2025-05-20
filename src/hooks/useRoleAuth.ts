@@ -29,32 +29,52 @@ export function useRoleAuth() {
         
         console.log("Fetching roles for user:", user.id);
         
-        // Explicitly query user roles from the database
-        const { data: roleData, error: roleError } = await supabase
+        // Check admin status first using the security definer function
+        const adminCheckPromise = supabase.rpc('check_admin_role', { user_id: user.id });
+        
+        // Also fetch all roles for the user
+        const rolesPromise = supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id);
-          
-        if (roleError) {
-          console.error("Error fetching user roles:", roleError);
-          throw roleError;
+        
+        // Wait for both promises to resolve
+        const [adminCheck, roleData] = await Promise.all([adminCheckPromise, rolesPromise]);
+        
+        // Handle admin check result
+        if (adminCheck.error) {
+          console.error("Error checking admin role:", adminCheck.error);
+          // Don't throw, we'll still try to use the roleData
+        } else {
+          console.log("Admin check result:", adminCheck.data);
+          setIsAdminUser(!!adminCheck.data);
         }
         
-        console.log("User role data received:", roleData);
-        
-        // Extract roles from the data
-        const userRoles: UserRole[] = roleData ? 
-          roleData.map(item => item.role as UserRole) : [];
+        // Handle role data
+        if (roleData.error) {
+          console.error("Error fetching user roles:", roleData.error);
+          // Only throw if both checks failed
+          if (adminCheck.error) {
+            throw roleData.error;
+          }
+        } else {
+          console.log("User role data received:", roleData.data);
           
-        console.log("Parsed user roles:", userRoles);
-        
-        setRoles(userRoles);
-        
-        // Check if admin (office_staff role)
-        const adminStatus = userRoles.includes('office_staff');
-        console.log("Admin status determined:", adminStatus);
-        
-        setIsAdminUser(adminStatus);
+          // Extract roles from the data
+          const userRoles: UserRole[] = roleData.data ? 
+            roleData.data.map(item => item.role as UserRole) : [];
+            
+          console.log("Parsed user roles:", userRoles);
+          
+          setRoles(userRoles);
+          
+          // If admin check failed, determine from roles
+          if (adminCheck.error) {
+            const adminStatus = userRoles.includes('office_staff');
+            console.log("Admin status determined from roles:", adminStatus);
+            setIsAdminUser(adminStatus);
+          }
+        }
       } else {
         console.log("No user found, clearing roles");
         setRoles([]);
@@ -77,7 +97,7 @@ export function useRoleAuth() {
     fetchUserRoles();
 
     // Listen for auth state changes and update roles accordingly
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state change detected:", event);
       
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {

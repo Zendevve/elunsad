@@ -13,7 +13,7 @@ const AdminRoute: React.FC = () => {
   // To track if we should show the access denied toast
   const [showAccessDenied, setShowAccessDenied] = useState(false);
 
-  // Improved check for admin status with better error handling
+  // Check admin status using the security definer function
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
@@ -37,32 +37,49 @@ const AdminRoute: React.FC = () => {
         const userId = sessionData.session.user.id;
         console.log("Checking admin status for user:", userId);
         
-        // Direct query to check if user has office_staff role
+        // Use RPC to call our new security definer function
+        // This avoids the RLS recursion issues
         const { data, error } = await supabase
-          .from('user_roles')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('role', 'office_staff')
-          .maybeSingle();
+          .rpc('check_admin_role', { user_id: userId });
         
         if (error) {
           console.error("Error checking admin role:", error);
-          setIsAdmin(false);
+          
+          // Fallback to direct query if the RPC fails
+          // This is a backup in case the function call fails
+          const fallbackCheck = await supabase
+            .from('user_roles')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('role', 'office_staff')
+            .maybeSingle();
+            
+          if (fallbackCheck.error) {
+            console.error("Fallback check failed:", fallbackCheck.error);
+            setIsAdmin(false);
+          } else {
+            const hasAdminRole = !!fallbackCheck.data;
+            console.log("Admin status (fallback):", hasAdminRole);
+            setIsAdmin(hasAdminRole);
+            
+            if (!hasAdminRole) {
+              setShowAccessDenied(true);
+            }
+          }
           return;
         }
         
-        // User is admin if data exists
-        const hasAdminRole = !!data;
-        console.log("User admin status:", hasAdminRole);
-        setIsAdmin(hasAdminRole);
+        // data contains the boolean result from check_admin_role function
+        console.log("Admin status check result:", data);
+        setIsAdmin(data);
         
         // Set flag to show toast if not admin
-        if (!hasAdminRole) {
+        if (!data) {
           setShowAccessDenied(true);
         }
         
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        console.error("Unexpected error checking admin status:", error);
         setIsAdmin(false);
       }
     };
