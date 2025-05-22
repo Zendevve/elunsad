@@ -274,7 +274,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
           {getStatusBadge(application.application_status)}
           <Button
             variant="outline"
-            onClick={() => navigate('/admin/applications')}
+            onClick={() => navigate('/admin')}
             className="flex items-center"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
