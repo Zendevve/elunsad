@@ -1,17 +1,17 @@
-
 import React, { useState, useEffect } from "react";
-import { getApplicationFullDetails } from "./ApplicationDetailsService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, CheckCircle, XCircle, AlertCircle, Clock } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, AlertCircle, Clock, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { ApplicationData, ApplicationStatus, BusinessInformationData, OwnerInformationData, BusinessOperationsData, BusinessLinesData, DeclarationData } from "@/services/application/types";
+import { adminApplicationService } from "@/services/applicationService";
+import { getApplicationFullDetails } from "./ApplicationDetailsService";
+import { ApplicationData, ApplicationStatus } from "@/services/application/types";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ApplicationDetailsProps {
   applicationId: string;
@@ -20,13 +20,14 @@ interface ApplicationDetailsProps {
 const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [data, setData] = useState<{
     application: ApplicationData | null;
-    businessInformation: BusinessInformationData | null;
-    ownerInformation: OwnerInformationData | null;
-    businessOperations: BusinessOperationsData | null;
-    businessLines: BusinessLinesData[] | null;
-    declaration: DeclarationData | null;
+    businessInformation: any | null;
+    ownerInformation: any | null;
+    businessOperations: any | null;
+    businessLines: any[] | null;
+    declaration: any | null;
     profile: any | null;
   }>({
     application: null,
@@ -37,7 +38,10 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
     declaration: null,
     profile: null
   });
+  
+  const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const loadApplicationDetails = async () => {
@@ -46,8 +50,12 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         setError(null);
         
         const details = await getApplicationFullDetails(applicationId);
-        setData(details);
-      } catch (err) {
+        // Only update the state if the component is still mounted
+        setData({
+          ...details,
+          application: details.application as ApplicationData
+        });
+      } catch (err: any) {
         console.error("Error loading application details:", err);
         setError("Failed to load application details. Please try again later.");
         toast({
@@ -63,63 +71,75 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
     if (applicationId) {
       loadApplicationDetails();
     }
-  }, [applicationId]);
+  }, [applicationId, toast]);
 
   const handleUpdateStatus = async (status: ApplicationStatus) => {
     try {
-      const { error } = await supabase
-        .from('applications')
-        .update({ application_status: status })
-        .eq('id', applicationId);
+      setIsUpdating(true);
       
-      if (error) throw error;
+      // Get current notes to pass to the update function
+      const currentNotes = data.application?.admin_notes || '';
       
-      // Update local state
-      setData(prev => prev.application ? {
+      // Update the status in the database
+      const updatedApplication = await adminApplicationService.updateApplicationStatus(
+        applicationId, 
+        status, 
+        currentNotes
+      );
+      
+      // Update local state with the returned updated application
+      setData(prev => ({
         ...prev,
-        application: {
-          ...(prev.application as ApplicationData),
-          application_status: status
-        }
-      } : prev);
+        application: updatedApplication as ApplicationData
+      }));
+      
+      // Invalidate queries to ensure the application list will refresh when navigating back
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['applications', status] });
+      queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
       
       toast({
         title: "Status Updated",
         description: `Application status has been changed to ${status.replace(/_/g, ' ')}`,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating status:", err);
       toast({
         variant: "destructive",
         title: "Update Failed",
         description: "Could not update application status",
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleSaveNotes = async (notes: string) => {
     try {
-      const { error } = await supabase
-        .from('applications')
-        .update({ admin_notes: notes })
-        .eq('id', applicationId);
+      // Get current status
+      const currentStatus = data.application?.application_status || 'draft';
       
-      if (error) throw error;
+      // Update the application with the new notes, keeping the same status
+      const updatedApplication = await adminApplicationService.updateApplicationStatus(
+        applicationId, 
+        currentStatus, 
+        notes
+      );
       
       // Update local state
-      setData(prev => prev.application ? {
+      setData(prev => ({
         ...prev,
-        application: {
-          ...(prev.application as ApplicationData),
-          admin_notes: notes
-        }
-      } : prev);
+        application: updatedApplication as ApplicationData
+      }));
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
       
       toast({
         title: "Notes Saved",
         description: "Admin notes have been updated",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving notes:", err);
       toast({
         variant: "destructive",
@@ -185,8 +205,8 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         <AlertCircle className="h-12 w-12 text-destructive mb-4" />
         <h3 className="text-xl font-bold mb-2">Failed to Load Application</h3>
         <p className="text-muted-foreground mb-6">{error || "Application not found or access denied"}</p>
-        <Button onClick={() => navigate('/admin-dashboard')}>
-          Return to Dashboard
+        <Button onClick={() => navigate('/admin/applications')}>
+          Return to Applications
         </Button>
       </div>
     );
@@ -214,9 +234,11 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
           {getStatusBadge(application.application_status)}
           <Button
             variant="outline"
-            onClick={() => navigate('/admin-dashboard')}
+            onClick={() => navigate('/admin/applications')}
+            className="flex items-center"
           >
-            Back to Dashboard
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Applications
           </Button>
         </div>
       </div>
@@ -542,29 +564,35 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
             <Button 
               variant={application.application_status === 'under_review' ? 'default' : 'outline'}
               onClick={() => handleUpdateStatus('under_review')}
+              disabled={isUpdating}
             >
+              {isUpdating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
               Mark Under Review
             </Button>
             <Button 
               variant={application.application_status === 'requires_additional_info' ? 'default' : 'outline'}
               onClick={() => handleUpdateStatus('requires_additional_info')}
+              disabled={isUpdating}
             >
+              {isUpdating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
               Request More Info
             </Button>
             <Button 
               variant={application.application_status === 'approved' ? 'default' : 'outline'}
               className={application.application_status === 'approved' ? 'bg-green-600 hover:bg-green-700' : ''}
               onClick={() => handleUpdateStatus('approved')}
+              disabled={isUpdating}
             >
-              <CheckCircle className="mr-2 h-4 w-4" />
+              {isUpdating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
               Approve
             </Button>
             <Button 
               variant={application.application_status === 'rejected' ? 'default' : 'outline'}
               className={application.application_status === 'rejected' ? 'bg-red-600 hover:bg-red-700' : ''}
               onClick={() => handleUpdateStatus('rejected')}
+              disabled={isUpdating}
             >
-              <XCircle className="mr-2 h-4 w-4" />
+              {isUpdating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
               Reject
             </Button>
           </div>

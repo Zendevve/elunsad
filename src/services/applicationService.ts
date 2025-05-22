@@ -4,3 +4,4 @@ export * from './application/applicationService';
 export * from './application/adminApplicationService';
 export * from './application/adminApplicationTypes';
 export { adminApplicationService } from './application/adminApplicationService';
+export { applicationService } from './application/applicationService';

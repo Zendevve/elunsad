@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, 
@@ -9,184 +10,81 @@ import { Input } from "@/components/ui/input";
 import { adminApplicationService } from "@/services/applicationService";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
+import { ApplicationListItem } from "@/services/application/adminApplicationTypes";
 import { 
-  FileText, Eye, Search, RefreshCcw, AlertCircle, 
+  FileText, Search, RefreshCcw, AlertCircle, 
   Check, AlertTriangle, Bug, Database 
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import ApplicationTableRow from "./ApplicationTableRow";
-
-interface Application {
-  id: string;
-  application_type: ApplicationType;
-  application_status: ApplicationStatus;
-  submission_date: string | null;
-  created_at: string;
-  user_id: string;
-  business_information?: any;
-  owner_information?: any;
-}
+import { useQuery } from "@tanstack/react-query";
 
 const ApplicationReview = () => {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
   const [activeTab, setActiveTab] = useState<string>("submitted");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   const [debugMode, setDebugMode] = useState(false);
-  const [rawResponse, setRawResponse] = useState<any>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchApplications();
-  }, [activeTab]);
-
-  const fetchApplications = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
+  // Use React Query for data fetching
+  const { 
+    data: applications = [],
+    error: queryError, 
+    isLoading, 
+    isError,
+    refetch
+  } = useQuery({
+    queryKey: ['applications', activeTab],
+    queryFn: async () => {
       console.log(`Fetching applications for tab: ${activeTab}`);
-      let data;
-      
-      try {
-        // First try to get applications by the selected status
-        if (activeTab === "all") {
-          const response = await adminApplicationService.getAllApplications();
-          setRawResponse(response); // Store raw response for debug mode
-          data = response;
-        } else {
-          const response = await adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
-          setRawResponse(response); // Store raw response for debug mode
-          data = response;
-        }
-        
-        // Check if we actually got data back
-        if (data && data.length > 0) {
-          console.log("Applications fetched successfully:", data.length);
-          toast({
-            title: "Applications loaded",
-            description: `Successfully loaded ${data.length} applications`
-          });
-        } else {
-          console.log("No applications found for the selected status.");
-        }
-      } catch (statusError: any) {
-        console.error("Error fetching applications by status:", statusError);
-        
-        // Show more descriptive error message based on error type
-        if (statusError.code === "42702") {
-          toast({
-            variant: "warning",
-            title: "Database column reference issue",
-            description: "There's an ambiguous column reference in the database query. The admin is working on fixing this."
-          });
-        } else {
-          toast({
-            variant: "warning",
-            title: "Using local filtering",
-            description: "There was an issue with the database query, showing filtered results instead."
-          });
-        }
-        
-        // Fallback to fetching all applications if fetching by status fails
-        console.log("Attempting to fetch all applications as fallback");
-        const response = await adminApplicationService.getAllApplications();
-        setRawResponse(response); // Store raw response for debug mode
-        data = response;
-        
-        // If we're on a specific tab, filter on the client side
-        if (activeTab !== "all" && data) {
-          data = data.filter(app => app.application_status === activeTab);
-        }
-      }
-      
-      console.log("Applications fetched:", data?.length || 0);
-      
-      if (!data || data.length === 0) {
-        console.log(`No applications found for status: ${activeTab}`);
+      if (activeTab === "all") {
+        return adminApplicationService.getAllApplications();
       } else {
-        console.log("Sample application data:", data[0]?.id, data[0]?.application_status);
+        return adminApplicationService.getApplicationsByStatus(activeTab as ApplicationStatus);
       }
-      
-      setApplications(data || []);
-      setFilteredApplications(data || []);
-    } catch (error: any) {
-      console.error("Error fetching applications:", error);
-      setError(error.message || "Failed to load applications. See console for details.");
-      toast({
-        variant: "destructive",
-        title: "Failed to load applications",
-        description: "There was a problem loading the applications. Please try again."
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    },
+    staleTime: 1000 * 60, // 1 minute before considering data stale
+  });
+
+  // Filter applications based on search term
+  const filteredApplications = searchTerm.trim() 
+    ? applications.filter(app => {
+        const businessName = app.business_information?.business_name || "";
+        const ownerSurname = app.owner_information?.surname || "";
+        const ownerGivenName = app.owner_information?.given_name || "";
+        const ownerName = ownerSurname && ownerGivenName ? 
+          `${ownerSurname}, ${ownerGivenName}` : "";
+        const applicationId = app.id || "";
+        
+        return (
+          applicationId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          ownerName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      })
+    : applications;
+
+  // Handle search input change
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
   };
 
-  const handleRetryWithAllApplications = async () => {
-    setRetryCount(prev => prev + 1);
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log("Attempting to fetch all applications regardless of status");
-      const data = await adminApplicationService.getAllApplications();
-      setRawResponse(data); // Store raw response for debug mode
-      
-      console.log(`Retrieved ${data?.length || 0} total applications`);
-      setApplications(data || []);
-      setFilteredApplications(data || []);
-      
-      if (data && data.length > 0) {
-        toast({
-          title: "Applications loaded",
-          description: `Successfully loaded ${data.length} applications`
-        });
-      } else {
-        toast({
-          variant: "warning",
-          title: "No applications found",
-          description: "No applications were found in the database."
-        });
-      }
-    } catch (error: any) {
-      console.error("Error in retry attempt:", error);
-      setError(error.message || "Failed to load applications after multiple attempts");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Toggle debug mode
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
   };
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    if (!value.trim()) {
-      setFilteredApplications(applications);
-      return;
-    }
-    
-    // Filter applications based on search term
-    const filtered = applications.filter(app => {
-      const businessName = app.business_information?.business_name || "";
-      const ownerSurname = app.owner_information?.surname || "";
-      const ownerGivenName = app.owner_information?.given_name || "";
-      const ownerName = ownerSurname && ownerGivenName ? 
-        `${ownerSurname}, ${ownerGivenName}` : "";
-      const applicationId = app.id || "";
-      
-      return (
-        applicationId.toLowerCase().includes(value.toLowerCase()) ||
-        businessName.toLowerCase().includes(value.toLowerCase()) ||
-        ownerName.toLowerCase().includes(value.toLowerCase())
-      );
+  // Force refetch data
+  const handleRefresh = () => {
+    refetch();
+    toast({
+      title: "Refreshing applications",
+      description: "Getting the latest data from the server"
     });
-    
-    setFilteredApplications(filtered);
+  };
+
+  // Handle retry with all applications
+  const handleRetryWithAllApplications = async () => {
+    setActiveTab("all");
   };
 
   return (
@@ -207,10 +105,10 @@ const ApplicationReview = () => {
           
           <Button 
             variant="outline" 
-            onClick={fetchApplications}
+            onClick={handleRefresh}
             className="flex items-center gap-1"
           >
-            <RefreshCcw className="h-4 w-4" />
+            <RefreshCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           
@@ -237,24 +135,24 @@ const ApplicationReview = () => {
                 <span className="font-semibold">Raw Data:</span>
               </div>
               <div className="bg-slate-900 text-white p-3 rounded-md text-sm overflow-auto max-h-60">
-                <pre>{JSON.stringify(rawResponse, null, 2)}</pre>
+                <pre>{JSON.stringify(applications, null, 2)}</pre>
               </div>
             </div>
           </AlertDescription>
         </Alert>
       )}
 
-      {error && (
+      {isError && (
         <div className="bg-red-50 border border-red-200 p-4 rounded-md flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
           <div className="flex-1">
             <h3 className="text-sm font-medium text-red-800">Error loading applications</h3>
-            <p className="text-sm text-red-700">{error}</p>
+            <p className="text-sm text-red-700">{(queryError as Error)?.message || "Unknown error occurred"}</p>
             <div className="flex gap-2 mt-2">
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={fetchApplications} 
+                onClick={() => refetch()} 
                 className="text-red-700"
               >
                 <RefreshCcw className="h-3 w-3 mr-1" />
@@ -307,7 +205,7 @@ const ApplicationReview = () => {
               <div className="flex flex-col gap-3 items-center">
                 <Button 
                   variant="outline" 
-                  onClick={fetchApplications}
+                  onClick={() => refetch()}
                   className="flex items-center gap-1"
                 >
                   <RefreshCcw className="h-4 w-4" />
@@ -325,17 +223,15 @@ const ApplicationReview = () => {
                   </Button>
                 )}
                 
-                {retryCount < 1 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRetryWithAllApplications}
-                    className="text-amber-700 border-amber-300 hover:bg-amber-50"
-                  >
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Try fetching all applications
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetryWithAllApplications}
+                  className="text-amber-700 border-amber-300 hover:bg-amber-50"
+                >
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Try fetching all applications
+                </Button>
               </div>
             </div>
           ) : (

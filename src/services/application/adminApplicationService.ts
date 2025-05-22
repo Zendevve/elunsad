@@ -145,7 +145,7 @@ export const adminApplicationService = {
   },
 
   // Update application status
-  async updateApplicationStatus(id: string, status: ApplicationStatus, adminNotes?: string) {
+  async updateApplicationStatus(id: string, status: ApplicationStatus, adminNotes?: string): Promise<ApplicationData> {
     try {
       console.log(`Updating application ${id} status to ${status}`);
       const { data, error } = await supabase
@@ -164,8 +164,8 @@ export const adminApplicationService = {
         throw error;
       }
       
-      console.log('Application status updated successfully');
-      return data;
+      console.log('Application status updated successfully:', data);
+      return data as ApplicationData;
     } catch (error) {
       console.error('Error updating application status:', error);
       throw error;
