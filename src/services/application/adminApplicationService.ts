@@ -147,7 +147,9 @@ export const adminApplicationService = {
   // Update application status
   async updateApplicationStatus(id: string, status: ApplicationStatus, adminNotes?: string): Promise<ApplicationData> {
     try {
-      console.log(`Updating application ${id} status to ${status}`);
+      console.log(`Updating application ${id} status to ${status}, notes: ${adminNotes || 'none'}`);
+      
+      // Improved error handling and logging
       const { data, error } = await supabase
         .from('applications')
         .update({ 
@@ -155,13 +157,23 @@ export const adminApplicationService = {
           admin_notes: adminNotes
         })
         .eq('id', id)
-        .select()
-        .single();
+        .select('*')  // Use select('*') instead of select() to be explicit
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors if no rows are returned
       
       if (error) {
+        // Detailed error logging
         console.error('SQL Error updating application status:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
         logDatabaseError('updateApplicationStatus', error);
         throw error;
+      }
+      
+      if (!data) {
+        const notFoundError = new Error(`Application with ID ${id} not found or could not be updated`);
+        console.error(notFoundError);
+        throw notFoundError;
       }
       
       console.log('Application status updated successfully:', data);

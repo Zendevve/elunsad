@@ -21,6 +21,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [data, setData] = useState<{
     application: ApplicationData | null;
     businessInformation: any | null;
@@ -43,42 +44,49 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const loadApplicationDetails = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const details = await getApplicationFullDetails(applicationId);
-        // Only update the state if the component is still mounted
-        setData({
-          ...details,
-          application: details.application as ApplicationData
-        });
-      } catch (err: any) {
-        console.error("Error loading application details:", err);
-        setError("Failed to load application details. Please try again later.");
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load application details",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Function to load application details
+  const loadApplicationDetails = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log("Loading application details for ID:", applicationId);
+      const details = await getApplicationFullDetails(applicationId);
+      // Only update the state if the component is still mounted
+      setData({
+        ...details,
+        application: details.application as ApplicationData
+      });
 
+      console.log("Successfully loaded application details:", details.application?.id);
+    } catch (err: any) {
+      console.error("Error loading application details:", err);
+      setError(err?.message || "Failed to load application details. Please try again later.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load application details",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (applicationId) {
       loadApplicationDetails();
     }
-  }, [applicationId, toast]);
+  }, [applicationId]);
 
   const handleUpdateStatus = async (status: ApplicationStatus) => {
     try {
       setIsUpdating(true);
+      setUpdateError(null);
       
       // Get current notes to pass to the update function
       const currentNotes = data.application?.admin_notes || '';
+      
+      console.log(`Updating application ${applicationId} to status: ${status}`);
       
       // Update the status in the database
       const updatedApplication = await adminApplicationService.updateApplicationStatus(
@@ -86,6 +94,8 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         status, 
         currentNotes
       );
+      
+      console.log("Update successful, response:", updatedApplication);
       
       // Update local state with the returned updated application
       setData(prev => ({
@@ -95,6 +105,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
       
       // Invalidate queries to ensure the application list will refresh when navigating back
       queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['applications', 'all'] });
       queryClient.invalidateQueries({ queryKey: ['applications', status] });
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
       
@@ -104,10 +115,12 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
       });
     } catch (err: any) {
       console.error("Error updating status:", err);
+      const errorMessage = err?.message || "Could not update application status";
+      setUpdateError(errorMessage);
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description: "Could not update application status",
+        description: errorMessage,
       });
     } finally {
       setIsUpdating(false);
@@ -116,8 +129,11 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
 
   const handleSaveNotes = async (notes: string) => {
     try {
+      setUpdateError(null);
       // Get current status
       const currentStatus = data.application?.application_status || 'draft';
+      
+      console.log(`Saving notes for application ${applicationId}, status: ${currentStatus}`);
       
       // Update the application with the new notes, keeping the same status
       const updatedApplication = await adminApplicationService.updateApplicationStatus(
@@ -125,6 +141,8 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         currentStatus, 
         notes
       );
+      
+      console.log("Notes updated successfully, response:", updatedApplication);
       
       // Update local state
       setData(prev => ({
@@ -141,12 +159,18 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
       });
     } catch (err: any) {
       console.error("Error saving notes:", err);
+      const errorMessage = err?.message || "Could not save admin notes";
+      setUpdateError(errorMessage);
       toast({
         variant: "destructive",
         title: "Save Failed",
-        description: "Could not save admin notes",
+        description: errorMessage,
       });
     }
+  };
+
+  const handleRetry = () => {
+    loadApplicationDetails();
   };
 
   const getStatusBadge = (status: ApplicationStatus) => {
@@ -205,9 +229,14 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         <AlertCircle className="h-12 w-12 text-destructive mb-4" />
         <h3 className="text-xl font-bold mb-2">Failed to Load Application</h3>
         <p className="text-muted-foreground mb-6">{error || "Application not found or access denied"}</p>
-        <Button onClick={() => navigate('/admin/applications')}>
-          Return to Applications
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={handleRetry}>
+            Try Again
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/admin/applications')}>
+            Return to Applications
+          </Button>
+        </div>
       </div>
     );
   }
@@ -216,6 +245,17 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
 
   return (
     <div className="space-y-6">
+      {/* Display update error if there is one */}
+      {updateError && (
+        <div className="bg-red-50 border border-red-200 p-4 rounded-md flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+          <div>
+            <h3 className="text-sm font-medium text-red-800">Error updating application</h3>
+            <p className="text-sm text-red-700">{updateError}</p>
+          </div>
+        </div>
+      )}
+      
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">
@@ -565,16 +605,18 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
               variant={application.application_status === 'under_review' ? 'default' : 'outline'}
               onClick={() => handleUpdateStatus('under_review')}
               disabled={isUpdating}
+              className="relative"
             >
-              {isUpdating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+              {isUpdating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Clock className="mr-2 h-4 w-4" />}
               Mark Under Review
             </Button>
             <Button 
               variant={application.application_status === 'requires_additional_info' ? 'default' : 'outline'}
               onClick={() => handleUpdateStatus('requires_additional_info')}
               disabled={isUpdating}
+              className="relative"
             >
-              {isUpdating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+              {isUpdating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <AlertCircle className="mr-2 h-4 w-4" />}
               Request More Info
             </Button>
             <Button 
