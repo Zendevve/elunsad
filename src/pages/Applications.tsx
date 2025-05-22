@@ -21,13 +21,14 @@ import {
   businessLinesService, 
   declarationService 
 } from "@/services/application";
+import { ApplicationType } from "@/services/application/types";
 
 const Applications = () => {
   
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
   const { toast } = useToast();
-  const [applicationType, setApplicationType] = useState("newApplication");
+  const [applicationType, setApplicationType] = useState<ApplicationType>("newApplication");
   const [fadeIn, setFadeIn] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false); // Declaration agreement state
   const [isSubmitting, setIsSubmitting] = useState(false); // Added specific state for submission
@@ -89,7 +90,8 @@ const Applications = () => {
   useEffect(() => {
     const initializeApplication = async () => {
       if (currentStep === 1 && applicationType && !applicationId && isAuthenticated) {
-        await createNewApplication(applicationType as any);
+        console.log("Creating new application with type:", applicationType);
+        await createNewApplication(applicationType);
       }
     };
     
@@ -498,7 +500,10 @@ const Applications = () => {
                   <EnhancedRadioGroup
                     options={applicationTypeOptions}
                     value={applicationType}
-                    onValueChange={setApplicationType}
+                    onValueChange={(value) => {
+                      console.log("Application type changed to:", value);
+                      setApplicationType(value as ApplicationType);
+                    }}
                     name="applicationType"
                   />
                 </div>

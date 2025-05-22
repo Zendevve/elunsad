@@ -12,6 +12,8 @@ export const applicationService = {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Not authenticated");
       
+      console.log("ApplicationService: Creating application with type:", applicationType);
+      
       const { data, error } = await supabase
         .from('applications')
         .insert({
@@ -23,6 +25,7 @@ export const applicationService = {
         .single();
       
       if (error) throw error;
+      console.log("ApplicationService: Created application:", data);
       return data;
     } catch (error) {
       console.error('Error creating application:', error);

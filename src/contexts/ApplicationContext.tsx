@@ -69,10 +69,12 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     
     setIsLoading(true);
     try {
+      console.log("ApplicationContext: Creating application with type:", type);
       const application = await applicationService.createApplication(type);
       if (application) {
+        console.log("ApplicationContext: Application created:", application);
         setApplicationId(application.id);
-        setApplicationType(application.application_type);
+        setApplicationType(application.application_type as ApplicationType);
         setApplicationStatus(application.application_status as ApplicationStatus);
         return application.id;
       }
@@ -98,7 +100,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       const application = await applicationService.getApplicationById(applicationId);
       if (application) {
-        setApplicationType(application.application_type);
+        console.log("ApplicationContext: Retrieved application details:", application);
+        setApplicationType(application.application_type as ApplicationType);
         setApplicationStatus(application.application_status as ApplicationStatus);
       } else {
         // Application not found, reset state
