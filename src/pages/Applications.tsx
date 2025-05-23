@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -86,19 +87,8 @@ const Applications = () => {
     }
   ];
 
-  // Start a new application when type is selected on step 1
-  useEffect(() => {
-    const initializeApplication = async () => {
-      if (currentStep === 1 && applicationType && !applicationId && isAuthenticated) {
-        console.log("Creating new application with type:", applicationType);
-        await createNewApplication(applicationType);
-      }
-    };
-    
-    if (isAuthenticated !== null) {
-      initializeApplication();
-    }
-  }, [applicationType, applicationId, currentStep, createNewApplication, isAuthenticated]);
+  // REMOVED: The automatic application creation effect
+  // This was causing the issue as it always created with the default value on page load
 
   // Handle step click to navigate to previous steps only
   const handleStepClick = (step: number) => {
@@ -119,7 +109,31 @@ const Applications = () => {
   const handleNext = async () => {
     setIsSaving(true);
     try {
-      // Save/validate current step data before proceeding
+      // For step 1, we need to create the application first with the selected type
+      if (currentStep === 1) {
+        if (!applicationId && isAuthenticated) {
+          console.log("Creating new application from Next button with type:", applicationType);
+          const newAppId = await createNewApplication(applicationType);
+          
+          if (!newAppId) {
+            toast({
+              title: "Application Creation Failed",
+              description: "Failed to create application. Please try again.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+        }
+        
+        // Proceed to next step after creating application
+        setCurrentStep(currentStep + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setIsSaving(false);
+        return;
+      }
+      
+      // Save/validate current step data before proceeding (for steps 2-5)
       if (currentStep === 2) {
         // Check if the window helper is available and use it to validate/save
         if (window.businessInfoHelpers?.validateAndSave) {
