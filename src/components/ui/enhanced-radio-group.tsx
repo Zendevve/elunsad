@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -27,14 +27,25 @@ export function EnhancedRadioGroup({
   name,
   className,
 }: EnhancedRadioGroupProps) {
+  // Log when values change to help debugging
+  useEffect(() => {
+    console.log(`EnhancedRadioGroup (${name}) - Current value:`, value);
+  }, [value, name]);
+
+  const handleValueChange = (newValue: string) => {
+    console.log(`EnhancedRadioGroup (${name}) - Value changing to:`, newValue);
+    onValueChange(newValue);
+  };
+
   return (
     <RadioGroup
       value={value}
-      onValueChange={onValueChange}
+      onValueChange={handleValueChange}
       className={cn(
         orientation === "horizontal" ? "flex gap-4 flex-wrap" : "space-y-3",
         className
       )}
+      name={name}
     >
       {options.map((option) => (
         <div

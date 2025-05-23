@@ -12,7 +12,18 @@ export const applicationService = {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Not authenticated");
       
-      console.log("ApplicationService: Creating application with type:", applicationType);
+      console.log("ApplicationService: Creating application with explicit type:", applicationType);
+      
+      // Validate application type
+      if (!applicationType) {
+        console.error("ApplicationService: Missing application type");
+        throw new Error("Application type is required");
+      }
+      
+      if (!["newApplication", "renewalApplication", "amendmentApplication"].includes(applicationType)) {
+        console.error("ApplicationService: Invalid application type:", applicationType);
+        throw new Error("Invalid application type");
+      }
       
       const { data, error } = await supabase
         .from('applications')
@@ -25,7 +36,7 @@ export const applicationService = {
         .single();
       
       if (error) throw error;
-      console.log("ApplicationService: Created application:", data);
+      console.log("ApplicationService: Created application with response:", data);
       return data;
     } catch (error) {
       console.error('Error creating application:', error);

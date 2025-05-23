@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ApplicationType, ApplicationStatus } from '@/services/application/types';
 import { applicationService } from '@/services/application';
 import { supabase } from "@/integrations/supabase/client";
@@ -69,10 +69,11 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     
     setIsLoading(true);
     try {
-      console.log("ApplicationContext: Creating application with type:", type);
+      console.log("ApplicationContext: Creating application with explicit type:", type);
       const application = await applicationService.createApplication(type);
       if (application) {
-        console.log("ApplicationContext: Application created:", application);
+        console.log("ApplicationContext: Application created with response:", application);
+        console.log("ApplicationContext: Type in response:", application.application_type);
         setApplicationId(application.id);
         setApplicationType(application.application_type as ApplicationType);
         setApplicationStatus(application.application_status as ApplicationStatus);

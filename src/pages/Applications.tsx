@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -68,6 +67,11 @@ const Applications = () => {
     checkAuth();
   }, [navigate, toast]);
 
+  // Log application type whenever it changes for debugging
+  useEffect(() => {
+    console.log("Applications - Current applicationType state:", applicationType);
+  }, [applicationType]);
+
   // Application type options
   const applicationTypeOptions = [
     {
@@ -86,9 +90,6 @@ const Applications = () => {
       description: "For updating details on an existing business permit"
     }
   ];
-
-  // REMOVED: The automatic application creation effect
-  // This was causing the issue as it always created with the default value on page load
 
   // Handle step click to navigate to previous steps only
   const handleStepClick = (step: number) => {
@@ -112,8 +113,12 @@ const Applications = () => {
       // For step 1, we need to create the application first with the selected type
       if (currentStep === 1) {
         if (!applicationId && isAuthenticated) {
+          // Add detailed logging for debugging
+          console.log("Before application creation - Selected type:", applicationType);
           console.log("Creating new application from Next button with type:", applicationType);
+          
           const newAppId = await createNewApplication(applicationType);
+          console.log("After creation - New application ID:", newAppId);
           
           if (!newAppId) {
             toast({
@@ -515,7 +520,7 @@ const Applications = () => {
                     options={applicationTypeOptions}
                     value={applicationType}
                     onValueChange={(value) => {
-                      console.log("Application type changed to:", value);
+                      console.log("Application type selection changed to:", value);
                       setApplicationType(value as ApplicationType);
                     }}
                     name="applicationType"
