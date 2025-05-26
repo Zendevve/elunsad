@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, ReactNode } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { 
   Menu, LogOut, ChevronLeft, Settings, Users, BarChart4, 
   LayoutDashboard, Bell, User, MapPin, FileText 
@@ -18,6 +19,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { isAdmin } = useRoleAuth();
   
@@ -75,7 +77,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const adminNavItems = [
     { name: 'Admin Dashboard', href: '/admin-dashboard', icon: LayoutDashboard },
-    { name: 'Business Owner Management', href: '/admin/users', icon: Users },
+    { name: 'Business Owner Management', href: '/admin', icon: Users },
     { name: 'Reports', href: '/admin/reports', icon: FileText },
     { name: 'Analytics', href: '/analytics', icon: BarChart4 },
     { name: 'Map View', href: '/map', icon: MapPin },
@@ -90,6 +92,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       title: "Switched to User View",
       description: "You are now viewing the application as a regular user"
     });
+  };
+
+  // Function to check if a nav item is active
+  const isActiveNavItem = (href: string) => {
+    if (href === '/admin') {
+      // For admin route, match exactly or when on /admin/users
+      return location.pathname === '/admin' || location.pathname === '/admin/users';
+    }
+    // For other routes, check if current path starts with the href
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
   return (
@@ -112,22 +124,28 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
         
         <nav className="mt-2 px-2 space-y-1">
-          {adminNavItems.map(item => (
-            <Button 
-              key={item.name} 
-              variant="ghost" 
-              className="w-full justify-start text-white hover:bg-indigo-800"
-              onClick={() => navigate(item.href)}
-            >
-              <item.icon className="mr-3 h-5 w-5" />
-              <span>{item.name}</span>
-              {item.badge && (
-                <span className="ml-auto bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                  {item.badge}
-                </span>
-              )}
-            </Button>
-          ))}
+          {adminNavItems.map(item => {
+            const isActive = isActiveNavItem(item.href);
+            return (
+              <Link 
+                key={item.name} 
+                to={item.href}
+                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isActive 
+                    ? 'bg-indigo-700 text-white' 
+                    : 'text-white hover:bg-indigo-800'
+                }`}
+              >
+                <item.icon className="mr-3 h-5 w-5" />
+                <span>{item.name}</span>
+                {item.badge && (
+                  <span className="ml-auto bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
           
           <Button 
             variant="outline" 
