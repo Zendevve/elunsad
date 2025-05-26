@@ -103,12 +103,4 @@ export const activityGenerator = {
       "application"
     );
   },
-
-  // Simple test activity generator
-  createTestActivity: () => 
-    generateActivity(
-      "application_submitted",
-      "Test Activity Created",
-      `This is a test activity created at ${new Date().toLocaleTimeString()}. The Recent Activity system is now working!`
-    ),
 };
