@@ -13,7 +13,7 @@ import {
   CheckCircle, AlertCircle, Clock, RefreshCcw
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getApplicationDetails } from "./ApplicationDetailsService";
+import { getApplicationFullDetails } from "./ApplicationDetailsService";
 import { adminApplicationService } from "@/services/applicationService";
 import { ApplicationStatus } from "@/services/application/types";
 import ApplicationStatusBadge from "./ApplicationStatusBadge";
@@ -35,7 +35,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
     refetch 
   } = useQuery({
     queryKey: ['application-details', applicationId],
-    queryFn: () => getApplicationDetails(applicationId)
+    queryFn: () => getApplicationFullDetails(applicationId)
   });
 
   useEffect(() => {
