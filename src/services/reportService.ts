@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { ApplicationStatus, ApplicationType } from "./application/types";
 
 export interface ReportFilters {
   dateRange: {
@@ -41,11 +42,11 @@ class ReportService {
       `);
 
     if (filters.status) {
-      query = query.eq("application_status", filters.status);
+      query = query.eq("application_status", filters.status as ApplicationStatus);
     }
 
     if (filters.businessType) {
-      query = query.eq("application_type", filters.businessType);
+      query = query.eq("application_type", filters.businessType as ApplicationType);
     }
 
     if (filters.dateRange.from) {
