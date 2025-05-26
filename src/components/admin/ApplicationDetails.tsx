@@ -283,6 +283,8 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         </div>
       </div>
 
+      
+      
       <Card>
         <CardHeader>
           <CardTitle>Applicant Information</CardTitle>

@@ -107,23 +107,32 @@ export const adminApplicationService = {
     }
   },
 
-  // Update application status
-  async updateApplicationStatus(applicationId: string, status: ApplicationStatus): Promise<void> {
+  // Update application status and return the updated application
+  async updateApplicationStatus(applicationId: string, status: ApplicationStatus, adminNotes?: string) {
     try {
-      const { error } = await supabase
+      const updateData: any = { 
+        application_status: status,
+        updated_at: new Date().toISOString()
+      };
+      
+      if (adminNotes !== undefined) {
+        updateData.admin_notes = adminNotes;
+      }
+      
+      const { data, error } = await supabase
         .from('applications')
-        .update({ 
-          application_status: status,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', applicationId);
+        .update(updateData)
+        .eq('id', applicationId)
+        .select()
+        .single();
       
       if (error) {
         console.error('Error updating application status:', error);
         throw error;
       }
       
-      console.log(`Updated application ${applicationId} status to ${status}`);
+      console.log(`Updated application ${applicationId} status to ${status}`, data);
+      return data;
     } catch (error) {
       console.error('Error updating application status:', error);
       throw error;
