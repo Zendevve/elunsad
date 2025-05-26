@@ -22,6 +22,7 @@ import {
   declarationService 
 } from "@/services/application";
 import { ApplicationType } from "@/services/application/types";
+import { activityGenerator } from "@/utils/activityGenerator";
 
 const Applications = () => {
   
@@ -405,7 +406,15 @@ const Applications = () => {
       setIsSubmitting(true);
       setIsLoading(true);
       
+      // Get business information for activity generation
+      const businessInfo = await businessInformationService.getBusinessInformation(applicationId!);
+      const businessName = businessInfo?.business_name || "Your Business";
+      
+      // Update application status to submitted
       await updateStatus('submitted');
+      
+      // Generate activity for application submission
+      await activityGenerator.applicationSubmitted(businessName, applicationId!);
       
       toast({
         title: "Application Submitted",

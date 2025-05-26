@@ -1,11 +1,18 @@
 
-import React from 'react';
-import { TableRow, TableCell } from "@/components/ui/table";
+import React from "react";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import ApplicationStatusBadge from './ApplicationStatusBadge';
-import { ApplicationType } from "@/services/application/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, Eye, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ApplicationStatus, ApplicationType } from "@/services/application/types";
+import ApplicationStatusBadge from "./ApplicationStatusBadge";
 
 interface ApplicationTableRowProps {
   id: string;
@@ -13,28 +20,28 @@ interface ApplicationTableRowProps {
   ownerName: string | null;
   applicationType: ApplicationType;
   submissionDate: string | null;
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
+  onStatusChange?: (newStatus: ApplicationStatus) => void;
 }
 
-const ApplicationTableRow = ({
+const ApplicationTableRow: React.FC<ApplicationTableRowProps> = ({
   id,
   businessName,
   ownerName,
   applicationType,
   submissionDate,
-  applicationStatus
-}: ApplicationTableRowProps) => {
-  const navigate = useNavigate();
-  
+  applicationStatus,
+  onStatusChange
+}) => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getApplicationTypeLabel = (type: ApplicationType) => {
+  const getApplicationTypeDisplay = (type: ApplicationType) => {
     switch (type) {
       case "newApplication":
-        return "New Business";
+        return "New Application";
       case "renewalApplication":
         return "Renewal";
       case "amendmentApplication":
@@ -43,32 +50,96 @@ const ApplicationTableRow = ({
         return type;
     }
   };
-  
-  const viewApplicationDetails = (id: string) => {
-    navigate(`/admin/applications/${id}`);
+
+  const handleStatusChange = (newStatus: ApplicationStatus) => {
+    if (onStatusChange) {
+      onStatusChange(newStatus);
+    }
   };
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{businessName || "-"}</TableCell>
-      <TableCell>{ownerName || "-"}</TableCell>
+      <TableCell className="font-medium">
+        {businessName || <span className="text-gray-400 italic">No business name</span>}
+      </TableCell>
       <TableCell>
-        {getApplicationTypeLabel(applicationType)}
+        {ownerName || <span className="text-gray-400 italic">No owner info</span>}
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline">{getApplicationTypeDisplay(applicationType)}</Badge>
       </TableCell>
       <TableCell>{formatDate(submissionDate)}</TableCell>
       <TableCell>
-        <ApplicationStatusBadge status={applicationStatus as any} />
+        <ApplicationStatusBadge status={applicationStatus} />
       </TableCell>
       <TableCell>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => viewApplicationDetails(id)}
-          className="flex items-center"
-        >
-          <Eye className="h-4 w-4 mr-1" />
-          View
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to={`/admin/applications/${id}`} className="flex items-center">
+                <Eye className="mr-2 h-4 w-4" />
+                View Details
+              </Link>
+            </DropdownMenuItem>
+            
+            {applicationStatus === "submitted" && (
+              <>
+                <DropdownMenuItem onClick={() => handleStatusChange("under_review")}>
+                  <Clock className="mr-2 h-4 w-4" />
+                  Start Review
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("approved")}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Approve
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("rejected")}>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Reject
+                </DropdownMenuItem>
+              </>
+            )}
+            
+            {applicationStatus === "under_review" && (
+              <>
+                <DropdownMenuItem onClick={() => handleStatusChange("approved")}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Approve
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("rejected")}>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Reject
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("requires_additional_info")}>
+                  <Clock className="mr-2 h-4 w-4" />
+                  Request More Info
+                </DropdownMenuItem>
+              </>
+            )}
+            
+            {applicationStatus === "requires_additional_info" && (
+              <>
+                <DropdownMenuItem onClick={() => handleStatusChange("under_review")}>
+                  <Clock className="mr-2 h-4 w-4" />
+                  Resume Review
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("approved")}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Approve
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("rejected")}>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Reject
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TableCell>
     </TableRow>
   );

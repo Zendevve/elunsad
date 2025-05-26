@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, 
@@ -17,6 +18,8 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import ApplicationTableRow from "./ApplicationTableRow";
 import { useQuery } from "@tanstack/react-query";
+import { activityGenerator } from "@/utils/activityGenerator";
+import { businessInformationService } from "@/services/application";
 
 const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("submitted");
@@ -43,6 +46,35 @@ const ApplicationReview = () => {
     },
     staleTime: 1000 * 60, // 1 minute before considering data stale
   });
+
+  // Function to handle status change with activity generation
+  const handleStatusChange = async (applicationId: string, newStatus: ApplicationStatus, currentApplication: ApplicationListItem) => {
+    try {
+      // Update the application status
+      await adminApplicationService.updateApplicationStatus(applicationId, newStatus);
+      
+      // Get business name for activity generation
+      const businessName = currentApplication.business_information?.business_name || "Business Application";
+      
+      // Generate activity for status change
+      await activityGenerator.statusChanged(newStatus, businessName, applicationId);
+      
+      // Refetch data to update the UI
+      refetch();
+      
+      toast({
+        title: "Status Updated",
+        description: `Application status changed to ${newStatus.replace('_', ' ')}`,
+      });
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update application status",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Filter applications based on search term
   const filteredApplications = searchTerm.trim() 
@@ -265,6 +297,7 @@ const ApplicationReview = () => {
                       applicationType={app.application_type}
                       submissionDate={app.submission_date}
                       applicationStatus={app.application_status}
+                      onStatusChange={(newStatus) => handleStatusChange(app.id, newStatus, app)}
                     />
                   ))}
                 </TableBody>

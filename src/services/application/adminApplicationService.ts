@@ -1,46 +1,30 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ApplicationStatus, ApplicationData } from "./types";
-import { logDatabaseError } from "@/utils/supabaseUtils";
 import { ApplicationListItem } from "./adminApplicationTypes";
+import { ApplicationStatus } from "./types";
 
 export const adminApplicationService = {
-  // Get all applications for admin review
+  // Get all applications for admin view
   async getAllApplications(): Promise<ApplicationListItem[]> {
     try {
-      console.log('Fetching all applications with full details');
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          id,
-          application_type,
-          application_status,
-          submission_date,
-          created_at,
-          user_id,
-          admin_notes,
-          business_information:business_information!left(business_name),
-          owner_information:owner_information!left(surname, given_name)
+          *,
+          business_information!inner(*),
+          owner_information!inner(*)
         `)
-        .order('submission_date', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('SQL Error fetching applications:', error);
-        logDatabaseError('getAllApplications', error);
+        console.error('Error fetching all applications:', error);
         throw error;
       }
       
-      console.log('Applications data retrieved:', data?.length || 0);
-      if (data && data.length > 0) {
-        console.log('Sample application data:', data[0].id, data[0].application_status);
-      } else {
-        console.log('No applications found in database');
-      }
-      
-      // Type assertion to ensure TypeScript recognizes the correct return type
-      return (data || []) as ApplicationListItem[];
+      console.log('Admin fetched all applications:', data);
+      return data || [];
     } catch (error) {
-      console.error('Error fetching all applications:', error);
+      console.error('Admin service error:', error);
       throw error;
     }
   },
@@ -48,138 +32,51 @@ export const adminApplicationService = {
   // Get applications by status
   async getApplicationsByStatus(status: ApplicationStatus): Promise<ApplicationListItem[]> {
     try {
-      console.log(`Fetching applications with status: ${status}`);
       const { data, error } = await supabase
         .from('applications')
         .select(`
-          id,
-          application_type,
-          application_status,
-          submission_date,
-          created_at, 
-          user_id,
-          admin_notes,
-          business_information:business_information!left(business_name),
-          owner_information:owner_information!left(surname, given_name)
+          *,
+          business_information!inner(*),
+          owner_information!inner(*)
         `)
         .eq('application_status', status)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error(`Error fetching applications with status ${status}:`, error);
+        throw error;
+      }
+      
+      console.log(`Admin fetched ${status} applications:`, data);
+      return data || [];
+    } catch (error) {
+      console.error('Admin service error:', error);
+      throw error;
+    }
+  },
+
+  // Get submitted applications specifically
+  async getSubmittedApplications(): Promise<ApplicationListItem[]> {
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .select(`
+          *,
+          business_information!inner(*),
+          owner_information!inner(*)
+        `)
+        .eq('application_status', 'submitted')
         .order('submission_date', { ascending: false });
       
       if (error) {
-        console.error(`SQL Error fetching ${status} applications:`, error);
-        logDatabaseError(`getApplicationsByStatus:${status}`, error);
+        console.error('Error fetching submitted applications:', error);
         throw error;
       }
       
-      console.log(`Retrieved ${data?.length || 0} applications with status ${status}`);
-      if (data && data.length > 0) {
-        console.log('Sample application data:', data[0].id, data[0].application_status);
-      }
-      
-      // Type assertion to ensure TypeScript recognizes the correct return type
-      return (data || []) as ApplicationListItem[];
+      console.log('Admin fetched submitted applications:', data);
+      return data || [];
     } catch (error) {
-      console.error(`Error fetching ${status} applications:`, error);
-      throw error;
-    }
-  },
-
-  // Get submitted applications that need review
-  async getSubmittedApplications(): Promise<ApplicationListItem[]> {
-    return this.getApplicationsByStatus('submitted');
-  },
-  
-  // Get application details by ID with all related data
-  async getApplicationDetails(id: string): Promise<ApplicationData & {
-    business_information?: any;
-    owner_information?: any;
-    business_operations?: any;
-    business_lines?: any[];
-    declarations?: any;
-  }> {
-    try {
-      console.log(`Fetching application details for ID: ${id}`);
-      const { data, error } = await supabase
-        .from('applications')
-        .select(`
-          id,
-          application_type,
-          application_status,
-          submission_date,
-          created_at,
-          user_id,
-          admin_notes,
-          business_information:business_information!left(*),
-          owner_information:owner_information!left(*),
-          business_operations:business_operations!left(*),
-          business_lines:business_lines!left(*),
-          declarations:declarations!left(*)
-        `)
-        .eq('id', id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('SQL Error fetching application details:', error);
-        logDatabaseError('getApplicationDetails', error);
-        throw error;
-      }
-      
-      if (!data) {
-        console.error(`No application found with ID: ${id}`);
-        throw new Error(`No application found with ID: ${id}`);
-      }
-      
-      console.log('Application details retrieved successfully');
-      // Type assertion to ensure TypeScript recognizes the correct return type
-      return data as (ApplicationData & {
-        business_information?: any;
-        owner_information?: any;
-        business_operations?: any;
-        business_lines?: any[];
-        declarations?: any;
-      });
-    } catch (error) {
-      console.error('Error fetching application details:', error);
-      throw error;
-    }
-  },
-
-  // Update application status
-  async updateApplicationStatus(id: string, status: ApplicationStatus, adminNotes?: string): Promise<ApplicationData> {
-    try {
-      console.log(`Updating application ${id} status to ${status}, notes: ${adminNotes || 'none'}`);
-      
-      // Improved error handling and logging
-      const { data, error } = await supabase
-        .from('applications')
-        .update({ 
-          application_status: status,
-          admin_notes: adminNotes
-        })
-        .eq('id', id)
-        .select('*')  // Use select('*') instead of select() to be explicit
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors if no rows are returned
-      
-      if (error) {
-        // Detailed error logging
-        console.error('SQL Error updating application status:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        console.error('Error details:', error.details);
-        logDatabaseError('updateApplicationStatus', error);
-        throw error;
-      }
-      
-      if (!data) {
-        const notFoundError = new Error(`Application with ID ${id} not found or could not be updated`);
-        console.error(notFoundError);
-        throw notFoundError;
-      }
-      
-      console.log('Application status updated successfully:', data);
-      return data as ApplicationData;
-    } catch (error) {
-      console.error('Error updating application status:', error);
+      console.error('Admin service error:', error);
       throw error;
     }
   },
@@ -187,43 +84,48 @@ export const adminApplicationService = {
   // Get application counts by status
   async getApplicationCounts() {
     try {
-      const statuses: ApplicationStatus[] = ['draft', 'submitted', 'under_review', 'approved', 'rejected', 'requires_additional_info'];
-      const counts: Record<string, number> = {};
-      
-      // Get total count
-      const { count: totalCount, error: totalError } = await supabase
+      const { data, error } = await supabase
         .from('applications')
-        .select('*', { count: 'exact', head: true });
-        
-      if (totalError) {
-        console.error('SQL Error getting total count:', totalError);
-        logDatabaseError('getApplicationCounts:total', totalError);
-        throw totalError;
+        .select('application_status');
+      
+      if (error) {
+        console.error('Error fetching application counts:', error);
+        throw error;
       }
       
-      counts.total = totalCount || 0;
-      console.log(`Total applications count: ${counts.total}`);
+      const counts = data?.reduce((acc, app) => {
+        const status = app.application_status;
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
       
-      // Get counts for each status
-      for (const status of statuses) {
-        const { count, error } = await supabase
-          .from('applications')
-          .select('*', { count: 'exact', head: true })
-          .eq('application_status', status);
-        
-        if (error) {
-          console.error(`SQL Error getting count for ${status}:`, error);
-          logDatabaseError(`getApplicationCounts:${status}`, error);
-          throw error;
-        }
-        
-        counts[status] = count || 0;
-        console.log(`${status} applications count: ${counts[status]}`);
-      }
-      
+      console.log('Application counts:', counts);
       return counts;
     } catch (error) {
       console.error('Error getting application counts:', error);
+      throw error;
+    }
+  },
+
+  // Update application status
+  async updateApplicationStatus(applicationId: string, status: ApplicationStatus): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ 
+          application_status: status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', applicationId);
+      
+      if (error) {
+        console.error('Error updating application status:', error);
+        throw error;
+      }
+      
+      console.log(`Updated application ${applicationId} status to ${status}`);
+    } catch (error) {
+      console.error('Error updating application status:', error);
       throw error;
     }
   }
