@@ -1,5 +1,6 @@
+
 export type ApplicationType = 'newApplication' | 'renewalApplication' | 'amendmentApplication';
-export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info';
+export type ApplicationStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'requires_additional_info' | 'pending_documents' | 'documents_under_review';
 export type OwnershipType = 'soleProprietorship' | 'onePersonCorp' | 'partnership' | 'corporation' | 'cooperative';
 
 export interface ApplicationData {

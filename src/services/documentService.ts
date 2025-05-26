@@ -43,7 +43,10 @@ export const documentService = {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      return (data || []).map(doc => ({
+        ...doc,
+        status: doc.status as 'pending' | 'approved' | 'rejected'
+      }));
     } catch (error) {
       console.error('Error fetching application documents:', error);
       throw error;
@@ -88,7 +91,10 @@ export const documentService = {
       // Generate activity for document upload
       await activityGenerator.documentUploaded(documentData.document_name, documentData.application_id);
       
-      return data;
+      return {
+        ...data,
+        status: data.status as 'pending' | 'approved' | 'rejected'
+      };
     } catch (error) {
       console.error('Error creating document:', error);
       throw error;
@@ -123,7 +129,10 @@ export const documentService = {
         await activityGenerator.documentRejected(data.document_name, adminFeedback || 'No reason provided', data.application_id);
       }
       
-      return data;
+      return {
+        ...data,
+        status: data.status as 'pending' | 'approved' | 'rejected'
+      };
     } catch (error) {
       console.error('Error updating document status:', error);
       throw error;
