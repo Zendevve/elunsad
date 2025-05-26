@@ -22,12 +22,16 @@ export const generateActivity = async (
       related_entity_type: relatedEntityType,
     });
     
-    console.log("Activity generated successfully:", activity);
-    return activity;
+    if (activity) {
+      console.log("Activity generated successfully:", activity);
+      return activity;
+    } else {
+      console.warn("Activity creation returned null - user may not be authenticated");
+      return null;
+    }
   } catch (error) {
     console.error("Failed to generate activity:", error);
-    // Don't throw the error to prevent breaking the main flow
-    // Just log it for debugging
+    return null;
   }
 };
 
@@ -99,4 +103,12 @@ export const activityGenerator = {
       "application"
     );
   },
+
+  // Test activity generator for debugging
+  createTestActivity: () => 
+    generateActivity(
+      "application_submitted",
+      "Test Activity",
+      "This is a test activity to verify the system is working"
+    ),
 };

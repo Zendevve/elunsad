@@ -17,6 +17,8 @@ export const useActivities = (limit?: number) => {
   } = useQuery({
     queryKey: ["activities", limit],
     queryFn: () => activityService.getRecentActivities(limit),
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const markAsReadMutation = useMutation({
@@ -37,6 +39,8 @@ export const useActivities = (limit?: number) => {
 
   // Set up real-time subscription for new activities
   useEffect(() => {
+    console.log("Setting up real-time subscription for activities");
+    
     const channel = supabase
       .channel("activities-changes")
       .on(
@@ -63,9 +67,17 @@ export const useActivities = (limit?: number) => {
       .subscribe();
 
     return () => {
+      console.log("Cleaning up real-time subscription for activities");
       supabase.removeChannel(channel);
     };
   }, [queryClient, toast]);
+
+  // Log errors for debugging
+  useEffect(() => {
+    if (error) {
+      console.error("Activities query error:", error);
+    }
+  }, [error]);
 
   return {
     activities,
@@ -81,5 +93,7 @@ export const useUnreadCount = () => {
   return useQuery({
     queryKey: ["unread-count"],
     queryFn: () => activityService.getUnreadCount(),
+    retry: 3,
+    retryDelay: 1000,
   });
 };

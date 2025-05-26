@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -15,7 +14,8 @@ import {
   MapPin,
   Calendar,
   Users,
-  HelpCircle
+  HelpCircle,
+  TestTube
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import useRoleAuth from "@/hooks/useRoleAuth";
 import { useActivities } from "@/hooks/useActivities";
 import { formatDistanceToNow } from "date-fns";
+import { activityGenerator } from "@/utils/activityGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 const getActivityIcon = (activityType: string) => {
   switch (activityType) {
@@ -76,6 +78,8 @@ const Dashboard = () => {
   const { isAdmin, isLoading } = useRoleAuth();
   const navigate = useNavigate();
   
+  const { toast } = useToast();
+  
   // Get activities data with more frequent refresh
   const { activities, isLoading: activitiesLoading, markAsRead, refetch } = useActivities(5);
   
@@ -96,6 +100,34 @@ const Dashboard = () => {
 
     return () => clearInterval(interval);
   }, [refetch]);
+
+  // Add test activity function for debugging
+  const handleCreateTestActivity = async () => {
+    console.log("Creating test activity...");
+    try {
+      const result = await activityGenerator.createTestActivity();
+      if (result) {
+        toast({
+          title: "Test Activity Created",
+          description: "A test activity has been created successfully",
+        });
+        refetch();
+      } else {
+        toast({
+          title: "Failed to Create Activity",
+          description: "Make sure you are logged in and try again",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating test activity:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while creating the test activity",
+        variant: "destructive",
+      });
+    }
+  };
   
   // Show loading state while checking roles
   if (isLoading) {
@@ -225,6 +257,14 @@ const Dashboard = () => {
           <Button className="flex items-center gap-2" variant="outline">
             <UploadCloud className="h-4 w-4" />
             <span>Upload Documents</span>
+          </Button>
+          <Button 
+            className="flex items-center gap-2" 
+            variant="outline"
+            onClick={handleCreateTestActivity}
+          >
+            <TestTube className="h-4 w-4" />
+            <span>Create Test Activity</span>
           </Button>
         </div>
       </section>
@@ -374,15 +414,24 @@ const Dashboard = () => {
               <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>No recent activity</p>
               <p className="text-sm">Your activities will appear here when you start using the system</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => refetch()}
-                className="mt-4"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Check for Activities
-              </Button>
+              <div className="flex gap-2 justify-center mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => refetch()}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Check for Activities
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleCreateTestActivity}
+                >
+                  <TestTube className="h-4 w-4 mr-2" />
+                  Create Test Activity
+                </Button>
+              </div>
             </div>
           )}
         </div>
