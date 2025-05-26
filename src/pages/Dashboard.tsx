@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -14,8 +15,7 @@ import {
   MapPin,
   Calendar,
   Users,
-  HelpCircle,
-  TestTube
+  HelpCircle
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import useRoleAuth from "@/hooks/useRoleAuth";
 import { useActivities } from "@/hooks/useActivities";
 import { formatDistanceToNow } from "date-fns";
-import { activityGenerator } from "@/utils/activityGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -132,94 +131,6 @@ const Dashboard = () => {
 
     return () => clearInterval(interval);
   }, [refetch]);
-
-  // Enhanced test activity function with better error handling
-  const handleCreateTestActivity = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "You must be logged in to create test activities",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log("Creating test activity...");
-    
-    try {
-      const result = await activityGenerator.createTestActivity();
-      if (result) {
-        toast({
-          title: "Success!",
-          description: "Test activity created successfully",
-        });
-        // Refresh activities immediately
-        setTimeout(() => refetch(), 500);
-      } else {
-        toast({
-          title: "Failed to Create Activity",
-          description: "The activity could not be created. Check the console for details.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error creating test activity:", error);
-      toast({
-        title: "Error",
-        description: "An error occurred while creating the test activity",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Create sample activities for demonstration
-  const handleCreateSampleActivities = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "You must be logged in to create sample activities",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log("Creating sample activities...");
-    
-    try {
-      // Create multiple sample activities
-      const samples = [
-        await activityGenerator.applicationSubmitted("Sample Business Corp", "sample-app-1"),
-        await activityGenerator.documentUploaded("Business Registration Certificate", "sample-app-1"),
-        await activityGenerator.documentApproved("Business Registration Certificate", "sample-app-1"),
-        await activityGenerator.statusChanged("under_review", "Sample Business Corp", "sample-app-1"),
-        await activityGenerator.permitExpiring("Old Business LLC", 15, "permit-123"),
-      ];
-
-      const successCount = samples.filter(Boolean).length;
-      
-      if (successCount > 0) {
-        toast({
-          title: "Sample Activities Created!",
-          description: `Created ${successCount} sample activities successfully`,
-        });
-        // Refresh activities immediately
-        setTimeout(() => refetch(), 500);
-      } else {
-        toast({
-          title: "Failed to Create Sample Activities",
-          description: "No activities could be created. Check the console for details.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error creating sample activities:", error);
-      toast({
-        title: "Error",
-        description: "An error occurred while creating sample activities",
-        variant: "destructive",
-      });
-    }
-  };
   
   // Show loading state while checking roles or auth
   if (isLoading || authLoading) {
@@ -345,10 +256,12 @@ const Dashboard = () => {
       <section className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
-          <Button className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            <span>New Application</span>
-          </Button>
+          <Link to="/applications">
+            <Button className="flex items-center gap-2">
+              <PlusCircle className="h-4 w-4" />
+              <span>New Application</span>
+            </Button>
+          </Link>
           <Button className="flex items-center gap-2" variant="secondary">
             <RefreshCw className="h-4 w-4" />
             <span>Submit Renewal</span>
@@ -356,27 +269,6 @@ const Dashboard = () => {
           <Button className="flex items-center gap-2" variant="outline">
             <UploadCloud className="h-4 w-4" />
             <span>Upload Documents</span>
-          </Button>
-          
-          {/* Enhanced test activity buttons */}
-          <Button 
-            className="flex items-center gap-2" 
-            variant="outline"
-            onClick={handleCreateTestActivity}
-            disabled={!isAuthenticated}
-          >
-            <TestTube className="h-4 w-4" />
-            <span>Create Test Activity</span>
-          </Button>
-          
-          <Button 
-            className="flex items-center gap-2" 
-            variant="outline"
-            onClick={handleCreateSampleActivities}
-            disabled={!isAuthenticated}
-          >
-            <FileText className="h-4 w-4" />
-            <span>Create Sample Activities</span>
           </Button>
         </div>
       </section>
@@ -492,7 +384,7 @@ const Dashboard = () => {
         {/* Authentication warning in activity section */}
         {!isAuthenticated && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-            Authentication required to view and create activities
+            Authentication required to view activities
           </div>
         )}
         
@@ -533,7 +425,7 @@ const Dashboard = () => {
             <div className="text-center py-8 text-gray-500">
               <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>No recent activity</p>
-              <p className="text-sm">Your activities will appear here when you start using the system</p>
+              <p className="text-sm">Activities will appear here when you submit applications or perform other actions</p>
               <div className="flex gap-2 justify-center mt-4">
                 <Button 
                   variant="outline" 
@@ -543,24 +435,15 @@ const Dashboard = () => {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Check for Activities
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleCreateTestActivity}
-                  disabled={!isAuthenticated}
-                >
-                  <TestTube className="h-4 w-4 mr-2" />
-                  Create Test Activity
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleCreateSampleActivities}
-                  disabled={!isAuthenticated}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Create Sample Activities
-                </Button>
+                <Link to="/applications">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Start New Application
+                  </Button>
+                </Link>
               </div>
             </div>
           )}
