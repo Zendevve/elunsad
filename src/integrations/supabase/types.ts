@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activities: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["activity_type_enum"]
+          created_at: string
+          description: string
+          id: string
+          is_read: boolean
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["activity_type_enum"]
+          created_at?: string
+          description: string
+          id?: string
+          is_read?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["activity_type_enum"]
+          created_at?: string
+          description?: string
+          id?: string
+          is_read?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       applications: {
         Row: {
           admin_notes: string | null
@@ -553,6 +592,17 @@ export type Database = {
       }
     }
     Enums: {
+      activity_type_enum:
+        | "application_submitted"
+        | "application_updated"
+        | "document_uploaded"
+        | "document_approved"
+        | "document_rejected"
+        | "permit_renewal_reminder"
+        | "permit_expiring"
+        | "status_changed"
+        | "payment_received"
+        | "inspection_scheduled"
       application_status_enum:
         | "draft"
         | "submitted"
@@ -693,6 +743,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_type_enum: [
+        "application_submitted",
+        "application_updated",
+        "document_uploaded",
+        "document_approved",
+        "document_rejected",
+        "permit_renewal_reminder",
+        "permit_expiring",
+        "status_changed",
+        "payment_received",
+        "inspection_scheduled",
+      ],
       application_status_enum: [
         "draft",
         "submitted",

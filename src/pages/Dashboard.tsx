@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -19,7 +20,47 @@ import {
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import useRoleAuth from "@/hooks/useRoleAuth";
+import { useActivities } from "@/hooks/useActivities";
+import { formatDistanceToNow } from "date-fns";
+
+const getActivityIcon = (activityType: string) => {
+  switch (activityType) {
+    case "document_approved":
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
+    case "document_uploaded":
+      return <UploadCloud className="h-5 w-5 text-blue-500" />;
+    case "permit_renewal_reminder":
+    case "permit_expiring":
+      return <Bell className="h-5 w-5 text-amber-500" />;
+    case "application_submitted":
+    case "application_updated":
+      return <FileText className="h-5 w-5 text-blue-500" />;
+    case "document_rejected":
+      return <AlertTriangle className="h-5 w-5 text-red-500" />;
+    default:
+      return <Bell className="h-5 w-5 text-gray-500" />;
+  }
+};
+
+const getActivityBorderColor = (activityType: string) => {
+  switch (activityType) {
+    case "document_approved":
+      return "border-green-500 bg-green-50";
+    case "document_uploaded":
+    case "application_submitted":
+    case "application_updated":
+      return "border-blue-500 bg-blue-50";
+    case "permit_renewal_reminder":
+    case "permit_expiring":
+      return "border-amber-500 bg-amber-50";
+    case "document_rejected":
+      return "border-red-500 bg-red-50";
+    default:
+      return "border-gray-500 bg-gray-50";
+  }
+};
 
 const Dashboard = () => {
   // Get current date
@@ -30,6 +71,9 @@ const Dashboard = () => {
   // Add role check and navigation
   const { isAdmin, isLoading } = useRoleAuth();
   const navigate = useNavigate();
+  
+  // Get activities data
+  const { activities, isLoading: activitiesLoading, markAsRead } = useActivities(3);
   
   // Auto-redirect admin users to admin dashboard
   useEffect(() => {
@@ -268,30 +312,45 @@ const Dashboard = () => {
           </Link>
         </div>
         <div className="space-y-4">
-          <div className="flex items-start p-3 border-l-4 border-green-500 bg-green-50 rounded">
-            <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5" />
-            <div>
-              <p className="font-medium">Document Approved</p>
-              <p className="text-sm text-gray-600">Your business permit for "Main Street Cafe" has been approved</p>
-              <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
+          {activitiesLoading ? (
+            // Loading skeleton
+            Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="flex items-start p-3 border-l-4 border-gray-200 bg-gray-50 rounded">
+                <Skeleton className="h-5 w-5 mr-3 mt-0.5 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-3/4 mb-2" />
+                  <Skeleton className="h-3 w-full mb-1" />
+                  <Skeleton className="h-3 w-1/4" />
+                </div>
+              </div>
+            ))
+          ) : activities.length > 0 ? (
+            activities.map((activity) => (
+              <div 
+                key={activity.id} 
+                className={`flex items-start p-3 border-l-4 rounded cursor-pointer transition-opacity ${getActivityBorderColor(activity.activity_type)} ${activity.is_read ? 'opacity-60' : ''}`}
+                onClick={() => !activity.is_read && markAsRead(activity.id)}
+              >
+                {getActivityIcon(activity.activity_type)}
+                <div className="ml-3 flex-1">
+                  <p className="font-medium">{activity.title}</p>
+                  <p className="text-sm text-gray-600">{activity.description}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                  </p>
+                </div>
+                {!activity.is_read && (
+                  <div className="h-2 w-2 bg-blue-500 rounded-full ml-2 mt-2"></div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>No recent activity</p>
+              <p className="text-sm">Your activities will appear here when you start using the system</p>
             </div>
-          </div>
-          <div className="flex items-start p-3 border-l-4 border-blue-500 bg-blue-50 rounded">
-            <UploadCloud className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
-            <div>
-              <p className="font-medium">Document Uploaded</p>
-              <p className="text-sm text-gray-600">You uploaded "Business Tax Certificate" for review</p>
-              <p className="text-xs text-gray-500 mt-1">Yesterday</p>
-            </div>
-          </div>
-          <div className="flex items-start p-3 border-l-4 border-amber-500 bg-amber-50 rounded">
-            <Bell className="h-5 w-5 text-amber-500 mr-3 mt-0.5" />
-            <div>
-              <p className="font-medium">Renewal Reminder</p>
-              <p className="text-sm text-gray-600">Your permit for "Downtown Gift Shop" expires in 15 days</p>
-              <p className="text-xs text-gray-500 mt-1">2 days ago</p>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
