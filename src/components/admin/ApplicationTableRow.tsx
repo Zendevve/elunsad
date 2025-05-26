@@ -50,8 +50,7 @@ const ApplicationTableRow = ({
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{id.substring(0, 8)}...</TableCell>
-      <TableCell>{businessName || "-"}</TableCell>
+      <TableCell className="font-medium">{businessName || "-"}</TableCell>
       <TableCell>{ownerName || "-"}</TableCell>
       <TableCell>
         {getApplicationTypeLabel(applicationType)}

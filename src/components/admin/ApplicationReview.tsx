@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, 
@@ -244,7 +243,6 @@ const ApplicationReview = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Application ID</TableHead>
                     <TableHead>Business Name</TableHead>
                     <TableHead>Owner</TableHead>
                     <TableHead>Type</TableHead>
