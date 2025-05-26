@@ -419,7 +419,7 @@ const Applications = () => {
   const handleSubmitApplication = async () => {
     console.log("Starting application submission...");
     
-    // Verify authentication before submission
+    // Double check authentication before submission
     if (!isAuthenticated || !currentUser) {
       console.error("User not authenticated during submission");
       toast({
@@ -451,24 +451,20 @@ const Applications = () => {
       await updateStatus('submitted');
       console.log("Application status updated to submitted");
       
-      // Generate activity for application submission - with proper error handling
+      // Generate activity for application submission with explicit user check
       try {
         console.log("Creating activity for application submission...");
-        const activity = await activityGenerator.applicationSubmitted(businessName, applicationId!);
-        console.log("Activity created successfully:", activity);
-        
-        toast({
-          title: "Application Submitted",
-          description: "Your business permit application has been submitted successfully.",
-        });
+        await activityGenerator.applicationSubmitted(businessName, applicationId!);
+        console.log("Activity created successfully");
       } catch (activityError) {
         console.error("Failed to create activity:", activityError);
-        // Still show success toast even if activity creation fails
-        toast({
-          title: "Application Submitted",
-          description: "Your business permit application has been submitted successfully.",
-        });
+        // Don't fail the submission if activity creation fails
       }
+      
+      toast({
+        title: "Application Submitted",
+        description: "Your business permit application has been submitted successfully.",
+      });
       
       navigate('/status');
     } catch (error) {

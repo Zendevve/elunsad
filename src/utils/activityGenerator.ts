@@ -1,7 +1,6 @@
 
 import { activityService } from "@/services/activityService";
 import { Database } from "@/integrations/supabase/types";
-import { supabase } from "@/integrations/supabase/client";
 
 type ActivityType = Database["public"]["Enums"]["activity_type_enum"];
 
@@ -15,21 +14,6 @@ export const generateActivity = async (
   try {
     console.log("Generating activity:", { type, title, description, relatedEntityId, relatedEntityType });
     
-    // Verify user is authenticated
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error) {
-      console.error("Authentication error in generateActivity:", error);
-      throw new Error(`Authentication failed: ${error.message}`);
-    }
-    
-    if (!user) {
-      console.error("Cannot create activity - user not authenticated");
-      throw new Error("User must be authenticated to create activities");
-    }
-    
-    console.log("User authenticated, creating activity for:", user.id);
-    
     const activity = await activityService.createActivity({
       activity_type: type,
       title,
@@ -38,11 +22,16 @@ export const generateActivity = async (
       related_entity_type: relatedEntityType,
     });
     
-    console.log("Activity generated successfully:", activity);
-    return activity;
+    if (activity) {
+      console.log("Activity generated successfully:", activity);
+      return activity;
+    } else {
+      console.warn("Activity creation returned null - user may not be authenticated");
+      return null;
+    }
   } catch (error) {
     console.error("Failed to generate activity:", error);
-    throw error; // Re-throw to let calling code handle it
+    return null;
   }
 };
 
@@ -80,7 +69,7 @@ export const activityGenerator = {
     return generateActivity(
       "application_submitted",
       "Application Submitted",
-      `Your business permit application for "${businessName}" has been submitted successfully`,
+      `Your business permit application for "${businessName}" has been submitted`,
       applicationId,
       "application"
     );
@@ -109,9 +98,17 @@ export const activityGenerator = {
     return generateActivity(
       "status_changed",
       "Status Changed",
-      `Your application for "${businessName}" status changed to ${newStatus.replace('_', ' ')}`,
+      `Your application for "${businessName}" status changed to ${newStatus}`,
       applicationId,
       "application"
     );
-  }
+  },
+
+  // Test activity generator for debugging
+  createTestActivity: () => 
+    generateActivity(
+      "application_submitted",
+      "Test Activity",
+      "This is a test activity to verify the system is working"
+    ),
 };

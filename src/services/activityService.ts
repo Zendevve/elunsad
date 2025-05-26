@@ -43,20 +43,22 @@ export const activityService = {
     try {
       console.log("Creating activity:", activity);
       
-      // Get current authenticated user
+      // Get current user with more detailed logging
       const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      console.log("Auth check for activity creation:", { user: user?.id, error: authError });
       
       if (authError) {
         console.error("Authentication error in createActivity:", authError);
-        throw new Error(`Authentication failed: ${authError.message}`);
+        return null;
       }
       
       if (!user) {
-        console.error("No authenticated user found");
-        throw new Error("User must be authenticated to create activities");
+        console.error("No authenticated user found for activity creation");
+        return null;
       }
 
-      console.log("Creating activity for authenticated user:", user.id);
+      console.log("Creating activity for user:", user.id);
 
       const activityData = {
         ...activity,
@@ -73,15 +75,14 @@ export const activityService = {
 
       if (error) {
         console.error("Error creating activity:", error);
-        console.error("Error details:", error.message, error.details, error.hint);
-        throw error;
+        return null;
       }
 
       console.log("Activity created successfully:", data);
       return data;
     } catch (error) {
       console.error("Failed to create activity:", error);
-      throw error; // Re-throw to let calling code handle it
+      return null;
     }
   },
 
@@ -102,5 +103,16 @@ export const activityService = {
       console.error("Failed to get unread count:", error);
       return 0;
     }
+  },
+
+  // Helper method to create a test activity for debugging
+  async createTestActivity(): Promise<Activity | null> {
+    return this.createActivity({
+      activity_type: "application_submitted",
+      title: "Test Activity",
+      description: "This is a test activity to verify the system is working",
+      related_entity_id: null,
+      related_entity_type: null,
+    });
   }
 };

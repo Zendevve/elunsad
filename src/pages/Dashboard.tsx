@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   Bell, 
@@ -15,7 +14,8 @@ import {
   MapPin,
   Calendar,
   Users,
-  HelpCircle
+  HelpCircle,
+  TestTube
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import useRoleAuth from "@/hooks/useRoleAuth";
 import { useActivities } from "@/hooks/useActivities";
 import { formatDistanceToNow } from "date-fns";
+import { activityGenerator } from "@/utils/activityGenerator";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const getActivityIcon = (activityType: string) => {
   switch (activityType) {
@@ -79,40 +79,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
   
   const { toast } = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [authLoading, setAuthLoading] = useState<boolean>(true);
   
   // Get activities data with more frequent refresh
   const { activities, isLoading: activitiesLoading, markAsRead, refetch } = useActivities(5);
-  
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) {
-          console.error("Auth error:", error);
-        }
-        setIsAuthenticated(!!user);
-        console.log("Dashboard auth check - User authenticated:", !!user, user?.id);
-      } catch (error) {
-        console.error("Failed to check authentication:", error);
-        setIsAuthenticated(false);
-      } finally {
-        setAuthLoading(false);
-      }
-    };
-
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Dashboard auth state change:", event, !!session);
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
   
   // Auto-redirect admin users to admin dashboard
   useEffect(() => {
@@ -131,9 +100,37 @@ const Dashboard = () => {
 
     return () => clearInterval(interval);
   }, [refetch]);
+
+  // Add test activity function for debugging
+  const handleCreateTestActivity = async () => {
+    console.log("Creating test activity...");
+    try {
+      const result = await activityGenerator.createTestActivity();
+      if (result) {
+        toast({
+          title: "Test Activity Created",
+          description: "A test activity has been created successfully",
+        });
+        refetch();
+      } else {
+        toast({
+          title: "Failed to Create Activity",
+          description: "Make sure you are logged in and try again",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating test activity:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while creating the test activity",
+        variant: "destructive",
+      });
+    }
+  };
   
-  // Show loading state while checking roles or auth
-  if (isLoading || authLoading) {
+  // Show loading state while checking roles
+  if (isLoading) {
     return (
       <div className="p-6">
         <div className="flex flex-col items-center justify-center h-64">
@@ -146,13 +143,6 @@ const Dashboard = () => {
   
   return (
     <div className="p-6">
-      {/* Authentication status indicator */}
-      {!isAuthenticated && (
-        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800">⚠️ You are not authenticated. Some features may not work correctly.</p>
-        </div>
-      )}
-
       {/* Hero / Welcome Banner */}
       <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -256,12 +246,10 @@ const Dashboard = () => {
       <section className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
-          <Link to="/applications">
-            <Button className="flex items-center gap-2">
-              <PlusCircle className="h-4 w-4" />
-              <span>New Application</span>
-            </Button>
-          </Link>
+          <Button className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4" />
+            <span>New Application</span>
+          </Button>
           <Button className="flex items-center gap-2" variant="secondary">
             <RefreshCw className="h-4 w-4" />
             <span>Submit Renewal</span>
@@ -269,6 +257,14 @@ const Dashboard = () => {
           <Button className="flex items-center gap-2" variant="outline">
             <UploadCloud className="h-4 w-4" />
             <span>Upload Documents</span>
+          </Button>
+          <Button 
+            className="flex items-center gap-2" 
+            variant="outline"
+            onClick={handleCreateTestActivity}
+          >
+            <TestTube className="h-4 w-4" />
+            <span>Create Test Activity</span>
           </Button>
         </div>
       </section>
@@ -380,14 +376,6 @@ const Dashboard = () => {
             </Link>
           </div>
         </div>
-        
-        {/* Authentication warning in activity section */}
-        {!isAuthenticated && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-            Authentication required to view activities
-          </div>
-        )}
-        
         <div className="space-y-4">
           {activitiesLoading ? (
             // Loading skeleton
@@ -425,7 +413,7 @@ const Dashboard = () => {
             <div className="text-center py-8 text-gray-500">
               <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>No recent activity</p>
-              <p className="text-sm">Activities will appear here when you submit applications or perform other actions</p>
+              <p className="text-sm">Your activities will appear here when you start using the system</p>
               <div className="flex gap-2 justify-center mt-4">
                 <Button 
                   variant="outline" 
@@ -435,15 +423,14 @@ const Dashboard = () => {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Check for Activities
                 </Button>
-                <Link to="/applications">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Start New Application
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleCreateTestActivity}
+                >
+                  <TestTube className="h-4 w-4 mr-2" />
+                  Create Test Activity
+                </Button>
               </div>
             </div>
           )}
