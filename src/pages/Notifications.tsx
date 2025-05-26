@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -11,7 +10,9 @@ import {
   Search,
   Filter,
   X,
-  Check
+  Check,
+  TestTube,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useActivities } from "@/hooks/useActivities";
+import { activityService } from "@/services/activityService";
 import { formatDistanceToNow } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 const getActivityIcon = (activityType: string) => {
   switch (activityType) {
@@ -61,8 +64,9 @@ const getActivityBorderColor = (activityType: string) => {
 const Notifications = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "unread" | "read">("all");
+  const { toast } = useToast();
   
-  const { activities, isLoading, markAsRead } = useActivities();
+  const { activities, isLoading, markAsRead, refetch } = useActivities();
 
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,6 +80,34 @@ const Notifications = () => {
   });
 
   const unreadCount = activities.filter(activity => !activity.is_read).length;
+
+  // Add test activity function for debugging
+  const handleCreateTestActivity = async () => {
+    console.log("Creating test activity...");
+    try {
+      const result = await activityService.createTestActivity();
+      if (result) {
+        toast({
+          title: "Test Activity Created",
+          description: "A test activity has been created successfully",
+        });
+        refetch();
+      } else {
+        toast({
+          title: "Failed to Create Activity",
+          description: "Make sure you are logged in and try again",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating test activity:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while creating the test activity",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -102,9 +134,20 @@ const Notifications = () => {
                 Stay updated with your application status and important reminders
               </p>
             </div>
-            <Badge variant="secondary" className="text-lg px-3 py-1">
-              {unreadCount} unread
-            </Badge>
+            <div className="flex gap-2 items-center">
+              <Badge variant="secondary" className="text-lg px-3 py-1">
+                {unreadCount} unread
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCreateTestActivity}
+                className="flex items-center gap-2"
+              >
+                <TestTube className="h-4 w-4" />
+                Test Activity
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -142,6 +185,15 @@ const Notifications = () => {
               size="sm"
             >
               Read
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => refetch()}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
             </Button>
           </div>
         </div>
@@ -209,12 +261,33 @@ const Notifications = () => {
               <div className="text-center py-12">
                 <Bell className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications found</h3>
-                <p className="text-gray-500">
+                <p className="text-gray-500 mb-4">
                   {searchTerm || filterType !== "all" 
                     ? "Try adjusting your search or filter criteria"
                     : "You'll see notifications here when there's activity on your account"
                   }
                 </p>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCreateTestActivity}
+                    className="flex items-center gap-2"
+                  >
+                    <TestTube className="h-4 w-4" />
+                    Create Test Activity
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                  >
+                    <Link to="/applications" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Create Application
+                    </Link>
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

@@ -19,6 +19,7 @@ export const useActivities = (limit?: number) => {
     queryFn: () => activityService.getRecentActivities(limit),
     retry: 3,
     retryDelay: 1000,
+    refetchInterval: 30000, // Refetch every 30 seconds to catch new activities
   });
 
   const markAsReadMutation = useMutation({
@@ -95,5 +96,6 @@ export const useUnreadCount = () => {
     queryFn: () => activityService.getUnreadCount(),
     retry: 3,
     retryDelay: 1000,
+    refetchInterval: 30000, // Auto-refresh unread count
   });
 };

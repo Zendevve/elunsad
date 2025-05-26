@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ApplicationStatus, ApplicationType } from "./types";
+import { activityGenerator } from "@/utils/activityGenerator";
 
 // Core application service methods
 export const applicationService = {
@@ -37,6 +38,10 @@ export const applicationService = {
       
       if (error) throw error;
       console.log("ApplicationService: Created application with response:", data);
+      
+      // Generate activity for application creation
+      await activityGenerator.applicationUpdated("New Application", data.id);
+      
       return data;
     } catch (error) {
       console.error('Error creating application:', error);
@@ -99,6 +104,14 @@ export const applicationService = {
         .single();
       
       if (error) throw error;
+      
+      // Generate activity for status change
+      if (status === 'submitted') {
+        await activityGenerator.applicationSubmitted("Your Application", id);
+      } else {
+        await activityGenerator.statusChanged(status, "Your Application", id);
+      }
+      
       return data;
     } catch (error) {
       console.error('Error updating application status:', error);

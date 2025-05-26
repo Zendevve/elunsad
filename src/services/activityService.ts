@@ -105,8 +105,8 @@ export const activityService = {
   async createTestActivity(): Promise<Activity | null> {
     return this.createActivity({
       activity_type: "application_submitted",
-      title: "System Test",
-      description: "Testing activity creation - this confirms the Recent Activity system is working!",
+      title: "System Test Activity",
+      description: `Test activity created at ${new Date().toLocaleString()} - Recent Activity system is working!`,
       related_entity_id: null,
       related_entity_type: null,
     });

@@ -103,4 +103,40 @@ export const activityGenerator = {
       "application"
     );
   },
+
+  // Welcome activity for new users
+  welcomeActivity: () => 
+    generateActivity(
+      "application_submitted",
+      "Welcome to Business Permit System",
+      "Welcome! You can now apply for business permits and track your applications here.",
+    ),
+
+  // Document management activities
+  documentRequested: (documentType: string, applicationId?: string) =>
+    generateActivity(
+      "document_uploaded",
+      "Document Requested",
+      `Additional document required: ${documentType}`,
+      applicationId,
+      "application"
+    ),
+
+  // System notifications
+  systemMaintenance: (maintenanceDate: string) =>
+    generateActivity(
+      "permit_expiring",
+      "System Maintenance Notice",
+      `System maintenance scheduled for ${maintenanceDate}. Please plan accordingly.`,
+    ),
+
+  // Payment activities
+  paymentReceived: (amount: string, applicationId?: string) =>
+    generateActivity(
+      "application_updated",
+      "Payment Received",
+      `Payment of ${amount} has been received for your application`,
+      applicationId,
+      "application"
+    ),
 };
