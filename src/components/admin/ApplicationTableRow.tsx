@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Eye, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ApplicationStatus, ApplicationType } from "@/services/application/types";
+import { documentService, REQUIRED_DOCUMENTS } from "@/services/documentService";
 import ApplicationStatusBadge from "./ApplicationStatusBadge";
+import DocumentStatusIndicator from "./DocumentStatusIndicator";
 
 interface ApplicationTableRowProps {
   id: string;
@@ -33,6 +35,34 @@ const ApplicationTableRow: React.FC<ApplicationTableRowProps> = ({
   applicationStatus,
   onStatusChange
 }) => {
+  const [documentStatus, setDocumentStatus] = useState({
+    uploaded: 0,
+    approved: 0,
+    pending: 0,
+    rejected: 0
+  });
+
+  useEffect(() => {
+    loadDocumentStatus();
+  }, [id]);
+
+  const loadDocumentStatus = async () => {
+    try {
+      const completion = await documentService.checkDocumentCompletion(id);
+      const totalRequired = REQUIRED_DOCUMENTS.length;
+      const uploaded = totalRequired - completion.missingDocuments.length;
+      
+      setDocumentStatus({
+        uploaded,
+        approved: completion.allApproved ? totalRequired : completion.pendingDocuments.length + completion.rejectedDocuments.length < totalRequired ? totalRequired - completion.missingDocuments.length - completion.pendingDocuments.length - completion.rejectedDocuments.length : 0,
+        pending: completion.pendingDocuments.length,
+        rejected: completion.rejectedDocuments.length
+      });
+    } catch (error) {
+      console.error('Error loading document status:', error);
+    }
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
@@ -71,6 +101,15 @@ const ApplicationTableRow: React.FC<ApplicationTableRowProps> = ({
       <TableCell>{formatDate(submissionDate)}</TableCell>
       <TableCell>
         <ApplicationStatusBadge status={applicationStatus} />
+      </TableCell>
+      <TableCell>
+        <DocumentStatusIndicator
+          totalRequired={REQUIRED_DOCUMENTS.length}
+          uploaded={documentStatus.uploaded}
+          approved={documentStatus.approved}
+          pending={documentStatus.pending}
+          rejected={documentStatus.rejected}
+        />
       </TableCell>
       <TableCell>
         <DropdownMenu>

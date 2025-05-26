@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, 
@@ -20,6 +19,7 @@ import ApplicationTableRow from "./ApplicationTableRow";
 import { useQuery } from "@tanstack/react-query";
 import { activityGenerator } from "@/utils/activityGenerator";
 import { businessInformationService } from "@/services/application";
+import DocumentStatusIndicator from "./DocumentStatusIndicator";
 
 const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("submitted");
@@ -280,6 +280,7 @@ const ApplicationReview = () => {
                     <TableHead>Type</TableHead>
                     <TableHead>Submitted</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Documents</TableHead>
                     <TableHead>Action</TableHead>
                   </TableRow>
                 </TableHeader>
