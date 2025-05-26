@@ -15,13 +15,20 @@ export const generateActivity = async (
   try {
     console.log("Generating activity:", { type, title, description, relatedEntityId, relatedEntityType });
     
-    // Ensure user is authenticated before creating activity
+    // Verify user is authenticated
     const { data: { user }, error } = await supabase.auth.getUser();
     
-    if (error || !user) {
-      console.warn("Cannot create activity - user not authenticated:", error);
-      return null;
+    if (error) {
+      console.error("Authentication error in generateActivity:", error);
+      throw new Error(`Authentication failed: ${error.message}`);
     }
+    
+    if (!user) {
+      console.error("Cannot create activity - user not authenticated");
+      throw new Error("User must be authenticated to create activities");
+    }
+    
+    console.log("User authenticated, creating activity for:", user.id);
     
     const activity = await activityService.createActivity({
       activity_type: type,
@@ -31,16 +38,11 @@ export const generateActivity = async (
       related_entity_type: relatedEntityType,
     });
     
-    if (activity) {
-      console.log("Activity generated successfully:", activity);
-      return activity;
-    } else {
-      console.warn("Activity creation returned null");
-      return null;
-    }
+    console.log("Activity generated successfully:", activity);
+    return activity;
   } catch (error) {
     console.error("Failed to generate activity:", error);
-    return null;
+    throw error; // Re-throw to let calling code handle it
   }
 };
 
@@ -78,7 +80,7 @@ export const activityGenerator = {
     return generateActivity(
       "application_submitted",
       "Application Submitted",
-      `Your business permit application for "${businessName}" has been submitted`,
+      `Your business permit application for "${businessName}" has been submitted successfully`,
       applicationId,
       "application"
     );
@@ -107,28 +109,9 @@ export const activityGenerator = {
     return generateActivity(
       "status_changed",
       "Status Changed",
-      `Your application for "${businessName}" status changed to ${newStatus}`,
+      `Your application for "${businessName}" status changed to ${newStatus.replace('_', ' ')}`,
       applicationId,
       "application"
     );
-  },
-
-  // Enhanced test activity generator
-  createTestActivity: async () => {
-    console.log("Creating test activity...");
-    
-    // Check authentication first
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error || !user) {
-      console.error("User must be authenticated to create test activity");
-      return null;
-    }
-    
-    return generateActivity(
-      "application_submitted",
-      "Test Activity",
-      `This is a test activity created at ${new Date().toLocaleString()} to verify the system is working properly`
-    );
-  },
+  }
 };

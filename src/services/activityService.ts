@@ -43,34 +43,17 @@ export const activityService = {
     try {
       console.log("Creating activity:", activity);
       
-      // Wait for authentication to be established
-      let attempts = 0;
-      const maxAttempts = 5;
-      let user = null;
+      // Get current authenticated user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      while (attempts < maxAttempts) {
-        const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError) {
-          console.error("Authentication error in createActivity:", authError);
-          attempts++;
-          await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
-          continue;
-        }
-        
-        if (currentUser) {
-          user = currentUser;
-          break;
-        }
-        
-        attempts++;
-        console.log(`Waiting for authentication... attempt ${attempts}/${maxAttempts}`);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+      if (authError) {
+        console.error("Authentication error in createActivity:", authError);
+        throw new Error(`Authentication failed: ${authError.message}`);
       }
       
       if (!user) {
-        console.error("No authenticated user found after waiting");
-        return null;
+        console.error("No authenticated user found");
+        throw new Error("User must be authenticated to create activities");
       }
 
       console.log("Creating activity for authenticated user:", user.id);
@@ -91,14 +74,14 @@ export const activityService = {
       if (error) {
         console.error("Error creating activity:", error);
         console.error("Error details:", error.message, error.details, error.hint);
-        return null;
+        throw error;
       }
 
       console.log("Activity created successfully:", data);
       return data;
     } catch (error) {
       console.error("Failed to create activity:", error);
-      return null;
+      throw error; // Re-throw to let calling code handle it
     }
   },
 
@@ -119,24 +102,5 @@ export const activityService = {
       console.error("Failed to get unread count:", error);
       return 0;
     }
-  },
-
-  // Helper method to create a test activity with proper authentication check
-  async createTestActivity(): Promise<Activity | null> {
-    // Check authentication first
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error || !user) {
-      console.error("User must be authenticated to create test activity");
-      return null;
-    }
-    
-    return this.createActivity({
-      activity_type: "application_submitted",
-      title: "Test Activity Created",
-      description: `Test activity created by ${user.email} at ${new Date().toLocaleString()}`,
-      related_entity_id: null,
-      related_entity_type: null,
-    });
   }
 };
