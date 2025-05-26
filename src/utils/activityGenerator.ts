@@ -26,7 +26,7 @@ export const generateActivity = async (
       console.log("Activity generated successfully:", activity);
       return activity;
     } else {
-      console.warn("Activity creation returned null - user may not be authenticated");
+      console.warn("Activity creation returned null - check authentication and RLS policies");
       return null;
     }
   } catch (error) {
@@ -69,7 +69,7 @@ export const activityGenerator = {
     return generateActivity(
       "application_submitted",
       "Application Submitted",
-      `Your business permit application for "${businessName}" has been submitted`,
+      `Your business permit application for "${businessName}" has been submitted successfully`,
       applicationId,
       "application"
     );
@@ -104,11 +104,11 @@ export const activityGenerator = {
     );
   },
 
-  // Test activity generator for debugging
+  // Simple test activity generator
   createTestActivity: () => 
     generateActivity(
       "application_submitted",
-      "Test Activity",
-      "This is a test activity to verify the system is working"
+      "Test Activity Created",
+      `This is a test activity created at ${new Date().toLocaleTimeString()}. The Recent Activity system is now working!`
     ),
 };

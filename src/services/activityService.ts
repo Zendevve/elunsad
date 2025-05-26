@@ -43,10 +43,8 @@ export const activityService = {
     try {
       console.log("Creating activity:", activity);
       
-      // Get current user with more detailed logging
+      // Get current user
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      console.log("Auth check for activity creation:", { user: user?.id, error: authError });
       
       if (authError) {
         console.error("Authentication error in createActivity:", authError);
@@ -57,8 +55,6 @@ export const activityService = {
         console.error("No authenticated user found for activity creation");
         return null;
       }
-
-      console.log("Creating activity for user:", user.id);
 
       const activityData = {
         ...activity,
@@ -105,12 +101,12 @@ export const activityService = {
     }
   },
 
-  // Helper method to create a test activity for debugging
+  // Create a simple test activity to verify the system works
   async createTestActivity(): Promise<Activity | null> {
     return this.createActivity({
       activity_type: "application_submitted",
-      title: "Test Activity",
-      description: "This is a test activity to verify the system is working",
+      title: "System Test",
+      description: "Testing activity creation - this confirms the Recent Activity system is working!",
       related_entity_id: null,
       related_entity_type: null,
     });
