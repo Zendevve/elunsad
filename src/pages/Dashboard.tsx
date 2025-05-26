@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   Bell, 
@@ -26,6 +26,7 @@ import { useActivities } from "@/hooks/useActivities";
 import { formatDistanceToNow } from "date-fns";
 import { activityGenerator } from "@/utils/activityGenerator";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const getActivityIcon = (activityType: string) => {
   switch (activityType) {
@@ -79,9 +80,40 @@ const Dashboard = () => {
   const navigate = useNavigate();
   
   const { toast } = useToast();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
   
   // Get activities data with more frequent refresh
   const { activities, isLoading: activitiesLoading, markAsRead, refetch } = useActivities(5);
+  
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error("Auth error:", error);
+        }
+        setIsAuthenticated(!!user);
+        console.log("Dashboard auth check - User authenticated:", !!user, user?.id);
+      } catch (error) {
+        console.error("Failed to check authentication:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Dashboard auth state change:", event, !!session);
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   // Auto-redirect admin users to admin dashboard
   useEffect(() => {
@@ -101,21 +133,32 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  // Add test activity function for debugging
+  // Enhanced test activity function with better error handling
   const handleCreateTestActivity = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to create test activities",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log("Creating test activity...");
+    
     try {
       const result = await activityGenerator.createTestActivity();
       if (result) {
         toast({
-          title: "Test Activity Created",
-          description: "A test activity has been created successfully",
+          title: "Success!",
+          description: "Test activity created successfully",
         });
-        refetch();
+        // Refresh activities immediately
+        setTimeout(() => refetch(), 500);
       } else {
         toast({
           title: "Failed to Create Activity",
-          description: "Make sure you are logged in and try again",
+          description: "The activity could not be created. Check the console for details.",
           variant: "destructive",
         });
       }
@@ -128,9 +171,58 @@ const Dashboard = () => {
       });
     }
   };
+
+  // Create sample activities for demonstration
+  const handleCreateSampleActivities = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to create sample activities",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("Creating sample activities...");
+    
+    try {
+      // Create multiple sample activities
+      const samples = [
+        await activityGenerator.applicationSubmitted("Sample Business Corp", "sample-app-1"),
+        await activityGenerator.documentUploaded("Business Registration Certificate", "sample-app-1"),
+        await activityGenerator.documentApproved("Business Registration Certificate", "sample-app-1"),
+        await activityGenerator.statusChanged("under_review", "Sample Business Corp", "sample-app-1"),
+        await activityGenerator.permitExpiring("Old Business LLC", 15, "permit-123"),
+      ];
+
+      const successCount = samples.filter(Boolean).length;
+      
+      if (successCount > 0) {
+        toast({
+          title: "Sample Activities Created!",
+          description: `Created ${successCount} sample activities successfully`,
+        });
+        // Refresh activities immediately
+        setTimeout(() => refetch(), 500);
+      } else {
+        toast({
+          title: "Failed to Create Sample Activities",
+          description: "No activities could be created. Check the console for details.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating sample activities:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while creating sample activities",
+        variant: "destructive",
+      });
+    }
+  };
   
-  // Show loading state while checking roles
-  if (isLoading) {
+  // Show loading state while checking roles or auth
+  if (isLoading || authLoading) {
     return (
       <div className="p-6">
         <div className="flex flex-col items-center justify-center h-64">
@@ -143,6 +235,13 @@ const Dashboard = () => {
   
   return (
     <div className="p-6">
+      {/* Authentication status indicator */}
+      {!isAuthenticated && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800">⚠️ You are not authenticated. Some features may not work correctly.</p>
+        </div>
+      )}
+
       {/* Hero / Welcome Banner */}
       <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -258,13 +357,26 @@ const Dashboard = () => {
             <UploadCloud className="h-4 w-4" />
             <span>Upload Documents</span>
           </Button>
+          
+          {/* Enhanced test activity buttons */}
           <Button 
             className="flex items-center gap-2" 
             variant="outline"
             onClick={handleCreateTestActivity}
+            disabled={!isAuthenticated}
           >
             <TestTube className="h-4 w-4" />
             <span>Create Test Activity</span>
+          </Button>
+          
+          <Button 
+            className="flex items-center gap-2" 
+            variant="outline"
+            onClick={handleCreateSampleActivities}
+            disabled={!isAuthenticated}
+          >
+            <FileText className="h-4 w-4" />
+            <span>Create Sample Activities</span>
           </Button>
         </div>
       </section>
@@ -376,6 +488,14 @@ const Dashboard = () => {
             </Link>
           </div>
         </div>
+        
+        {/* Authentication warning in activity section */}
+        {!isAuthenticated && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            Authentication required to view and create activities
+          </div>
+        )}
+        
         <div className="space-y-4">
           {activitiesLoading ? (
             // Loading skeleton
@@ -427,9 +547,19 @@ const Dashboard = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={handleCreateTestActivity}
+                  disabled={!isAuthenticated}
                 >
                   <TestTube className="h-4 w-4 mr-2" />
                   Create Test Activity
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleCreateSampleActivities}
+                  disabled={!isAuthenticated}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Create Sample Activities
                 </Button>
               </div>
             </div>

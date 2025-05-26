@@ -1,6 +1,7 @@
 
 import { activityService } from "@/services/activityService";
 import { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 
 type ActivityType = Database["public"]["Enums"]["activity_type_enum"];
 
@@ -14,6 +15,14 @@ export const generateActivity = async (
   try {
     console.log("Generating activity:", { type, title, description, relatedEntityId, relatedEntityType });
     
+    // Ensure user is authenticated before creating activity
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+      console.warn("Cannot create activity - user not authenticated:", error);
+      return null;
+    }
+    
     const activity = await activityService.createActivity({
       activity_type: type,
       title,
@@ -26,7 +35,7 @@ export const generateActivity = async (
       console.log("Activity generated successfully:", activity);
       return activity;
     } else {
-      console.warn("Activity creation returned null - user may not be authenticated");
+      console.warn("Activity creation returned null");
       return null;
     }
   } catch (error) {
@@ -104,11 +113,22 @@ export const activityGenerator = {
     );
   },
 
-  // Test activity generator for debugging
-  createTestActivity: () => 
-    generateActivity(
+  // Enhanced test activity generator
+  createTestActivity: async () => {
+    console.log("Creating test activity...");
+    
+    // Check authentication first
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+      console.error("User must be authenticated to create test activity");
+      return null;
+    }
+    
+    return generateActivity(
       "application_submitted",
       "Test Activity",
-      "This is a test activity to verify the system is working"
-    ),
+      `This is a test activity created at ${new Date().toLocaleString()} to verify the system is working properly`
+    );
+  },
 };

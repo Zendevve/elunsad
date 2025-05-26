@@ -2,12 +2,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { activityService } from "@/services/activityService";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export const useActivities = (limit?: number) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const {
     data: activities = [],
@@ -19,6 +36,7 @@ export const useActivities = (limit?: number) => {
     queryFn: () => activityService.getRecentActivities(limit),
     retry: 3,
     retryDelay: 1000,
+    enabled: isAuthenticated, // Only run query when authenticated
   });
 
   const markAsReadMutation = useMutation({
@@ -39,6 +57,11 @@ export const useActivities = (limit?: number) => {
 
   // Set up real-time subscription for new activities
   useEffect(() => {
+    if (!isAuthenticated) {
+      console.log("Skipping real-time subscription - user not authenticated");
+      return;
+    }
+
     console.log("Setting up real-time subscription for activities");
     
     const channel = supabase
@@ -70,7 +93,7 @@ export const useActivities = (limit?: number) => {
       console.log("Cleaning up real-time subscription for activities");
       supabase.removeChannel(channel);
     };
-  }, [queryClient, toast]);
+  }, [queryClient, toast, isAuthenticated]);
 
   // Log errors for debugging
   useEffect(() => {
@@ -86,14 +109,33 @@ export const useActivities = (limit?: number) => {
     refetch,
     markAsRead: markAsReadMutation.mutate,
     isMarkingAsRead: markAsReadMutation.isPending,
+    isAuthenticated,
   };
 };
 
 export const useUnreadCount = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return useQuery({
     queryKey: ["unread-count"],
     queryFn: () => activityService.getUnreadCount(),
     retry: 3,
     retryDelay: 1000,
+    enabled: isAuthenticated, // Only run query when authenticated
   });
 };
