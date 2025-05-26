@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -39,8 +38,8 @@ import {
 const documentTypes = [
   {
     id: 1,
-    name: "Business Registration Certificate",
-    description: "Official business registration document from relevant authorities",
+    name: "Business Permit Application Form",
+    description: "Filled-out Business Permit application form",
     required: true,
     status: "approved",
     lastUpdated: "2024-03-15",
@@ -48,21 +47,84 @@ const documentTypes = [
   },
   {
     id: 2,
-    name: "Tax Clearance Certificate",
-    description: "Current tax clearance from revenue authority",
+    name: "Owner ID Pictures",
+    description: "Two (2) passport size ID pictures of the owner or in cases of partnership or Corporation the picture of the Senior or Managing Partner, President or Branch Manager",
     required: true,
     status: "pending",
     lastUpdated: "2024-03-14",
-    feedback: "Under review by tax department"
+    feedback: "Under review by office staff"
   },
   {
     id: 3,
-    name: "Fire Safety Inspection Report",
-    description: "Recent fire safety inspection certificate",
+    name: "Valid ID with Signature",
+    description: "One (1) valid I.D. with signature",
     required: true,
     status: "declined",
     lastUpdated: "2024-03-13",
-    feedback: "Certificate expired. Please submit current inspection report"
+    feedback: "ID unclear. Please submit a clearer copy"
+  },
+  {
+    id: 4,
+    name: "Community Tax Certificate",
+    description: "Community Tax Certificate (CTC/CEDULA)",
+    required: true,
+    status: "pending",
+    lastUpdated: "2024-03-12",
+    feedback: "Awaiting verification"
+  },
+  {
+    id: 5,
+    name: "DTI/SEC/CDA Registration",
+    description: "DTI/SEC/CDA Registration certificate",
+    required: true,
+    status: "approved",
+    lastUpdated: "2024-03-11",
+    feedback: "Document verified and approved"
+  },
+  {
+    id: 6,
+    name: "Zoning Clearance",
+    description: "Zoning clearance from City Zoning Office",
+    required: true,
+    status: "pending",
+    lastUpdated: "2024-03-10",
+    feedback: "Processing at City Zoning Office"
+  },
+  {
+    id: 7,
+    name: "Occupancy Permit",
+    description: "Occupancy Permit (OP) or Certificate of OP Exemption from City Engineering Office",
+    required: true,
+    status: "declined",
+    lastUpdated: "2024-03-09",
+    feedback: "Permit expired. Please renew and resubmit"
+  },
+  {
+    id: 8,
+    name: "Health Certificate",
+    description: "Health Card/Certificate of the owner or any one of the employees from City Health Office",
+    required: true,
+    status: "approved",
+    lastUpdated: "2024-03-08",
+    feedback: "Health certificate verified"
+  },
+  {
+    id: 9,
+    name: "Real Property Tax Clearance",
+    description: "Real Property Tax Clearance from City Treasurer's Office",
+    required: true,
+    status: "pending",
+    lastUpdated: "2024-03-07",
+    feedback: "Verification in progress at City Treasurer's Office"
+  },
+  {
+    id: 10,
+    name: "PESO Clearance",
+    description: "PESO Clearance from City PESO Office",
+    required: true,
+    status: "approved",
+    lastUpdated: "2024-03-06",
+    feedback: "PESO clearance verified and approved"
   }
 ];
 

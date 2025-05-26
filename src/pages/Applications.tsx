@@ -30,12 +30,11 @@ const Applications = () => {
   const { toast } = useToast();
   const [applicationType, setApplicationType] = useState<ApplicationType>("newApplication");
   const [fadeIn, setFadeIn] = useState(false);
-  const [isAgreed, setIsAgreed] = useState(false); // Declaration agreement state
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added specific state for submission
-  const [isSaving, setIsSaving] = useState(false); // Added state for saving current step
+  const [isAgreed, setIsAgreed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   
-  // Get application context
   const { 
     applicationId, 
     createNewApplication, 
@@ -45,7 +44,6 @@ const Applications = () => {
     setIsLoading
   } = useApplication();
 
-  // Check if user is authenticated
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   
   useEffect(() => {
@@ -59,7 +57,6 @@ const Applications = () => {
           description: "Please sign in to create an application.",
           variant: "destructive",
         });
-        // Redirect to login page
         navigate("/auth");
       }
     };
@@ -67,12 +64,10 @@ const Applications = () => {
     checkAuth();
   }, [navigate, toast]);
 
-  // Log application type whenever it changes for debugging
   useEffect(() => {
     console.log("Applications - Current applicationType state:", applicationType);
   }, [applicationType]);
 
-  // Application type options
   const applicationTypeOptions = [
     {
       value: "newApplication",
@@ -91,7 +86,6 @@ const Applications = () => {
     }
   ];
 
-  // Handle step click to navigate to previous steps only
   const handleStepClick = (step: number) => {
     if (step < currentStep) {
       setCurrentStep(step);
@@ -99,21 +93,17 @@ const Applications = () => {
     }
   };
 
-  // Add fade-in animation when step changes
   useEffect(() => {
     setFadeIn(false);
     const timer = setTimeout(() => setFadeIn(true), 50);
     return () => clearTimeout(timer);
   }, [currentStep]);
 
-  // Handle next click to navigate forward
   const handleNext = async () => {
     setIsSaving(true);
     try {
-      // For step 1, we need to create the application first with the selected type
       if (currentStep === 1) {
         if (!applicationId && isAuthenticated) {
-          // Add detailed logging for debugging
           console.log("Before application creation - Selected type:", applicationType);
           console.log("Creating new application from Next button with type:", applicationType);
           
@@ -131,16 +121,13 @@ const Applications = () => {
           }
         }
         
-        // Proceed to next step after creating application
         setCurrentStep(currentStep + 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setIsSaving(false);
         return;
       }
       
-      // Save/validate current step data before proceeding (for steps 2-5)
       if (currentStep === 2) {
-        // Check if the window helper is available and use it to validate/save
         if (window.businessInfoHelpers?.validateAndSave) {
           console.log("Applications - Validating business info through helper");
           const isValid = await window.businessInfoHelpers.validateAndSave();
@@ -152,10 +139,9 @@ const Applications = () => {
               variant: "destructive",
             });
             setIsSaving(false);
-            return; // Stop here if validation fails
+            return;
           }
         } else {
-          // Fallback validation if helper is not available
           const businessInfo = await businessInformationService.getBusinessInformation(applicationId || '');
           
           if (!businessInfo) {
@@ -168,7 +154,6 @@ const Applications = () => {
             return;
           }
           
-          // Validate required fields
           const requiredBusinessFields = [
             'business_name', 'tin_number', 'ownership_type', 
             'street', 'barangay', 'city_municipality', 
@@ -188,7 +173,6 @@ const Applications = () => {
           }
         }
       } else if (currentStep === 3) {
-        // Validate owner information - Modified to prevent automatic toasts
         if (window.ownerInfoHelpers?.validateAndSave) {
           console.log("Applications - Validating owner info through helper");
           const isValid = await window.ownerInfoHelpers.validateAndSave();
@@ -202,7 +186,6 @@ const Applications = () => {
             return;
           }
         } else {
-          // Fallback validation
           const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId || '');
           if (!ownerInfo) {
             toast({
@@ -214,7 +197,6 @@ const Applications = () => {
             return;
           }
           
-          // Validate required owner fields
           const requiredOwnerFields = [
             'surname', 'given_name', 'age', 'sex', 
             'civil_status', 'nationality', 'owner_street', 
@@ -235,7 +217,6 @@ const Applications = () => {
           }
         }
       } else if (currentStep === 4) {
-        // Validate business operation and lines
         const businessLines = await businessLinesService.getBusinessLines(applicationId || '');
         if (!businessLines || businessLines.length === 0) {
           toast({
@@ -247,7 +228,6 @@ const Applications = () => {
           return;
         }
       } else if (currentStep === 5) {
-        // Validate declaration
         if (window.declarationHelpers?.validateAndSave) {
           console.log("Applications - Validating declaration through helper");
           const isValid = await window.declarationHelpers.validateAndSave();
@@ -285,9 +265,7 @@ const Applications = () => {
         }
       }
       
-      // If everything passed, proceed to next step and show success toast only here
       if (currentStep < totalSteps) {
-        // Only show success toast when explicitly moving to next step
         if (currentStep === 2) {
           toast({
             title: "Business Information Saved",
@@ -313,7 +291,6 @@ const Applications = () => {
         setCurrentStep(currentStep + 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        // Final step - submit the application
         handleSubmitApplication();
       }
     } catch (error) {
@@ -325,7 +302,6 @@ const Applications = () => {
       });
     } finally {
       setIsSaving(false);
-      // Make sure loading state is reset regardless of outcome
       setIsLoading(false);
     }
   };
@@ -337,7 +313,6 @@ const Applications = () => {
       }
   };
 
-  // Validate required data before submission
   const validateApplication = async () => {
     if (!applicationId) {
       toast({
@@ -358,7 +333,6 @@ const Applications = () => {
     }
 
     try {
-      // Check if all required data is present
       const businessInfo = await businessInformationService.getBusinessInformation(applicationId);
       const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId);
       const businessLines = await businessLinesService.getBusinessLines(applicationId);
@@ -377,7 +351,7 @@ const Applications = () => {
           description: "Please complete the Business Information section before submitting.",
           variant: "destructive",
         });
-        setCurrentStep(2); // Go to Business Information step
+        setCurrentStep(2);
         return false;
       }
       
@@ -387,7 +361,7 @@ const Applications = () => {
           description: "Please complete the Owner Information section before submitting.",
           variant: "destructive",
         });
-        setCurrentStep(3); // Go to Owner Information step
+        setCurrentStep(3);
         return false;
       }
       
@@ -397,7 +371,7 @@ const Applications = () => {
           description: "Please add at least one Line of Business before submitting.",
           variant: "destructive",
         });
-        setCurrentStep(4); // Go to Business Lines step
+        setCurrentStep(4);
         return false;
       }
       
@@ -407,7 +381,7 @@ const Applications = () => {
           description: "Please sign the declaration before submitting.",
           variant: "destructive",
         });
-        setCurrentStep(5); // Go to Declaration step
+        setCurrentStep(5);
         return false;
       }
       
@@ -423,17 +397,14 @@ const Applications = () => {
     }
   };
 
-  // Handle final application submission
   const handleSubmitApplication = async () => {
-    // Validate the application data
     const isValid = await validateApplication();
     if (!isValid) return;
 
     try {
-      setIsSubmitting(true); // Set specific submission state to true
+      setIsSubmitting(true);
       setIsLoading(true);
       
-      // Update application status to submitted
       await updateStatus('submitted');
       
       toast({
@@ -441,7 +412,6 @@ const Applications = () => {
         description: "Your business permit application has been submitted successfully.",
       });
       
-      // Redirect to status page
       navigate('/status');
     } catch (error) {
       console.error("Application submission error:", error);
@@ -451,12 +421,11 @@ const Applications = () => {
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false); // Reset submission state to false
+      setIsSubmitting(false);
       setIsLoading(false);
     }
   };
 
-  // Pass isAgreed to DeclarationSection
   const handleAgreementChange = (agreed: boolean) => {
     setIsAgreed(agreed);
   };
@@ -607,23 +576,43 @@ const Applications = () => {
                       <ul className="text-sm text-gray-600 mt-2 space-y-1.5 list-inside">
                         <li className="flex items-start">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
-                          <span>Barangay Business Clearance</span>
+                          <span>Filled-out Business Permit application form</span>
                         </li>
                         <li className="flex items-start">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
-                          <span>DTI/SEC Registration</span>
+                          <span>Two (2) passport size ID pictures of the owner</span>
                         </li>
                         <li className="flex items-start">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
-                          <span>Contract of Lease (if applicable)</span>
+                          <span>One (1) valid I.D. with signature</span>
                         </li>
                         <li className="flex items-start">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
-                          <span>Tax Identification Number (TIN)</span>
+                          <span>Community Tax Certificate (CTC/CEDULA)</span>
                         </li>
                         <li className="flex items-start">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
-                          <span>Establishment Photos</span>
+                          <span>DTI/SEC/CDA Registration</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>Zoning clearance from City Zoning Office</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>Occupancy Permit or Certificate of OP Exemption</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>Health Card/Certificate from City Health Office</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>Real Property Tax Clearance</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 mt-1.5 mr-2 shrink-0"></span>
+                          <span>PESO Clearance from City PESO Office</span>
                         </li>
                       </ul>
                     </div>
