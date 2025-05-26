@@ -39,6 +39,8 @@ const getActivityIcon = (activityType: string) => {
       return <FileText className="h-5 w-5 text-blue-500" />;
     case "document_rejected":
       return <AlertTriangle className="h-5 w-5 text-red-500" />;
+    case "status_changed":
+      return <RefreshCw className="h-5 w-5 text-purple-500" />;
     default:
       return <Bell className="h-5 w-5 text-gray-500" />;
   }
@@ -57,6 +59,8 @@ const getActivityBorderColor = (activityType: string) => {
       return "border-amber-500 bg-amber-50";
     case "document_rejected":
       return "border-red-500 bg-red-50";
+    case "status_changed":
+      return "border-purple-500 bg-purple-50";
     default:
       return "border-gray-500 bg-gray-50";
   }
@@ -72,8 +76,8 @@ const Dashboard = () => {
   const { isAdmin, isLoading } = useRoleAuth();
   const navigate = useNavigate();
   
-  // Get activities data
-  const { activities, isLoading: activitiesLoading, markAsRead } = useActivities(3);
+  // Get activities data with more frequent refresh
+  const { activities, isLoading: activitiesLoading, markAsRead, refetch } = useActivities(5);
   
   // Auto-redirect admin users to admin dashboard
   useEffect(() => {
@@ -82,6 +86,16 @@ const Dashboard = () => {
       navigate("/admin-dashboard");
     }
   }, [isAdmin, isLoading, navigate]);
+
+  // Refresh activities every 10 seconds to catch new ones
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("Auto-refreshing activities...");
+      refetch();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [refetch]);
   
   // Show loading state while checking roles
   if (isLoading) {
@@ -305,11 +319,22 @@ const Dashboard = () => {
       <section className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-          <Link to="/notifications">
-            <Button variant="ghost" size="sm" className="text-blue-600">
-              View All
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => refetch()}
+              className="text-blue-600 hover:bg-blue-50"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Refresh
             </Button>
-          </Link>
+            <Link to="/notifications">
+              <Button variant="ghost" size="sm" className="text-blue-600">
+                View All
+              </Button>
+            </Link>
+          </div>
         </div>
         <div className="space-y-4">
           {activitiesLoading ? (
@@ -328,7 +353,7 @@ const Dashboard = () => {
             activities.map((activity) => (
               <div 
                 key={activity.id} 
-                className={`flex items-start p-3 border-l-4 rounded cursor-pointer transition-opacity ${getActivityBorderColor(activity.activity_type)} ${activity.is_read ? 'opacity-60' : ''}`}
+                className={`flex items-start p-3 border-l-4 rounded cursor-pointer transition-opacity hover:bg-gray-50 ${getActivityBorderColor(activity.activity_type)} ${activity.is_read ? 'opacity-60' : ''}`}
                 onClick={() => !activity.is_read && markAsRead(activity.id)}
               >
                 {getActivityIcon(activity.activity_type)}
@@ -349,6 +374,15 @@ const Dashboard = () => {
               <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>No recent activity</p>
               <p className="text-sm">Your activities will appear here when you start using the system</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => refetch()}
+                className="mt-4"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Check for Activities
+              </Button>
             </div>
           )}
         </div>

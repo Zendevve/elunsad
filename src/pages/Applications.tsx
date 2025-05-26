@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -46,19 +47,36 @@ const Applications = () => {
   } = useApplication();
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getUser();
-      setIsAuthenticated(!!data.user);
-      
-      if (!data.user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to create an application.",
-          variant: "destructive",
-        });
-        navigate("/auth");
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        console.log("Auth check result:", { user: data.user, error });
+        
+        if (error) {
+          console.error("Auth error:", error);
+          setIsAuthenticated(false);
+        } else if (data.user) {
+          setIsAuthenticated(true);
+          setCurrentUser(data.user);
+          console.log("User authenticated:", data.user.id);
+        } else {
+          setIsAuthenticated(false);
+        }
+        
+        if (!data.user) {
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to create an application.",
+            variant: "destructive",
+          });
+          navigate("/signin");
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        setIsAuthenticated(false);
       }
     };
     
@@ -399,6 +417,20 @@ const Applications = () => {
   };
 
   const handleSubmitApplication = async () => {
+    console.log("Starting application submission...");
+    
+    // Double check authentication before submission
+    if (!isAuthenticated || !currentUser) {
+      console.error("User not authenticated during submission");
+      toast({
+        title: "Authentication Error",
+        description: "Please sign in to submit your application.",
+        variant: "destructive",
+      });
+      navigate("/signin");
+      return;
+    }
+
     const isValid = await validateApplication();
     if (!isValid) return;
 
@@ -406,15 +438,28 @@ const Applications = () => {
       setIsSubmitting(true);
       setIsLoading(true);
       
+      console.log("Submitting application with ID:", applicationId);
+      console.log("Current user:", currentUser.id);
+      
       // Get business information for activity generation
       const businessInfo = await businessInformationService.getBusinessInformation(applicationId!);
       const businessName = businessInfo?.business_name || "Your Business";
       
+      console.log("Business info for activity:", businessName);
+      
       // Update application status to submitted
       await updateStatus('submitted');
+      console.log("Application status updated to submitted");
       
-      // Generate activity for application submission
-      await activityGenerator.applicationSubmitted(businessName, applicationId!);
+      // Generate activity for application submission with explicit user check
+      try {
+        console.log("Creating activity for application submission...");
+        await activityGenerator.applicationSubmitted(businessName, applicationId!);
+        console.log("Activity created successfully");
+      } catch (activityError) {
+        console.error("Failed to create activity:", activityError);
+        // Don't fail the submission if activity creation fails
+      }
       
       toast({
         title: "Application Submitted",
@@ -449,7 +494,7 @@ const Applications = () => {
           <CardContent className="space-y-4">
             <p className="text-center">You need to be logged in to access this page.</p>
             <div className="flex justify-center">
-              <Button onClick={() => navigate("/auth")}>
+              <Button onClick={() => navigate("/signin")}>
                 Go to Login
               </Button>
             </div>

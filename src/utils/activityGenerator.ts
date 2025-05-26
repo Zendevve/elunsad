@@ -12,15 +12,22 @@ export const generateActivity = async (
   relatedEntityType?: string
 ) => {
   try {
-    await activityService.createActivity({
+    console.log("Generating activity:", { type, title, description, relatedEntityId, relatedEntityType });
+    
+    const activity = await activityService.createActivity({
       activity_type: type,
       title,
       description,
       related_entity_id: relatedEntityId,
       related_entity_type: relatedEntityType,
     });
+    
+    console.log("Activity generated successfully:", activity);
+    return activity;
   } catch (error) {
     console.error("Failed to generate activity:", error);
+    // Don't throw the error to prevent breaking the main flow
+    // Just log it for debugging
   }
 };
 
@@ -53,14 +60,16 @@ export const activityGenerator = {
       "application"
     ),
 
-  applicationSubmitted: (businessName: string, applicationId: string) =>
-    generateActivity(
+  applicationSubmitted: async (businessName: string, applicationId: string) => {
+    console.log("Creating application submitted activity for:", businessName, applicationId);
+    return generateActivity(
       "application_submitted",
       "Application Submitted",
       `Your business permit application for "${businessName}" has been submitted`,
       applicationId,
       "application"
-    ),
+    );
+  },
 
   applicationUpdated: (businessName: string, applicationId: string) =>
     generateActivity(
@@ -80,12 +89,14 @@ export const activityGenerator = {
       "permit"
     ),
 
-  statusChanged: (newStatus: string, businessName: string, applicationId: string) =>
-    generateActivity(
+  statusChanged: async (newStatus: string, businessName: string, applicationId: string) => {
+    console.log("Creating status changed activity for:", businessName, newStatus, applicationId);
+    return generateActivity(
       "status_changed",
       "Status Changed",
       `Your application for "${businessName}" status changed to ${newStatus}`,
       applicationId,
       "application"
-    ),
+    );
+  },
 };

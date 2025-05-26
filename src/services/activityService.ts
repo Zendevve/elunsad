@@ -34,18 +34,35 @@ export const activityService = {
   },
 
   async createActivity(activity: Omit<ActivityInsert, "user_id">): Promise<Activity> {
-    const { data: { user } } = await supabase.auth.getUser();
+    console.log("Creating activity:", activity);
+    
+    // Get current user with more detailed logging
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    console.log("Auth check for activity creation:", { user: user?.id, error: authError });
+    
+    if (authError) {
+      console.error("Authentication error in createActivity:", authError);
+      throw new Error(`Authentication error: ${authError.message}`);
+    }
     
     if (!user) {
-      throw new Error("User not authenticated");
+      console.error("No authenticated user found for activity creation");
+      throw new Error("User not authenticated - cannot create activity");
     }
+
+    console.log("Creating activity for user:", user.id);
+
+    const activityData = {
+      ...activity,
+      user_id: user.id,
+    };
+
+    console.log("Activity data to insert:", activityData);
 
     const { data, error } = await supabase
       .from("activities")
-      .insert({
-        ...activity,
-        user_id: user.id,
-      })
+      .insert(activityData)
       .select()
       .single();
 
@@ -54,6 +71,7 @@ export const activityService = {
       throw error;
     }
 
+    console.log("Activity created successfully:", data);
     return data;
   },
 
