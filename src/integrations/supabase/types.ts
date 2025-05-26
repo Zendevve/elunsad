@@ -48,6 +48,57 @@ export type Database = {
         }
         Relationships: []
       }
+      application_documents: {
+        Row: {
+          admin_feedback: string | null
+          application_id: string
+          created_at: string
+          document_name: string
+          document_type: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          uploaded_at: string
+        }
+        Insert: {
+          admin_feedback?: string | null
+          application_id: string
+          created_at?: string
+          document_name: string
+          document_type: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_at?: string
+        }
+        Update: {
+          admin_feedback?: string | null
+          application_id?: string
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
       applications: {
         Row: {
           admin_notes: string | null
@@ -610,6 +661,8 @@ export type Database = {
         | "approved"
         | "rejected"
         | "requires_additional_info"
+        | "pending_documents"
+        | "documents_under_review"
       application_type_enum:
         | "newApplication"
         | "renewalApplication"
@@ -762,6 +815,8 @@ export const Constants = {
         "approved",
         "rejected",
         "requires_additional_info",
+        "pending_documents",
+        "documents_under_review",
       ],
       application_type_enum: [
         "newApplication",

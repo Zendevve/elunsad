@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import OwnerInformationSection from "@/components/application/OwnerInformationSe
 import BusinessOperationSection from "@/components/application/BusinessOperationSection";
 import BusinessLinesSection from "@/components/application/BusinessLinesSection";
 import DeclarationSection from "@/components/application/DeclarationSection";
+import DocumentSubmissionSection from "@/components/application/DocumentSubmissionSection";
 import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
 import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
@@ -22,13 +22,14 @@ import {
   businessLinesService, 
   declarationService 
 } from "@/services/application";
+import { documentService } from "@/services/documentService";
 import { ApplicationType } from "@/services/application/types";
 import { activityGenerator } from "@/utils/activityGenerator";
 
 const Applications = () => {
   
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 5;
+  const totalSteps = 6; // Updated to include document submission
   const { toast } = useToast();
   const [applicationType, setApplicationType] = useState<ApplicationType>("newApplication");
   const [fadeIn, setFadeIn] = useState(false);
@@ -282,6 +283,32 @@ const Applications = () => {
             return;
           }
         }
+      } else if (currentStep === 6) {
+        // Document validation
+        if (window.documentHelpers?.validateDocuments) {
+          const isValid = window.documentHelpers.validateDocuments();
+          if (!isValid) {
+            toast({
+              title: "Documents Required",
+              description: "Please upload all required documents before proceeding.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+        } else {
+          // Fallback validation
+          const completion = await documentService.checkDocumentCompletion(applicationId || '');
+          if (!completion.allUploaded) {
+            toast({
+              title: "Documents Required",
+              description: "Please upload all required documents before proceeding.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+        }
       }
       
       if (currentStep < totalSteps) {
@@ -304,6 +331,12 @@ const Applications = () => {
           toast({
             title: "Declaration Confirmed",
             description: "Your declaration has been confirmed successfully.",
+          });
+        }
+        if (currentStep === 6) {
+          toast({
+            title: "Documents Verified",
+            description: "Your documents have been verified successfully.",
           });
         }
         
@@ -356,12 +389,14 @@ const Applications = () => {
       const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId);
       const businessLines = await businessLinesService.getBusinessLines(applicationId);
       const declaration = await declarationService.getDeclaration(applicationId);
+      const documentCompletion = await documentService.checkDocumentCompletion(applicationId);
       
       console.log("Validation data:", { 
         businessInfo, 
         ownerInfo, 
         businessLines, 
-        declaration 
+        declaration,
+        documentCompletion 
       });
       
       if (!businessInfo) {
@@ -401,6 +436,17 @@ const Applications = () => {
           variant: "destructive",
         });
         setCurrentStep(5);
+        return false;
+      }
+      
+      // Add document validation
+      if (!documentCompletion.allUploaded) {
+        toast({
+          title: "Documents Required",
+          description: "Please upload all required documents before submitting.",
+          variant: "destructive",
+        });
+        setCurrentStep(6);
         return false;
       }
       
@@ -571,6 +617,10 @@ const Applications = () => {
               <DeclarationSection onAgreementChange={handleAgreementChange} />
             )}
 
+            {currentStep === 6 && (
+              <DocumentSubmissionSection />
+            )}
+
             <div className="flex justify-between mt-8">
               {/* Only show back button if not on step 1 */}
               {currentStep > 1 && (
@@ -681,7 +731,8 @@ const Applications = () => {
                         {currentStep === 2 && "Enter your business details"}
                         {currentStep === 3 && "Enter owner information"}
                         {currentStep === 4 && "Provide business operation details"}
-                        {currentStep === 5 && "Review and submit your application"}
+                        {currentStep === 5 && "Review and sign declaration"}
+                        {currentStep === 6 && "Upload required documents"}
                       </p>
                     </div>
                   </div>
