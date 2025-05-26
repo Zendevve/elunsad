@@ -2,7 +2,7 @@ import React, { useState, useEffect, ReactNode } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { 
   Menu, LogOut, ChevronLeft, Settings, Users, BarChart4, 
-  LayoutDashboard, Bell, User, MapPin 
+  LayoutDashboard, Bell, User, MapPin, FileText 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +76,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const adminNavItems = [
     { name: 'Admin Dashboard', href: '/admin-dashboard', icon: LayoutDashboard },
     { name: 'Business Owner Management', href: '/admin/users', icon: Users },
+    { name: 'Reports', href: '/admin/reports', icon: FileText },
     { name: 'Analytics', href: '/analytics', icon: BarChart4 },
     { name: 'Map View', href: '/map', icon: MapPin },
     { name: 'Notifications', href: '/notifications', icon: Bell, badge: 5 },

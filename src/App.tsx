@@ -18,6 +18,7 @@ import Administration from "./pages/Administration";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Status from "./pages/Status";
+import Reports from "./pages/Reports";
 import Layout from "./components/Layout";
 import AdminLayout from "./components/AdminLayout";
 import AuthRoute from "./components/AuthRoute";
@@ -73,6 +74,7 @@ const App = () => (
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
                 <Route path="/admin" element={<Administration />} />
                 <Route path="/admin/users" element={<Navigate to="/admin" replace />} />
+                <Route path="/admin/reports" element={<Reports />} />
                 <Route path="/admin/applications/:id" element={<AdminApplicationDetail />} />
                 <Route path="/analytics/*" element={<Analytics />} />
               </Route>
