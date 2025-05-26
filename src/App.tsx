@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Status from "./pages/Status";
 import Reports from "./pages/Reports";
+import ApplicationDetail from "./pages/ApplicationDetail";
 import Layout from "./components/Layout";
 import AdminLayout from "./components/AdminLayout";
 import AuthRoute from "./components/AuthRoute";
@@ -59,6 +60,7 @@ const App = () => (
               <Route element={<Layout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/applications" element={<Applications />} />
+                <Route path="/application/:id" element={<ApplicationDetail />} />
                 <Route path="/documents/*" element={<Documents />} />
                 <Route path="/map" element={<MapView />} />
                 <Route path="/notifications/*" element={<Notifications />} />
