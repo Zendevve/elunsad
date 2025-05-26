@@ -93,7 +93,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
     );
   }
 
-  const { application, businessInfo, ownerInfo, businessOps, businessLines, declaration } = applicationData;
+  const { application, businessInformation, ownerInformation, businessOperations, businessLines, declaration } = applicationData;
 
   return (
     <div className="space-y-6">
@@ -108,7 +108,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
           </Link>
           <div>
             <h1 className="text-2xl font-bold">
-              {businessInfo?.business_name || "Application Details"}
+              {businessInformation?.business_name || "Application Details"}
             </h1>
             <p className="text-gray-600">Application ID: {application.id}</p>
           </div>
@@ -140,15 +140,15 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
                 <div className="space-y-2">
                   <div>
                     <span className="font-medium">Business Name:</span>
-                    <p>{businessInfo?.business_name || "N/A"}</p>
+                    <p>{businessInformation?.business_name || "N/A"}</p>
                   </div>
                   <div>
                     <span className="font-medium">TIN Number:</span>
-                    <p>{businessInfo?.tin_number || "N/A"}</p>
+                    <p>{businessInformation?.tin_number || "N/A"}</p>
                   </div>
                   <div>
                     <span className="font-medium">Address:</span>
-                    <p>{businessInfo ? `${businessInfo.street}, ${businessInfo.barangay}, ${businessInfo.city_municipality}` : "N/A"}</p>
+                    <p>{businessInformation ? `${businessInformation.street}, ${businessInformation.barangay}, ${businessInformation.city_municipality}` : "N/A"}</p>
                   </div>
                 </div>
               </CardContent>
@@ -165,15 +165,15 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
                 <div className="space-y-2">
                   <div>
                     <span className="font-medium">Owner Name:</span>
-                    <p>{ownerInfo ? `${ownerInfo.given_name} ${ownerInfo.middle_name || ''} ${ownerInfo.surname}` : "N/A"}</p>
+                    <p>{ownerInformation ? `${ownerInformation.given_name} ${ownerInformation.middle_name || ''} ${ownerInformation.surname}` : "N/A"}</p>
                   </div>
                   <div>
                     <span className="font-medium">Age:</span>
-                    <p>{ownerInfo?.age || "N/A"}</p>
+                    <p>{ownerInformation?.age || "N/A"}</p>
                   </div>
                   <div>
                     <span className="font-medium">Address:</span>
-                    <p>{ownerInfo ? `${ownerInfo.owner_street}, ${ownerInfo.owner_barangay}, ${ownerInfo.owner_city_municipality}` : "N/A"}</p>
+                    <p>{ownerInformation ? `${ownerInformation.owner_street}, ${ownerInformation.owner_barangay}, ${ownerInformation.owner_city_municipality}` : "N/A"}</p>
                   </div>
                 </div>
               </CardContent>
@@ -182,7 +182,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         </TabsContent>
 
         <TabsContent value="business">
-          {businessInfo ? (
+          {businessInformation ? (
             <Card>
               <CardHeader>
                 <CardTitle>Business Information Details</CardTitle>
@@ -191,44 +191,44 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <span className="font-medium">Business Name:</span>
-                    <p>{businessInfo.business_name}</p>
+                    <p>{businessInformation.business_name}</p>
                   </div>
                   <div>
                     <span className="font-medium">Trade Name:</span>
-                    <p>{businessInfo.trade_name || "N/A"}</p>
+                    <p>{businessInformation.trade_name || "N/A"}</p>
                   </div>
                   <div>
                     <span className="font-medium">Ownership Type:</span>
-                    <p>{businessInfo.ownership_type}</p>
+                    <p>{businessInformation.ownership_type}</p>
                   </div>
                   <div>
                     <span className="font-medium">TIN Number:</span>
-                    <p>{businessInfo.tin_number}</p>
+                    <p>{businessInformation.tin_number}</p>
                   </div>
                   <div>
                     <span className="font-medium">SSS Number:</span>
-                    <p>{businessInfo.sss_number || "N/A"}</p>
+                    <p>{businessInformation.sss_number || "N/A"}</p>
                   </div>
                   <div>
                     <span className="font-medium">Mobile Number:</span>
-                    <p>{businessInfo.mobile_no}</p>
+                    <p>{businessInformation.mobile_no}</p>
                   </div>
                   <div>
                     <span className="font-medium">Email:</span>
-                    <p>{businessInfo.email_address}</p>
+                    <p>{businessInformation.email_address}</p>
                   </div>
                   <div className="md:col-span-2">
                     <span className="font-medium">Complete Address:</span>
                     <p>
                       {[
-                        businessInfo.house_bldg_no,
-                        businessInfo.building_name,
-                        businessInfo.street,
-                        businessInfo.subdivision,
-                        businessInfo.barangay,
-                        businessInfo.city_municipality,
-                        businessInfo.province,
-                        businessInfo.zip_code
+                        businessInformation.house_bldg_no,
+                        businessInformation.building_name,
+                        businessInformation.street,
+                        businessInformation.subdivision,
+                        businessInformation.barangay,
+                        businessInformation.city_municipality,
+                        businessInformation.province,
+                        businessInformation.zip_code
                       ].filter(Boolean).join(", ")}
                     </p>
                   </div>
@@ -244,7 +244,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         </TabsContent>
 
         <TabsContent value="owner">
-          {ownerInfo ? (
+          {ownerInformation ? (
             <Card>
               <CardHeader>
                 <CardTitle>Owner Information Details</CardTitle>
@@ -253,36 +253,36 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <span className="font-medium">Full Name:</span>
-                    <p>{`${ownerInfo.given_name} ${ownerInfo.middle_name || ''} ${ownerInfo.surname} ${ownerInfo.suffix || ''}`.trim()}</p>
+                    <p>{`${ownerInformation.given_name} ${ownerInformation.middle_name || ''} ${ownerInformation.surname} ${ownerInformation.suffix || ''}`.trim()}</p>
                   </div>
                   <div>
                     <span className="font-medium">Age:</span>
-                    <p>{ownerInfo.age}</p>
+                    <p>{ownerInformation.age}</p>
                   </div>
                   <div>
                     <span className="font-medium">Sex:</span>
-                    <p>{ownerInfo.sex}</p>
+                    <p>{ownerInformation.sex}</p>
                   </div>
                   <div>
                     <span className="font-medium">Civil Status:</span>
-                    <p>{ownerInfo.civil_status}</p>
+                    <p>{ownerInformation.civil_status}</p>
                   </div>
                   <div>
                     <span className="font-medium">Nationality:</span>
-                    <p>{ownerInfo.nationality}</p>
+                    <p>{ownerInformation.nationality}</p>
                   </div>
                   <div className="md:col-span-2">
                     <span className="font-medium">Complete Address:</span>
                     <p>
                       {[
-                        ownerInfo.owner_house_bldg_no,
-                        ownerInfo.owner_building_name,
-                        ownerInfo.owner_street,
-                        ownerInfo.owner_subdivision,
-                        ownerInfo.owner_barangay,
-                        ownerInfo.owner_city_municipality,
-                        ownerInfo.owner_province,
-                        ownerInfo.owner_zip_code
+                        ownerInformation.owner_house_bldg_no,
+                        ownerInformation.owner_building_name,
+                        ownerInformation.owner_street,
+                        ownerInformation.owner_subdivision,
+                        ownerInformation.owner_barangay,
+                        ownerInformation.owner_city_municipality,
+                        ownerInformation.owner_province,
+                        ownerInformation.owner_zip_code
                       ].filter(Boolean).join(", ")}
                     </p>
                   </div>
@@ -299,7 +299,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
 
         <TabsContent value="operations">
           <div className="space-y-6">
-            {businessOps && (
+            {businessOperations && (
               <Card>
                 <CardHeader>
                   <CardTitle>Business Operations</CardTitle>
@@ -308,19 +308,19 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <span className="font-medium">Business Activity:</span>
-                      <p>{businessOps.business_activity || "N/A"}</p>
+                      <p>{businessOperations.business_activity || "N/A"}</p>
                     </div>
                     <div>
                       <span className="font-medium">Business Area:</span>
-                      <p>{businessOps.business_area ? `${businessOps.business_area} sq meters` : "N/A"}</p>
+                      <p>{businessOperations.business_area ? `${businessOperations.business_area} sq meters` : "N/A"}</p>
                     </div>
                     <div>
                       <span className="font-medium">Capitalization:</span>
-                      <p>{businessOps.capitalization ? `₱${businessOps.capitalization.toLocaleString()}` : "N/A"}</p>
+                      <p>{businessOperations.capitalization ? `₱${businessOperations.capitalization.toLocaleString()}` : "N/A"}</p>
                     </div>
                     <div>
                       <span className="font-medium">Total Employees:</span>
-                      <p>{(businessOps.professional_male || 0) + (businessOps.professional_female || 0) + (businessOps.non_professional_male || 0) + (businessOps.non_professional_female || 0)}</p>
+                      <p>{(businessOperations.professional_male || 0) + (businessOperations.professional_female || 0) + (businessOperations.non_professional_male || 0) + (businessOperations.non_professional_female || 0)}</p>
                     </div>
                   </div>
                 </CardContent>
