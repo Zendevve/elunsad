@@ -75,7 +75,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const adminNavItems = [
     { name: 'Admin Dashboard', href: '/admin-dashboard', icon: LayoutDashboard },
-    { name: 'User Management', href: '/admin/users', icon: Users },
+    { name: 'Business Owner Management', href: '/admin/users', icon: Users },
     { name: 'Analytics', href: '/analytics', icon: BarChart4 },
     { name: 'Map View', href: '/map', icon: MapPin },
     { name: 'Notifications', href: '/notifications', icon: Bell, badge: 5 },
