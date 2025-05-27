@@ -70,7 +70,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                     disabled={step.number > currentStep}
                   >
                     {step.number < currentStep ? (
-                      <Check className="w-5 h-5" strokeWidth={3} />
+                      <Check className="w-5 h-5 text-white" strokeWidth={3} />
                     ) : (
                       step.number
                     )}
@@ -140,7 +140,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                     disabled={step.number > currentStep}
                   >
                     {step.number < currentStep ? (
-                      <Check className="w-4 h-4" strokeWidth={3} />
+                      <Check className="w-4 h-4 text-white" strokeWidth={3} />
                     ) : (
                       step.number
                     )}
@@ -181,7 +181,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                   `}
                 >
                   {step.number < currentStep ? (
-                    <Check className="w-3 h-3" strokeWidth={3} />
+                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
                   ) : (
                     step.number
                   )}
