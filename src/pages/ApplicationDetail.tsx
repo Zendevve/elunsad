@@ -8,7 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { getApplicationFullDetails } from "@/components/admin/ApplicationDetailsService";
-import { ArrowLeft, Calendar, FileText, User, Building, Briefcase, CheckSquare, AlertCircle } from "lucide-react";
+import { documentService, DocumentData } from "@/services/documentService";
+import { ArrowLeft, Calendar, FileText, User, Building, Briefcase, CheckSquare, AlertCircle, File, Eye, Download } from "lucide-react";
 
 const ApplicationDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,8 @@ const ApplicationDetail = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [applicationData, setApplicationData] = useState<any>(null);
+  const [documents, setDocuments] = useState<DocumentData[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(true);
 
   useEffect(() => {
     if (!id) {
@@ -24,6 +27,7 @@ const ApplicationDetail = () => {
     }
 
     fetchApplicationDetails();
+    fetchDocuments();
   }, [id]);
 
   const fetchApplicationDetails = async () => {
@@ -42,6 +46,20 @@ const ApplicationDetail = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDocuments = async () => {
+    if (!id) return;
+
+    try {
+      setDocumentsLoading(true);
+      const docs = await documentService.getApplicationDocuments(id);
+      setDocuments(docs);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+    } finally {
+      setDocumentsLoading(false);
     }
   };
 
@@ -64,6 +82,18 @@ const ApplicationDetail = () => {
     }
   };
 
+  const getDocumentStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-500">Approved</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500">Rejected</Badge>;
+      case 'pending':
+      default:
+        return <Badge className="bg-yellow-500">Pending</Badge>;
+    }
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
@@ -80,6 +110,19 @@ const ApplicationDetail = () => {
       default:
         return type;
     }
+  };
+
+  const handleViewDocument = (fileUrl: string) => {
+    window.open(fileUrl, '_blank');
+  };
+
+  const handleDownloadDocument = (fileUrl: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -212,6 +255,81 @@ const ApplicationDetail = () => {
           </CardContent>
         </Card>
 
+        {/* Documents Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <File className="h-5 w-5" />
+              Document Status
+            </CardTitle>
+            <CardDescription>
+              Track the status of your uploaded documents
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {documentsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : documents.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No documents uploaded yet</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center mb-2">
+                          <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                          <h4 className="font-medium">{doc.document_type}</h4>
+                          {getDocumentStatusBadge(doc.status)}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-1">{doc.document_name}</p>
+                        <div className="flex items-center text-xs text-gray-500 space-x-4">
+                          {doc.file_size && <span>{(doc.file_size / 1024).toFixed(2)} KB</span>}
+                          <span>Uploaded: {formatDate(doc.uploaded_at || '')}</span>
+                        </div>
+                        {doc.admin_feedback && doc.status === 'rejected' && (
+                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                            <p className="text-sm text-red-700">
+                              <strong>Feedback:</strong> {doc.admin_feedback}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2 ml-4">
+                        {doc.file_url && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDocument(doc.file_url!)}
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownloadDocument(doc.file_url!, doc.document_name)}
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Download
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Business Information */}
           {businessInformation && (
@@ -233,10 +351,24 @@ const ApplicationDetail = () => {
                     <p>{businessInformation.trade_name}</p>
                   </div>
                 )}
-                <div>
-                  <p className="text-sm font-medium text-gray-500">TIN Number</p>
-                  <p>{businessInformation.tin_number}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">TIN Number</p>
+                    <p>{businessInformation.tin_number}</p>
+                  </div>
+                  {businessInformation.registration_number && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Registration Number</p>
+                      <p>{businessInformation.registration_number}</p>
+                    </div>
+                  )}
                 </div>
+                {businessInformation.sss_number && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">SSS Number</p>
+                    <p>{businessInformation.sss_number}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-medium text-gray-500">Ownership Type</p>
                   <p className="capitalize">{businessInformation.ownership_type.replace(/([A-Z])/g, ' $1').trim()}</p>
@@ -265,6 +397,19 @@ const ApplicationDetail = () => {
                     <p>Email: {businessInformation.email_address}</p>
                   </div>
                 </div>
+                {(businessInformation.ctc_number || businessInformation.ctc_date_issue || businessInformation.ctc_place_issue) && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-2">CTC Information</p>
+                      <div className="space-y-1 text-sm">
+                        {businessInformation.ctc_number && <p>Number: {businessInformation.ctc_number}</p>}
+                        {businessInformation.ctc_date_issue && <p>Date Issued: {businessInformation.ctc_date_issue}</p>}
+                        {businessInformation.ctc_place_issue && <p>Place Issued: {businessInformation.ctc_place_issue}</p>}
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           )}
@@ -283,11 +428,11 @@ const ApplicationDetail = () => {
                   <p className="text-sm font-medium text-gray-500">Full Name</p>
                   <p className="text-lg">
                     {[
-                      ownerInformation.surname,
                       ownerInformation.given_name,
                       ownerInformation.middle_name,
+                      ownerInformation.surname,
                       ownerInformation.suffix
-                    ].filter(Boolean).join(", ")}
+                    ].filter(Boolean).join(" ")}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -348,6 +493,12 @@ const ApplicationDetail = () => {
                     <p>{businessOperations.business_activity}</p>
                   </div>
                 )}
+                {businessOperations.other_activity && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Other Activity</p>
+                    <p>{businessOperations.other_activity}</p>
+                  </div>
+                )}
                 {businessOperations.business_area && (
                   <div>
                     <p className="text-sm font-medium text-gray-500">Business Area (sq.m)</p>
@@ -360,12 +511,44 @@ const ApplicationDetail = () => {
                     <p>₱{Number(businessOperations.capitalization).toLocaleString()}</p>
                   </div>
                 )}
+                {businessOperations.tax_declaration_no && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Tax Declaration No.</p>
+                    <p>{businessOperations.tax_declaration_no}</p>
+                  </div>
+                )}
+                {businessOperations.cctv_cameras !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">CCTV Cameras</p>
+                    <p>{businessOperations.cctv_cameras}</p>
+                  </div>
+                )}
               </div>
               
+              {/* Property Information */}
+              <Separator className="my-6" />
+              <h4 className="font-medium mb-4">Property Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Property Status</p>
+                  <p>{businessOperations.property_owned ? 'Owned' : 'Rented'}</p>
+                </div>
+                {!businessOperations.property_owned && businessOperations.monthly_rental && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Monthly Rental</p>
+                    <p>₱{Number(businessOperations.monthly_rental).toLocaleString()}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Tax Incentives</p>
+                  <p>{businessOperations.has_tax_incentives ? 'Yes' : 'No'}</p>
+                </div>
+              </div>
+
               {/* Employee Information */}
               <Separator className="my-6" />
               <h4 className="font-medium mb-4">Employee Information</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Professional Male</p>
                   <p>{businessOperations.professional_male || 0}</p>
@@ -382,7 +565,91 @@ const ApplicationDetail = () => {
                   <p className="text-sm font-medium text-gray-500">Non-Professional Female</p>
                   <p>{businessOperations.non_professional_female || 0}</p>
                 </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Employees from Lucena</p>
+                  <p>{businessOperations.employees_in_lucena || 0}</p>
+                </div>
               </div>
+
+              {/* Vehicle Information */}
+              <Separator className="my-6" />
+              <h4 className="font-medium mb-4">Vehicle Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Van/Truck</p>
+                  <p>{businessOperations.van_truck || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Motorcycle</p>
+                  <p>{businessOperations.motorcycle || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Other Vehicles</p>
+                  <p>{businessOperations.other_vehicles || 0}</p>
+                </div>
+              </div>
+
+              {/* Main Office Address */}
+              {(businessOperations.main_street || businessOperations.main_barangay) && (
+                <>
+                  <Separator className="my-6" />
+                  <h4 className="font-medium mb-4">Main Office Address</h4>
+                  <div>
+                    <p className="text-sm">
+                      {[
+                        businessOperations.main_house_bldg_no,
+                        businessOperations.main_building_name,
+                        businessOperations.main_block_no,
+                        businessOperations.main_lot_no,
+                        businessOperations.main_street,
+                        businessOperations.main_subdivision,
+                        businessOperations.main_barangay,
+                        businessOperations.main_city_municipality,
+                        businessOperations.main_province,
+                        businessOperations.main_zip_code
+                      ].filter(Boolean).join(", ")}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Lessor Information */}
+              {!businessOperations.property_owned && businessOperations.lessor_full_name && (
+                <>
+                  <Separator className="my-6" />
+                  <h4 className="font-medium mb-4">Lessor Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Lessor Name</p>
+                      <p>{businessOperations.lessor_full_name}</p>
+                    </div>
+                    {businessOperations.lessor_business_name && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Business Name</p>
+                        <p>{businessOperations.lessor_business_name}</p>
+                      </div>
+                    )}
+                    {businessOperations.lessor_contact_number && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Contact Number</p>
+                        <p>{businessOperations.lessor_contact_number}</p>
+                      </div>
+                    )}
+                    {businessOperations.lessor_email_address && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Email Address</p>
+                        <p>{businessOperations.lessor_email_address}</p>
+                      </div>
+                    )}
+                    {businessOperations.lessor_address && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm font-medium text-gray-500">Lessor Address</p>
+                        <p>{businessOperations.lessor_address}</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         )}
@@ -409,13 +676,19 @@ const ApplicationDetail = () => {
                       {line.psic_code && (
                         <div>
                           <p className="text-sm font-medium text-gray-500">PSIC Code</p>
-                          <p>{line.psic_code}</p>
+                          <p className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{line.psic_code}</p>
+                        </div>
+                      )}
+                      {line.units && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Units</p>
+                          <p>{line.units}</p>
                         </div>
                       )}
                       {line.gross_sales && (
                         <div>
                           <p className="text-sm font-medium text-gray-500">Gross Sales</p>
-                          <p>{line.gross_sales}</p>
+                          <p>₱{Number(line.gross_sales).toLocaleString()}</p>
                         </div>
                       )}
                     </div>
