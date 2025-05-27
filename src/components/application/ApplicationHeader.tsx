@@ -62,7 +62,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                       ${step.number === currentStep 
                         ? 'border-blue-600 text-blue-600 ring-4 ring-blue-100' 
                         : step.number < currentStep 
-                        ? 'border-blue-600 bg-blue-600 text-white' 
+                        ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' 
                         : 'border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-600'
                       }
                       ${step.number <= currentStep ? 'cursor-pointer' : 'cursor-default'}
@@ -70,7 +70,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                     disabled={step.number > currentStep}
                   >
                     {step.number < currentStep ? (
-                      <Check className="w-5 h-5" />
+                      <Check className="w-5 h-5 text-white" strokeWidth={3} />
                     ) : (
                       step.number
                     )}
@@ -132,7 +132,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                       ${step.number === currentStep 
                         ? 'border-blue-600 text-blue-600' 
                         : step.number < currentStep 
-                        ? 'border-blue-600 bg-blue-600 text-white' 
+                        ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' 
                         : 'border-gray-300 text-gray-500'
                       }
                       ${step.number <= currentStep ? 'cursor-pointer' : 'cursor-default'}
@@ -140,7 +140,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                     disabled={step.number > currentStep}
                   >
                     {step.number < currentStep ? (
-                      <Check className="w-4 h-4" />
+                      <Check className="w-4 h-4 text-white" strokeWidth={3} />
                     ) : (
                       step.number
                     )}
@@ -181,7 +181,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                   `}
                 >
                   {step.number < currentStep ? (
-                    <Check className="w-3 h-3" />
+                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
                   ) : (
                     step.number
                   )}
