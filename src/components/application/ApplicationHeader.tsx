@@ -58,12 +58,12 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                     onClick={() => onStepClick(step.number)}
                     className={`
                       relative w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-semibold
-                      transition-all duration-200 bg-white z-10 shadow-sm
+                      transition-all duration-200 z-10 shadow-sm
                       ${step.number === currentStep 
-                        ? 'border-blue-600 text-blue-600 ring-4 ring-blue-100' 
+                        ? 'border-blue-600 text-blue-600 ring-4 ring-blue-100 bg-white' 
                         : step.number < currentStep 
-                        ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' 
-                        : 'border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-600'
+                        ? 'border-blue-600 bg-blue-600 text-white' 
+                        : 'border-gray-300 text-gray-500 bg-white hover:border-gray-400 hover:text-gray-600'
                       }
                       ${step.number <= currentStep ? 'cursor-pointer' : 'cursor-default'}
                     `}
@@ -128,12 +128,12 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                     onClick={() => onStepClick(step.number)}
                     className={`
                       relative w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-semibold
-                      transition-all duration-200 bg-white z-10
+                      transition-all duration-200 z-10
                       ${step.number === currentStep 
-                        ? 'border-blue-600 text-blue-600' 
+                        ? 'border-blue-600 text-blue-600 bg-white' 
                         : step.number < currentStep 
-                        ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' 
-                        : 'border-gray-300 text-gray-500'
+                        ? 'border-blue-600 bg-blue-600 text-white' 
+                        : 'border-gray-300 text-gray-500 bg-white'
                       }
                       ${step.number <= currentStep ? 'cursor-pointer' : 'cursor-default'}
                     `}
