@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Check } from 'lucide-react';
 
 interface ApplicationHeaderProps {
   currentStep: number;
@@ -9,12 +10,12 @@ interface ApplicationHeaderProps {
 
 const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, totalSteps, onStepClick }) => {
   const steps = [
-    { number: 1, title: "Application Type", description: "Select application type" },
-    { number: 2, title: "Business Information", description: "Enter business details" },
-    { number: 3, title: "Owner Information", description: "Enter owner details" },
-    { number: 4, title: "Business Operations", description: "Enter business operations and lines" },
-    { number: 5, title: "Declaration", description: "Review and sign declaration" },
-    { number: 6, title: "Documents", description: "Upload required documents" },
+    { number: 1, title: "Application Type Selection", description: "Choose your application type" },
+    { number: 2, title: "Business Details & Registration", description: "Enter business information and registration details" },
+    { number: 3, title: "Business Owner Information", description: "Provide owner personal and contact details" },
+    { number: 4, title: "Operations & Business Lines", description: "Define business operations and activity lines" },
+    { number: 5, title: "Declaration & Signature", description: "Review terms and provide digital signature" },
+    { number: 6, title: "Document Submission", description: "Upload all required supporting documents" },
   ];
 
   return (
@@ -35,8 +36,13 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
         {/* Desktop Step Navigation */}
         <div className="hidden lg:block pb-8">
           <div className="relative">
-            {/* Progress bar background */}
-            <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200" aria-hidden="true">
+            {/* Progress bar background - positioned to connect between step circles */}
+            <div className="absolute top-5 h-0.5 bg-gray-200" 
+                 style={{ 
+                   left: '5%', 
+                   right: '5%'
+                 }} 
+                 aria-hidden="true">
               <div 
                 className="h-full bg-blue-600 transition-all duration-500 ease-out"
                 style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
@@ -44,9 +50,9 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             </div>
             
             {/* Steps */}
-            <div className="relative flex justify-between">
+            <div className="relative flex justify-between px-[5%]">
               {steps.map((step) => (
-                <div key={step.number} className="flex flex-col items-center group">
+                <div key={step.number} className="flex flex-col items-center group max-w-40">
                   {/* Step Circle */}
                   <button
                     onClick={() => onStepClick(step.number)}
@@ -64,16 +70,14 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                     disabled={step.number > currentStep}
                   >
                     {step.number < currentStep ? (
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
+                      <Check className="w-5 h-5" />
                     ) : (
                       step.number
                     )}
                   </button>
                   
                   {/* Step Content */}
-                  <div className="mt-3 text-center max-w-24">
+                  <div className="mt-3 text-center">
                     <div className={`text-sm font-medium leading-tight ${
                       step.number === currentStep 
                         ? 'text-blue-600' 
@@ -103,7 +107,12 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
         <div className="hidden md:block lg:hidden pb-6">
           <div className="relative">
             {/* Progress bar */}
-            <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200" aria-hidden="true">
+            <div className="absolute top-4 h-0.5 bg-gray-200" 
+                 style={{ 
+                   left: '4%', 
+                   right: '4%'
+                 }} 
+                 aria-hidden="true">
               <div 
                 className="h-full bg-blue-600 transition-all duration-500 ease-out"
                 style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
@@ -111,7 +120,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             </div>
             
             {/* Steps */}
-            <div className="relative flex justify-between">
+            <div className="relative flex justify-between px-[4%]">
               {steps.map((step) => (
                 <div key={step.number} className="flex flex-col items-center">
                   {/* Step Circle */}
@@ -131,16 +140,14 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                     disabled={step.number > currentStep}
                   >
                     {step.number < currentStep ? (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
+                      <Check className="w-4 h-4" />
                     ) : (
                       step.number
                     )}
                   </button>
                   
                   {/* Step Title Only */}
-                  <div className="mt-2 text-center max-w-16">
+                  <div className="mt-2 text-center max-w-20">
                     <div className={`text-xs font-medium leading-tight ${
                       step.number === currentStep 
                         ? 'text-blue-600' 
@@ -174,9 +181,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
                   `}
                 >
                   {step.number < currentStep ? (
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
+                    <Check className="w-3 h-3" />
                   ) : (
                     step.number
                   )}
