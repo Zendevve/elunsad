@@ -39,8 +39,8 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             {/* Progress bar background - positioned to connect between step circles */}
             <div className="absolute top-5 h-0.5 bg-gray-200" 
                  style={{ 
-                   left: '5%', 
-                   right: '5%'
+                   left: '8.33%', 
+                   right: '8.33%'
                  }} 
                  aria-hidden="true">
               <div 
@@ -50,7 +50,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             </div>
             
             {/* Steps */}
-            <div className="relative flex justify-between px-[5%]">
+            <div className="relative flex justify-between px-[8.33%]">
               {steps.map((step) => (
                 <div key={step.number} className="flex flex-col items-center group max-w-40">
                   {/* Step Circle */}
@@ -109,8 +109,8 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             {/* Progress bar */}
             <div className="absolute top-4 h-0.5 bg-gray-200" 
                  style={{ 
-                   left: '4%', 
-                   right: '4%'
+                   left: '8.33%', 
+                   right: '8.33%'
                  }} 
                  aria-hidden="true">
               <div 
@@ -120,7 +120,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             </div>
             
             {/* Steps */}
-            <div className="relative flex justify-between px-[4%]">
+            <div className="relative flex justify-between px-[8.33%]">
               {steps.map((step) => (
                 <div key={step.number} className="flex flex-col items-center">
                   {/* Step Circle */}
