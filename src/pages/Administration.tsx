@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate, useLocation } from "react-router-dom";
-import BusinessOwnerManagement from "@/components/admin/BusinessOwnerManagement";
 import ApplicationReview from "@/components/admin/ApplicationReview";
 
 const Administration = () => {
@@ -15,7 +14,7 @@ const Administration = () => {
   useEffect(() => {
     if (location.hash) {
       const hash = location.hash.substring(1); // Remove the # character
-      if (["business-owners", "applications", "logs", "settings"].includes(hash)) {
+      if (["applications", "logs", "settings"].includes(hash)) {
         setActiveTab(hash);
       }
     }
@@ -33,22 +32,10 @@ const Administration = () => {
       
       <Tabs defaultValue="applications" value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="business-owners">Business Owners</TabsTrigger>
           <TabsTrigger value="applications">Applications</TabsTrigger>
           <TabsTrigger value="logs">Audit Logs</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="business-owners">
-          <Card>
-            <CardHeader>
-              <CardTitle>Business Owner Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BusinessOwnerManagement />
-            </CardContent>
-          </Card>
-        </TabsContent>
         
         <TabsContent value="applications">
           <Card>
