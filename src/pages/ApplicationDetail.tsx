@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -221,661 +221,523 @@ const ApplicationDetail = () => {
           </div>
         </div>
 
-        {/* Tabbed Content */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="business">Business Info</TabsTrigger>
-            <TabsTrigger value="operations">Operations</TabsTrigger>
-            <TabsTrigger value="business-lines">Business Lines</TabsTrigger>
-            <TabsTrigger value="declaration">Declaration</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview">
-            <div className="space-y-6">
-              {/* Application Status Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Application Status
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Created</p>
-                      <p className="text-lg">{formatDate(application.created_at)}</p>
-                    </div>
-                    {application.submission_date && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Submitted</p>
-                        <p className="text-lg">{formatDate(application.submission_date)}</p>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Last Updated</p>
-                      <p className="text-lg">{formatDate(application.updated_at)}</p>
-                    </div>
-                  </div>
-                  {application.admin_notes && (
-                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-sm font-medium text-amber-800 mb-2">Admin Notes:</p>
-                      <p className="text-amber-700">{application.admin_notes}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Quick Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {businessInformation && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Building className="h-5 w-5" />
-                        Business Summary
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Business Name</p>
-                        <p className="text-base">{businessInformation.business_name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">TIN Number</p>
-                        <p className="text-base">{businessInformation.tin_number}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Ownership Type</p>
-                        <p className="text-base capitalize">{businessInformation.ownership_type.replace(/([A-Z])/g, ' $1').trim()}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {ownerInformation && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <User className="h-5 w-5" />
-                        Owner Summary
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Full Name</p>
-                        <p className="text-base">
-                          {[
-                            ownerInformation.given_name,
-                            ownerInformation.middle_name,
-                            ownerInformation.surname,
-                            ownerInformation.suffix
-                          ].filter(Boolean).join(" ")}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Age</p>
-                        <p className="text-base">{ownerInformation.age}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Nationality</p>
-                        <p className="text-base">{ownerInformation.nationality}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {businessOperations && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Briefcase className="h-5 w-5" />
-                        Operations Summary
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Business Activity</p>
-                        <p className="text-base">{businessOperations.business_activity || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Business Area</p>
-                        <p className="text-base">{businessOperations.business_area ? `${businessOperations.business_area} sq meters` : "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Capitalization</p>
-                        <p className="text-base">{businessOperations.capitalization ? `₱${Number(businessOperations.capitalization).toLocaleString()}` : "N/A"}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+        {/* Application Status Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Application Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Created</p>
+                <p className="text-lg">{formatDate(application.created_at)}</p>
+              </div>
+              {application.submission_date && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Submitted</p>
+                  <p className="text-lg">{formatDate(application.submission_date)}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium text-gray-500">Last Updated</p>
+                <p className="text-lg">{formatDate(application.updated_at)}</p>
               </div>
             </div>
-          </TabsContent>
+            {application.admin_notes && (
+              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm font-medium text-amber-800 mb-2">Admin Notes:</p>
+                <p className="text-amber-700">{application.admin_notes}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <TabsContent value="documents">
+        {/* Documents Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <File className="h-5 w-5" />
+              Document Status
+            </CardTitle>
+            <CardDescription>
+              Track the status of your uploaded documents
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {documentsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : documents.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No documents uploaded yet</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center mb-2">
+                          <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                          <h4 className="font-medium">{doc.document_type}</h4>
+                          {getDocumentStatusBadge(doc.status)}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-1">{doc.document_name}</p>
+                        <div className="flex items-center text-xs text-gray-500 space-x-4">
+                          {doc.file_size && <span>{(doc.file_size / 1024).toFixed(2)} KB</span>}
+                          <span>Uploaded: {formatDate(doc.uploaded_at || '')}</span>
+                        </div>
+                        {doc.admin_feedback && doc.status === 'rejected' && (
+                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                            <p className="text-sm text-red-700">
+                              <strong>Feedback:</strong> {doc.admin_feedback}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2 ml-4">
+                        {doc.file_url && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDocument(doc.file_url!)}
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownloadDocument(doc.file_url!, doc.document_name)}
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Download
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Business Information */}
+          {businessInformation && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <File className="h-5 w-5" />
-                  Document Status
+                  <Building className="h-5 w-5" />
+                  Business Information
                 </CardTitle>
-                <CardDescription>
-                  Track the status of your uploaded documents
-                </CardDescription>
               </CardHeader>
-              <CardContent>
-                {documentsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Business Name</p>
+                  <p className="text-lg">{businessInformation.business_name}</p>
+                </div>
+                {businessInformation.trade_name && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Trade Name</p>
+                    <p>{businessInformation.trade_name}</p>
                   </div>
-                ) : documents.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No documents uploaded yet</p>
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">TIN Number</p>
+                    <p>{businessInformation.tin_number}</p>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {documents.map((doc) => (
-                      <div key={doc.id} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center mb-2">
-                              <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                              <h4 className="font-medium">{doc.document_type}</h4>
-                              {getDocumentStatusBadge(doc.status)}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-1">{doc.document_name}</p>
-                            <div className="flex items-center text-xs text-gray-500 space-x-4">
-                              {doc.file_size && <span>{(doc.file_size / 1024).toFixed(2)} KB</span>}
-                              <span>Uploaded: {formatDate(doc.uploaded_at || '')}</span>
-                            </div>
-                            {doc.admin_feedback && doc.status === 'rejected' && (
-                              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                                <p className="text-sm text-red-700">
-                                  <strong>Feedback:</strong> {doc.admin_feedback}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2 ml-4">
-                            {doc.file_url && (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleViewDocument(doc.file_url!)}
-                                >
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  View
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDownloadDocument(doc.file_url!, doc.document_name)}
-                                >
-                                  <Download className="h-3 w-3 mr-1" />
-                                  Download
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                  {businessInformation.registration_number && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Registration Number</p>
+                      <p>{businessInformation.registration_number}</p>
+                    </div>
+                  )}
+                </div>
+                {businessInformation.sss_number && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">SSS Number</p>
+                    <p>{businessInformation.sss_number}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Ownership Type</p>
+                  <p className="capitalize">{businessInformation.ownership_type.replace(/([A-Z])/g, ' $1').trim()}</p>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Business Address</p>
+                  <p className="text-sm">
+                    {[
+                      businessInformation.house_bldg_no,
+                      businessInformation.building_name,
+                      businessInformation.street,
+                      businessInformation.subdivision,
+                      businessInformation.barangay,
+                      businessInformation.city_municipality,
+                      businessInformation.province,
+                      businessInformation.zip_code
+                    ].filter(Boolean).join(", ")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Contact Information</p>
+                  <div className="space-y-1 text-sm">
+                    <p>Mobile: {businessInformation.mobile_no}</p>
+                    {businessInformation.telephone_no && <p>Telephone: {businessInformation.telephone_no}</p>}
+                    <p>Email: {businessInformation.email_address}</p>
+                  </div>
+                </div>
+                {(businessInformation.ctc_number || businessInformation.ctc_date_issue || businessInformation.ctc_place_issue) && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-2">CTC Information</p>
+                      <div className="space-y-1 text-sm">
+                        {businessInformation.ctc_number && <p>Number: {businessInformation.ctc_number}</p>}
+                        {businessInformation.ctc_date_issue && <p>Date Issued: {businessInformation.ctc_date_issue}</p>}
+                        {businessInformation.ctc_place_issue && <p>Place Issued: {businessInformation.ctc_place_issue}</p>}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="business">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Business Information */}
-              {businessInformation && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Building className="h-5 w-5" />
-                      Business Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+          {/* Owner Information */}
+          {ownerInformation && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Owner Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Full Name</p>
+                  <p className="text-lg">
+                    {[
+                      ownerInformation.given_name,
+                      ownerInformation.middle_name,
+                      ownerInformation.surname,
+                      ownerInformation.suffix
+                    ].filter(Boolean).join(" ")}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Age</p>
+                    <p>{ownerInformation.age}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Sex</p>
+                    <p className="capitalize">{ownerInformation.sex}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Civil Status</p>
+                    <p className="capitalize">{ownerInformation.civil_status}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Nationality</p>
+                    <p>{ownerInformation.nationality}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Owner Address</p>
+                  <p className="text-sm">
+                    {[
+                      ownerInformation.owner_house_bldg_no,
+                      ownerInformation.owner_building_name,
+                      ownerInformation.owner_street,
+                      ownerInformation.owner_subdivision,
+                      ownerInformation.owner_barangay,
+                      ownerInformation.owner_city_municipality,
+                      ownerInformation.owner_province,
+                      ownerInformation.owner_zip_code
+                    ].filter(Boolean).join(", ")}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Business Operations */}
+        {businessOperations && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Business Operations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {businessOperations.business_activity && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Business Activity</p>
+                    <p>{businessOperations.business_activity}</p>
+                  </div>
+                )}
+                {businessOperations.other_activity && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Other Activity</p>
+                    <p>{businessOperations.other_activity}</p>
+                  </div>
+                )}
+                {businessOperations.business_area && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Business Area (sq.m)</p>
+                    <p>{businessOperations.business_area}</p>
+                  </div>
+                )}
+                {businessOperations.capitalization && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Capitalization</p>
+                    <p>₱{Number(businessOperations.capitalization).toLocaleString()}</p>
+                  </div>
+                )}
+                {businessOperations.tax_declaration_no && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Tax Declaration No.</p>
+                    <p>{businessOperations.tax_declaration_no}</p>
+                  </div>
+                )}
+                {businessOperations.cctv_cameras !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">CCTV Cameras</p>
+                    <p>{businessOperations.cctv_cameras}</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Property Information */}
+              <Separator className="my-6" />
+              <h4 className="font-medium mb-4">Property Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Property Status</p>
+                  <p>{businessOperations.property_owned ? 'Owned' : 'Rented'}</p>
+                </div>
+                {!businessOperations.property_owned && businessOperations.monthly_rental && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Monthly Rental</p>
+                    <p>₱{Number(businessOperations.monthly_rental).toLocaleString()}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Tax Incentives</p>
+                  <p>{businessOperations.has_tax_incentives ? 'Yes' : 'No'}</p>
+                </div>
+              </div>
+
+              {/* Employee Information */}
+              <Separator className="my-6" />
+              <h4 className="font-medium mb-4">Employee Information</h4>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Professional Male</p>
+                  <p>{businessOperations.professional_male || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Professional Female</p>
+                  <p>{businessOperations.professional_female || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Non-Professional Male</p>
+                  <p>{businessOperations.non_professional_male || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Non-Professional Female</p>
+                  <p>{businessOperations.non_professional_female || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Employees from Lucena</p>
+                  <p>{businessOperations.employees_in_lucena || 0}</p>
+                </div>
+              </div>
+
+              {/* Vehicle Information */}
+              <Separator className="my-6" />
+              <h4 className="font-medium mb-4">Vehicle Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Van/Truck</p>
+                  <p>{businessOperations.van_truck || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Motorcycle</p>
+                  <p>{businessOperations.motorcycle || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Other Vehicles</p>
+                  <p>{businessOperations.other_vehicles || 0}</p>
+                </div>
+              </div>
+
+              {/* Main Office Address */}
+              {(businessOperations.main_street || businessOperations.main_barangay) && (
+                <>
+                  <Separator className="my-6" />
+                  <h4 className="font-medium mb-4">Main Office Address</h4>
+                  <div>
+                    <p className="text-sm">
+                      {[
+                        businessOperations.main_house_bldg_no,
+                        businessOperations.main_building_name,
+                        businessOperations.main_block_no,
+                        businessOperations.main_lot_no,
+                        businessOperations.main_street,
+                        businessOperations.main_subdivision,
+                        businessOperations.main_barangay,
+                        businessOperations.main_city_municipality,
+                        businessOperations.main_province,
+                        businessOperations.main_zip_code
+                      ].filter(Boolean).join(", ")}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Lessor Information */}
+              {!businessOperations.property_owned && businessOperations.lessor_full_name && (
+                <>
+                  <Separator className="my-6" />
+                  <h4 className="font-medium mb-4">Lessor Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Business Name</p>
-                      <p className="text-lg">{businessInformation.business_name}</p>
+                      <p className="text-sm font-medium text-gray-500">Lessor Name</p>
+                      <p>{businessOperations.lessor_full_name}</p>
                     </div>
-                    {businessInformation.trade_name && (
+                    {businessOperations.lessor_business_name && (
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Trade Name</p>
-                        <p>{businessInformation.trade_name}</p>
+                        <p className="text-sm font-medium text-gray-500">Business Name</p>
+                        <p>{businessOperations.lessor_business_name}</p>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-4">
+                    {businessOperations.lessor_contact_number && (
                       <div>
-                        <p className="text-sm font-medium text-gray-500">TIN Number</p>
-                        <p>{businessInformation.tin_number}</p>
+                        <p className="text-sm font-medium text-gray-500">Contact Number</p>
+                        <p>{businessOperations.lessor_contact_number}</p>
                       </div>
-                      {businessInformation.registration_number && (
+                    )}
+                    {businessOperations.lessor_email_address && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Email Address</p>
+                        <p>{businessOperations.lessor_email_address}</p>
+                      </div>
+                    )}
+                    {businessOperations.lessor_address && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm font-medium text-gray-500">Lessor Address</p>
+                        <p>{businessOperations.lessor_address}</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Business Lines */}
+        {businessLines && businessLines.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Lines of Business</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {businessLines.map((line: any, index: number) => (
+                  <div key={line.id || index} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Line of Business</p>
+                        <p>{line.line_of_business}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Products/Services</p>
+                        <p>{line.products_services}</p>
+                      </div>
+                      {line.psic_code && (
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Registration Number</p>
-                          <p>{businessInformation.registration_number}</p>
+                          <p className="text-sm font-medium text-gray-500">PSIC Code</p>
+                          <p className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{line.psic_code}</p>
+                        </div>
+                      )}
+                      {line.units && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Units</p>
+                          <p>{line.units}</p>
+                        </div>
+                      )}
+                      {line.gross_sales && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Gross Sales</p>
+                          <p>₱{Number(line.gross_sales).toLocaleString()}</p>
                         </div>
                       )}
                     </div>
-                    {businessInformation.sss_number && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">SSS Number</p>
-                        <p>{businessInformation.sss_number}</p>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Ownership Type</p>
-                      <p className="capitalize">{businessInformation.ownership_type.replace(/([A-Z])/g, ' $1').trim()}</p>
-                    </div>
-                    <Separator />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-2">Business Address</p>
-                      <p className="text-sm">
-                        {[
-                          businessInformation.house_bldg_no,
-                          businessInformation.building_name,
-                          businessInformation.street,
-                          businessInformation.subdivision,
-                          businessInformation.barangay,
-                          businessInformation.city_municipality,
-                          businessInformation.province,
-                          businessInformation.zip_code
-                        ].filter(Boolean).join(", ")}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Contact Information</p>
-                      <div className="space-y-1 text-sm">
-                        <p>Mobile: {businessInformation.mobile_no}</p>
-                        {businessInformation.telephone_no && <p>Telephone: {businessInformation.telephone_no}</p>}
-                        <p>Email: {businessInformation.email_address}</p>
-                      </div>
-                    </div>
-                    {(businessInformation.ctc_number || businessInformation.ctc_date_issue || businessInformation.ctc_place_issue) && (
-                      <>
-                        <Separator />
-                        <div>
-                          <p className="text-sm font-medium text-gray-500 mb-2">CTC Information</p>
-                          <div className="space-y-1 text-sm">
-                            {businessInformation.ctc_number && <p>Number: {businessInformation.ctc_number}</p>}
-                            {businessInformation.ctc_date_issue && <p>Date Issued: {businessInformation.ctc_date_issue}</p>}
-                            {businessInformation.ctc_place_issue && <p>Place Issued: {businessInformation.ctc_place_issue}</p>}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Owner Information */}
-              {ownerInformation && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5" />
-                      Owner Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Full Name</p>
-                      <p className="text-lg">
-                        {[
-                          ownerInformation.given_name,
-                          ownerInformation.middle_name,
-                          ownerInformation.surname,
-                          ownerInformation.suffix
-                        ].filter(Boolean).join(" ")}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Age</p>
-                        <p>{ownerInformation.age}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Sex</p>
-                        <p className="capitalize">{ownerInformation.sex}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Civil Status</p>
-                        <p className="capitalize">{ownerInformation.civil_status}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Nationality</p>
-                        <p>{ownerInformation.nationality}</p>
-                      </div>
-                    </div>
-                    <Separator />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-2">Owner Address</p>
-                      <p className="text-sm">
-                        {[
-                          ownerInformation.owner_house_bldg_no,
-                          ownerInformation.owner_building_name,
-                          ownerInformation.owner_street,
-                          ownerInformation.owner_subdivision,
-                          ownerInformation.owner_barangay,
-                          ownerInformation.owner_city_municipality,
-                          ownerInformation.owner_province,
-                          ownerInformation.owner_zip_code
-                        ].filter(Boolean).join(", ")}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="operations">
-            <div className="space-y-6">
-              {/* Business Operations */}
-              {businessOperations && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Briefcase className="h-5 w-5" />
-                      Business Operations
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Business Activity</p>
-                        <p>{businessOperations.business_activity || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Business Area (sq.m)</p>
-                        <p>{businessOperations.business_area || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Capitalization</p>
-                        <p>₱{Number(businessOperations.capitalization).toLocaleString() || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Tax Declaration No.</p>
-                        <p>{businessOperations.tax_declaration_no || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">CCTV Cameras</p>
-                        <p>{businessOperations.cctv_cameras !== null ? businessOperations.cctv_cameras : "N/A"}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Property Information */}
-                    <Separator className="my-6" />
-                    <h4 className="font-medium mb-4">Property Information</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Property Status</p>
-                        <p>{businessOperations.property_owned ? 'Owned' : 'Rented'}</p>
-                      </div>
-                      {!businessOperations.property_owned && businessOperations.monthly_rental && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Monthly Rental</p>
-                          <p>₱{Number(businessOperations.monthly_rental).toLocaleString()}</p>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Tax Incentives</p>
-                        <p>{businessOperations.has_tax_incentives ? 'Yes' : 'No'}</p>
-                      </div>
-                    </div>
-
-                    {/* Employee Information */}
-                    <Separator className="my-6" />
-                    <h4 className="font-medium mb-4">Employee Information</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Professional Male</p>
-                        <p>{businessOperations.professional_male || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Professional Female</p>
-                        <p>{businessOperations.professional_female || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Non-Professional Male</p>
-                        <p>{businessOperations.non_professional_male || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Non-Professional Female</p>
-                        <p>{businessOperations.non_professional_female || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Employees from Lucena</p>
-                        <p>{businessOperations.employees_in_lucena || 0}</p>
-                      </div>
-                    </div>
-
-                    {/* Vehicle Information */}
-                    <Separator className="my-6" />
-                    <h4 className="font-medium mb-4">Vehicle Information</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Van/Truck</p>
-                        <p>{businessOperations.van_truck || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Motorcycle</p>
-                        <p>{businessOperations.motorcycle || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Other Vehicles</p>
-                        <p>{businessOperations.other_vehicles || 0}</p>
-                      </div>
-                    </div>
-
-                    {/* Main Office Address */}
-                    {(businessOperations.main_street || businessOperations.main_barangay) && (
-                      <>
-                        <Separator className="my-6" />
-                        <h4 className="font-medium mb-4">Main Office Address</h4>
-                        <div>
-                          <p className="text-sm">
-                            {[
-                              businessOperations.main_house_bldg_no,
-                              businessOperations.main_building_name,
-                              businessOperations.main_block_no,
-                              businessOperations.main_lot_no,
-                              businessOperations.main_street,
-                              businessOperations.main_subdivision,
-                              businessOperations.main_barangay,
-                              businessOperations.main_city_municipality,
-                              businessOperations.main_province,
-                              businessOperations.main_zip_code
-                            ].filter(Boolean).join(", ")}
-                          </p>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Lessor Information */}
-                    {!businessOperations.property_owned && businessOperations.lessor_full_name && (
-                      <>
-                        <Separator className="my-6" />
-                        <h4 className="font-medium mb-4">Lessor Information</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Lessor Name</p>
-                            <p>{businessOperations.lessor_full_name}</p>
-                          </div>
-                          {businessOperations.lessor_business_name && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Business Name</p>
-                              <p>{businessOperations.lessor_business_name}</p>
-                            </div>
-                          )}
-                          {businessOperations.lessor_contact_number && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Contact Number</p>
-                              <p>{businessOperations.lessor_contact_number}</p>
-                            </div>
-                          )}
-                          {businessOperations.lessor_email_address && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Email Address</p>
-                              <p>{businessOperations.lessor_email_address}</p>
-                            </div>
-                          )}
-                          {businessOperations.lessor_address && (
-                            <div className="md:col-span-2">
-                              <p className="text-sm font-medium text-gray-500">Lessor Address</p>
-                              <p>{businessOperations.lessor_address}</p>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="business-lines">
-            {/* Business Lines */}
-            {businessLines && businessLines.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Lines of Business</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {businessLines.map((line, index) => (
-                      <div key={index} className="p-4 border border-gray-200 rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Line of Business</p>
-                            <p>{line.line_of_business}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">PSIC Code</p>
-                            <p>{line.psic_code || "N/A"}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Units</p>
-                            <p>{line.units || "N/A"}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Gross Sales</p>
-                            <p>{line.gross_sales ? `₱${Number(line.gross_sales).toLocaleString()}` : "N/A"}</p>
-                          </div>
-                          <div className="md:col-span-2">
-                            <p className="text-sm font-medium text-gray-500">Products/Services</p>
-                            <p>{line.products_services}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-8 text-gray-500">
-                  <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No business lines information available</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          <TabsContent value="declaration">
-            {/* Declaration */}
-            {declaration ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CheckSquare className="h-5 w-5 mr-2" />
-                    Declaration Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <span className="font-medium">Agreement Status:</span>
-                        <div className="mt-1">
-                          <Badge variant={declaration.is_agreed ? "default" : "destructive"}>
-                            {declaration.is_agreed ? "Agreed" : "Not Agreed"}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="font-medium">Designation/Position:</span>
-                        <p>{declaration.designation || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Place of Declaration:</span>
-                        <p>{declaration.declaration_place || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Verified By:</span>
-                        <p>{declaration.verified_by || "Pending Verification"}</p>
-                      </div>
-                    </div>
-
-                    {declaration.signature && (
-                      <div>
-                        <span className="font-medium">Digital Signature:</span>
-                        <div className="mt-2 p-4 border rounded-lg bg-gray-50">
-                          <img 
-                            src={declaration.signature} 
-                            alt="Digital Signature" 
-                            className="max-w-xs max-h-32 object-contain"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                          <div className="mt-2">
-                            <a 
-                              href={declaration.signature} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 text-sm"
-                            >
-                              View Full Signature
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-semibold mb-2">Declaration Statement</h4>
-                      <p className="text-sm text-gray-700">
-                        "I hereby declare that the information provided in this application is true and correct to the best of my knowledge.
-                        I understand that any false information or misrepresentation may be grounds for rejection of this application or
-                        revocation of any permit issued."
-                      </p>
-                    </div>
+        {/* Declaration */}
+        {declaration && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckSquare className="h-5 w-5" />
+                Declaration
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Agreement Status</p>
+                  <p className={declaration.is_agreed ? "text-green-600" : "text-red-600"}>
+                    {declaration.is_agreed ? "Agreed to terms and conditions" : "Not agreed"}
+                  </p>
+                </div>
+                {declaration.designation && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Designation</p>
+                    <p>{declaration.designation}</p>
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-8 text-gray-500">
-                  <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No declaration information available</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+                )}
+                {declaration.declaration_place && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Place of Declaration</p>
+                    <p>{declaration.declaration_place}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Signature Status</p>
+                  <p className={declaration.signature ? "text-green-600" : "text-red-600"}>
+                    {declaration.signature ? "Signed" : "Not signed"}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
