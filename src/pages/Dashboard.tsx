@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   Bell, 
@@ -25,6 +24,7 @@ import useRoleAuth from "@/hooks/useRoleAuth";
 import { useActivities } from "@/hooks/useActivities";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const getActivityIcon = (activityType: string) => {
   switch (activityType) {
@@ -74,14 +74,51 @@ const Dashboard = () => {
   const formattedDate = currentDate.toLocaleDateString('en-US', dateOptions as Intl.DateTimeFormatOptions);
   
   // Add role check and navigation
-  const { isAdmin, isLoading } = useRoleAuth();
+  const { isAdmin, isLoading, userId } = useRoleAuth();
   const navigate = useNavigate();
   
   const { toast } = useToast();
   
+  // Add state for user profile
+  const [userProfile, setUserProfile] = useState<{
+    firstname: string;
+    lastname: string | null;
+  } | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  
   // Get activities data with more frequent refresh
   const { activities, isLoading: activitiesLoading, markAsRead, refetch } = useActivities(5);
   
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!userId) {
+        setProfileLoading(false);
+        return;
+      }
+
+      try {
+        const { data: profileData, error } = await supabase
+          .from('profiles')
+          .select('firstname, lastname')
+          .eq('id', userId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user profile:", error);
+        } else if (profileData) {
+          setUserProfile(profileData);
+        }
+      } catch (error) {
+        console.error("Error in fetchUserProfile:", error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId]);
+
   // Auto-redirect admin users to admin dashboard
   useEffect(() => {
     if (isAdmin && !isLoading) {
@@ -111,6 +148,20 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Format user name for welcome message
+  const getUserDisplayName = () => {
+    if (profileLoading) {
+      return "Loading...";
+    }
+    
+    if (userProfile) {
+      const fullName = `${userProfile.firstname}${userProfile.lastname ? ` ${userProfile.lastname}` : ''}`;
+      return fullName;
+    }
+    
+    return "User";
+  };
   
   return (
     <div className="p-6">
@@ -118,7 +169,9 @@ const Dashboard = () => {
       <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome, John Smith</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Welcome, {getUserDisplayName()}
+            </h1>
             <p className="text-gray-600">{formattedDate}</p>
             <p className="text-gray-600 mt-2">You have <span className="font-semibold text-amber-600">3 permits</span> expiring soon.</p>
           </div>
