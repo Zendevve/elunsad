@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, 
@@ -12,7 +13,7 @@ import { ApplicationStatus, ApplicationType } from "@/services/application/types
 import { ApplicationListItem } from "@/services/application/adminApplicationTypes";
 import { 
   FileText, Search, RefreshCcw, AlertCircle, 
-  Check, AlertTriangle, Bug, Database 
+  Check, AlertTriangle 
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import ApplicationTableRow from "./ApplicationTableRow";
@@ -24,7 +25,6 @@ import DocumentStatusIndicator from "./DocumentStatusIndicator";
 const ApplicationReview = () => {
   const [activeTab, setActiveTab] = useState<string>("submitted");
   const [searchTerm, setSearchTerm] = useState("");
-  const [debugMode, setDebugMode] = useState(false);
   const { toast } = useToast();
 
   // Use React Query for data fetching
@@ -99,11 +99,6 @@ const ApplicationReview = () => {
     setSearchTerm(value);
   };
 
-  // Toggle debug mode
-  const toggleDebugMode = () => {
-    setDebugMode(!debugMode);
-  };
-
   // Force refetch data
   const handleRefresh = () => {
     refetch();
@@ -142,36 +137,8 @@ const ApplicationReview = () => {
             <RefreshCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleDebugMode}
-            className="flex items-center gap-1"
-          >
-            <Bug className="h-4 w-4" />
-            {debugMode ? "Hide Debug" : "Debug Mode"}
-          </Button>
         </div>
       </div>
-      
-      {debugMode && (
-        <Alert variant="warning" className="bg-amber-50 border-amber-300">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertTitle>Debug Mode Enabled</AlertTitle>
-          <AlertDescription>
-            <div className="mt-2 space-y-2">
-              <div className="flex items-center gap-2">
-                <Database className="h-4 w-4 text-amber-600" />
-                <span className="font-semibold">Raw Data:</span>
-              </div>
-              <div className="bg-slate-900 text-white p-3 rounded-md text-sm overflow-auto max-h-60">
-                <pre>{JSON.stringify(applications, null, 2)}</pre>
-              </div>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
 
       {isError && (
         <div className="bg-red-50 border border-red-200 p-4 rounded-md flex items-start gap-3">

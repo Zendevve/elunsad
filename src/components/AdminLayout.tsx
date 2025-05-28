@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, ReactNode } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { 
   Menu, LogOut, ChevronLeft, Settings, Users, BarChart4, 
-  LayoutDashboard, Bell, User, MapPin, FileText 
+  LayoutDashboard, Bell, MapPin, FileText 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,18 +80,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: 'Reports', href: '/admin/reports', icon: FileText },
     { name: 'Analytics', href: '/analytics', icon: BarChart4 },
     { name: 'Map View', href: '/map', icon: MapPin },
-    { name: 'Notifications', href: '/notifications', icon: Bell, badge: 5 },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Settings', href: '/settings', icon: Settings }
   ];
-
-  const handleSwitchToUserView = () => {
-    navigate('/dashboard');
-    toast({
-      title: "Switched to User View",
-      description: "You are now viewing the application as a regular user"
-    });
-  };
 
   // Function to check if a nav item is active
   const isActiveNavItem = (href: string) => {
@@ -146,15 +137,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </Link>
             );
           })}
-          
-          <Button 
-            variant="outline" 
-            className="w-full justify-start mt-4 bg-indigo-700 text-white border-indigo-600 hover:bg-indigo-800"
-            onClick={handleSwitchToUserView}
-          >
-            <User className="mr-3 h-5 w-5" />
-            <span>Switch to User View</span>
-          </Button>
         </nav>
         
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-indigo-800">
