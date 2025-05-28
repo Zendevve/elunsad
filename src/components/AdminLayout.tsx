@@ -81,7 +81,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: 'Analytics', href: '/analytics', icon: BarChart4 },
     { name: 'Map View', href: '/map', icon: MapPin },
     { name: 'Notifications', href: '/notifications', icon: Bell },
-    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'Profile', href: '/profile', icon: Users },
     { name: 'Settings', href: '/settings', icon: Settings }
   ];
 
@@ -129,11 +129,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               >
                 <item.icon className="mr-3 h-5 w-5" />
                 <span>{item.name}</span>
-                {item.badge && (
-                  <span className="ml-auto bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
