@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   Bell, 
@@ -25,6 +24,7 @@ import useRoleAuth from "@/hooks/useRoleAuth";
 import { useActivities } from "@/hooks/useActivities";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const getActivityIcon = (activityType: string) => {
   switch (activityType) {
@@ -68,21 +68,57 @@ const getActivityBorderColor = (activityType: string) => {
 };
 
 const Dashboard = () => {
-  // Get current date
   const currentDate = new Date();
   const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const formattedDate = currentDate.toLocaleDateString('en-US', dateOptions as Intl.DateTimeFormatOptions);
   
   // Add role check and navigation
-  const { isAdmin, isLoading } = useRoleAuth();
+  const { isAdmin, isLoading, userId } = useRoleAuth();
   const navigate = useNavigate();
   
   const { toast } = useToast();
   
+  // Add state for user profile
+  const [userProfile, setUserProfile] = useState<{ firstname: string; lastname: string } | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  
   // Get activities data with more frequent refresh
   const { activities, isLoading: activitiesLoading, markAsRead, refetch } = useActivities(5);
   
-  // Auto-redirect admin users to admin dashboard
+  // Fetch user profile
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!userId) {
+        setProfileLoading(false);
+        return;
+      }
+
+      try {
+        console.log("Fetching profile for user:", userId);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('firstname, lastname')
+          .eq('id', userId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user profile:", error);
+          setUserProfile(null);
+        } else {
+          console.log("User profile fetched:", data);
+          setUserProfile(data);
+        }
+      } catch (error) {
+        console.error("Error in fetchUserProfile:", error);
+        setUserProfile(null);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId]);
+  
   useEffect(() => {
     if (isAdmin && !isLoading) {
       console.log("Admin user detected, redirecting to admin dashboard");
@@ -90,7 +126,6 @@ const Dashboard = () => {
     }
   }, [isAdmin, isLoading, navigate]);
 
-  // Refresh activities every 10 seconds to catch new ones
   useEffect(() => {
     const interval = setInterval(() => {
       console.log("Auto-refreshing activities...");
@@ -100,7 +135,6 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  // Show loading state while checking roles
   if (isLoading) {
     return (
       <div className="p-6">
@@ -112,13 +146,22 @@ const Dashboard = () => {
     );
   }
   
+  // Get display name
+  const getDisplayName = () => {
+    if (profileLoading) return "Loading...";
+    if (userProfile) {
+      return `${userProfile.firstname} ${userProfile.lastname}`;
+    }
+    return "User";
+  };
+  
   return (
     <div className="p-6">
       {/* Hero / Welcome Banner */}
       <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome, John Smith</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome, {getDisplayName()}</h1>
             <p className="text-gray-600">{formattedDate}</p>
             <p className="text-gray-600 mt-2">You have <span className="font-semibold text-amber-600">3 permits</span> expiring soon.</p>
           </div>
@@ -135,7 +178,6 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Dashboard Overview / Quick Stats */}
       <section className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
