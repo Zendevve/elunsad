@@ -19,6 +19,6 @@ export const formatSelectedReasons = (reasons: string[]): string => {
   if (reasons.length === 0) return '';
   if (reasons.length === 1) return reasons[0];
   
-  // Format multiple reasons as a bulleted list
-  return reasons.map(reason => `• ${reason}`).join('\n');
+  // Format multiple reasons as a numbered list
+  return reasons.map((reason, index) => `${index + 1}. ${reason}`).join('\n');
 };
