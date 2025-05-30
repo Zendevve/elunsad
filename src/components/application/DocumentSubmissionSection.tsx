@@ -1,12 +1,11 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Info, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { documentService, DocumentData } from '@/services/documentService';
-import DocumentUpload from '@/components/documents/DocumentUpload';
 import DocumentList from '@/components/documents/DocumentList';
 import DocumentRequirements from '@/components/documents/DocumentRequirements';
 
@@ -14,7 +13,6 @@ const DocumentSubmissionSection: React.FC = () => {
   const { applicationId } = useApplication();
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedDocumentType, setSelectedDocumentType] = useState<string>('');
   const [completionStatus, setCompletionStatus] = useState({
     allUploaded: false,
     allApproved: false,
@@ -23,7 +21,6 @@ const DocumentSubmissionSection: React.FC = () => {
     rejectedDocuments: []
   });
   const { toast } = useToast();
-  const uploadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (applicationId) {
@@ -57,22 +54,6 @@ const DocumentSubmissionSection: React.FC = () => {
 
   const handleUploadComplete = () => {
     loadDocuments();
-    setSelectedDocumentType(''); // Clear selection after upload
-  };
-
-  const handleUploadRequest = (documentType: string) => {
-    setSelectedDocumentType(documentType);
-    // Scroll to upload section
-    if (uploadRef.current) {
-      uploadRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center' 
-      });
-    }
-    toast({
-      title: "Document Selected",
-      description: `Ready to upload: ${documentType}`,
-    });
   };
 
   // Make validation function available globally for the Applications page
@@ -145,25 +126,15 @@ const DocumentSubmissionSection: React.FC = () => {
         </Alert>
       )}
 
-      {/* Document Requirements Checklist */}
+      {/* Enhanced Document Requirements with Inline Upload */}
       <DocumentRequirements
         uploadedDocuments={uploadedTypes}
         approvedDocuments={approvedTypes}
         pendingDocuments={pendingTypes}
         rejectedDocuments={rejectedTypes}
         applicationId={applicationId}
-        onUploadRequest={handleUploadRequest}
+        onUploadComplete={handleUploadComplete}
       />
-
-      {/* Document Upload */}
-      <div ref={uploadRef}>
-        <DocumentUpload
-          applicationId={applicationId}
-          onUploadComplete={handleUploadComplete}
-          preSelectedDocumentType={selectedDocumentType}
-          onDocumentTypeChange={setSelectedDocumentType}
-        />
-      </div>
 
       {/* Document List */}
       <DocumentList documents={documents} isLoading={isLoading} />
