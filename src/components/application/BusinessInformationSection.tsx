@@ -1,14 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FormSectionWrapper from "./FormSectionWrapper";
-import { FormField } from "@/components/ui/form-field";
-import { EnhancedRadioGroup } from "@/components/ui/enhanced-radio-group";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessInformationService } from "@/services/application";
 import { OwnershipType } from "@/services/application/types";
 import { useToast } from "@/hooks/use-toast";
 import { useEntityData } from "@/hooks/useEntityData";
+import BusinessIdentificationSection from "./BusinessIdentificationSection";
+import BusinessRegistrationSection from "./BusinessRegistrationSection";
+import BusinessOwnershipSection from "./BusinessOwnershipSection";
+import BusinessAddressSection from "./BusinessAddressSection";
+import BusinessContactSection from "./BusinessContactSection";
 
 const BusinessInformationSection = () => {
   const { applicationId, isLoading: isAppLoading, setIsLoading } = useApplication();
@@ -91,70 +93,6 @@ const BusinessInformationSection = () => {
     setValidationErrors(errors);
   }, [businessInfo, hasTouchedFields]);
 
-  // List of barangays in Lucena
-  const barangays = [
-    "Barangay 1 (Poblacion)",
-    "Barangay 2 (Poblacion)",
-    "Barangay 3 (Poblacion)",
-    "Barangay 4 (Poblacion)",
-    "Barangay 5 (Poblacion)",
-    "Barangay 6 (Poblacion)",
-    "Barangay 7 (Poblacion)",
-    "Barangay 8 (Poblacion)",
-    "Barangay 9 (Poblacion)",
-    "Barangay 10 (Poblacion)",
-    "Barra",
-    "Bocohan",
-    "Cotta",
-    "Gulang-Gulang",
-    "Dalahican",
-    "Domoit",
-    "Ibabang Dupay",
-    "Ibabang Iyam",
-    "Ibabang Talim",
-    "Ilayang Dupay",
-    "Ilayang Iyam",
-    "Ilayang Talim",
-    "Isabang",
-    "Market View",
-    "Mayao Castillo",
-    "Mayao Crossing",
-    "Mayao Kanluran",
-    "Mayao Parada",
-    "Mayao Silangan",
-    "Ransohan",
-    "Salinas",
-    "Talao-Talao"
-  ];
-
-  const ownershipOptions = [
-    {
-      value: "soleProprietorship",
-      label: "Sole Proprietorship",
-      description: "Business owned by one person"
-    },
-    {
-      value: "onePersonCorp",
-      label: "One Person Corp",
-      description: "Corporation with a single stockholder"
-    },
-    {
-      value: "partnership",
-      label: "Partnership",
-      description: "Business owned by two or more individuals"
-    },
-    {
-      value: "corporation",
-      label: "Corporation",
-      description: "Business entity with shareholders"
-    },
-    {
-      value: "cooperative",
-      label: "Cooperative",
-      description: "Business owned and run by its members"
-    }
-  ];
-
   const handleFieldChange = (field: string, value: any) => {
     if (!hasTouchedFields) {
       setHasTouchedFields(true);
@@ -226,245 +164,51 @@ const BusinessInformationSection = () => {
       stepNumber={2}
     >
       <div className="space-y-8">
-        {/* Business Name and Trade Name */}
-        <div>
-          <h3 className="font-medium text-base mb-3">Business Identification</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField 
-              id="businessName" 
-              label="Business Name"
-              value={businessInfo.business_name}
-              onChange={(e) => handleFieldChange('business_name', e.target.value)}
-              required
-              tooltip="Enter the official registered business name as it appears on your DTI/SEC registration"
-              error={validationErrors.business_name}
-            />
-            <FormField 
-              id="tradeName" 
-              label="Trade Name / Franchise"
-              value={businessInfo.trade_name}
-              onChange={(e) => handleFieldChange('trade_name', e.target.value)}
-              helperText="Leave blank if same as business name"
-              tooltip="Enter the name you use for your business if different from the registered business name"
-            />
-          </div>
-        </div>
+        <BusinessIdentificationSection
+          businessName={businessInfo.business_name}
+          tradeName={businessInfo.trade_name}
+          onFieldChange={handleFieldChange}
+          validationErrors={validationErrors}
+        />
 
-        {/* Registration Numbers */}
-        <div>
-          <h3 className="font-medium text-base mb-3">Registration Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-            <FormField 
-              id="dtiSecCdaNumber" 
-              label="DTI/SEC/CDA Registration No."
-              value={businessInfo.registration_number}
-              onChange={(e) => handleFieldChange('registration_number', e.target.value)}
-              tooltip="Enter your Department of Trade and Industry, Securities and Exchange Commission, or Cooperative Development Authority registration number"
-            />
-            <FormField 
-              id="tinNumber" 
-              label="Tax Identification Number"
-              value={businessInfo.tin_number}
-              onChange={(e) => handleFieldChange('tin_number', e.target.value)}
-              required
-              placeholder="XXX-XXX-XXX-XXX"
-              tooltip="Enter your 12-digit Tax Identification Number from BIR"
-              error={validationErrors.tin_number}
-            />
-            <FormField 
-              id="sssNumber" 
-              label="SSS Number"
-              value={businessInfo.sss_number}
-              onChange={(e) => handleFieldChange('sss_number', e.target.value)}
-              placeholder="XX-XXXXXXX-X"
-              tooltip="Enter your Social Security System employer number"
-            />
-          </div>
-          
-          {/* CTC Information - New Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormField 
-              id="ctcNumber" 
-              label="CTC Number"
-              value={businessInfo.ctc_number}
-              onChange={(e) => handleFieldChange('ctc_number', e.target.value)}
-              tooltip="Enter your Community Tax Certificate (CTC) number"
-            />
-            <FormField 
-              id="ctcDateIssue" 
-              label="CTC Date of Issue"
-              value={businessInfo.ctc_date_issue}
-              onChange={(e) => handleFieldChange('ctc_date_issue', e.target.value)}
-              tooltip="Enter the date when your CTC was issued"
-              type="date"
-            />
-            <FormField 
-              id="ctcPlaceIssue" 
-              label="CTC Place of Issue"
-              value={businessInfo.ctc_place_issue}
-              onChange={(e) => handleFieldChange('ctc_place_issue', e.target.value)}
-              tooltip="Enter where your CTC was issued"
-            />
-          </div>
-        </div>
+        <BusinessRegistrationSection
+          registrationNumber={businessInfo.registration_number}
+          tinNumber={businessInfo.tin_number}
+          sssNumber={businessInfo.sss_number}
+          ctcNumber={businessInfo.ctc_number}
+          ctcDateIssue={businessInfo.ctc_date_issue}
+          ctcPlaceIssue={businessInfo.ctc_place_issue}
+          onFieldChange={handleFieldChange}
+          validationErrors={validationErrors}
+        />
 
-        {/* Kind of Ownership */}
-        <div>
-          <h3 className="font-medium text-base mb-3">
-            Ownership Type <span className="text-red-500">*</span>
-          </h3>
-          <div className="mt-2">
-            <EnhancedRadioGroup
-              options={ownershipOptions}
-              value={businessInfo.ownership_type}
-              onValueChange={(value) => handleFieldChange('ownership_type', value)}
-              orientation="horizontal"
-              name="ownershipType"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            />
-          </div>
-        </div>
+        <BusinessOwnershipSection
+          ownershipType={businessInfo.ownership_type}
+          onFieldChange={handleFieldChange}
+        />
 
-        {/* Business Address */}
-        <div>
-          <h3 className="font-medium text-base mb-3">Business Address <span className="text-red-500">*</span></h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <FormField 
-              id="houseBldgNo" 
-              label="House/Bldg. No."
-              value={businessInfo.house_bldg_no}
-              onChange={(e) => handleFieldChange('house_bldg_no', e.target.value)}
-              tooltip="Enter the house or building number of your business address"
-            />
-            <FormField 
-              id="buildingName" 
-              label="Building Name"
-              value={businessInfo.building_name}
-              onChange={(e) => handleFieldChange('building_name', e.target.value)}
-              helperText="If applicable"
-            />
-            <FormField 
-              id="blockNo" 
-              label="Block No."
-              value={businessInfo.block_no}
-              onChange={(e) => handleFieldChange('block_no', e.target.value)}
-              helperText="If applicable"
-            />
-            <FormField 
-              id="lotNo" 
-              label="Lot No."
-              value={businessInfo.lot_no}
-              onChange={(e) => handleFieldChange('lot_no', e.target.value)}
-              helperText="If applicable"
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <FormField 
-              id="street" 
-              label="Street"
-              value={businessInfo.street}
-              onChange={(e) => handleFieldChange('street', e.target.value)}
-              required
-              tooltip="Enter the street name of your business location"
-              error={validationErrors.street}
-            />
-            <FormField 
-              id="subdivision" 
-              label="Subdivision"
-              value={businessInfo.subdivision}
-              onChange={(e) => handleFieldChange('subdivision', e.target.value)}
-              helperText="If applicable"
-            />
-            <div className="space-y-1.5">
-              <div className="relative">
-                <Select 
-                  value={businessInfo.barangay} 
-                  onValueChange={(value) => handleFieldChange('barangay', value)}
-                >
-                  <SelectTrigger id="barangay" className={`h-14 pt-4 ${validationErrors.barangay ? 'border-red-500' : ''}`}>
-                    <SelectValue placeholder="Select barangay" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-80">
-                    {barangays.map((barangay) => (
-                      <SelectItem key={barangay} value={barangay}>
-                        {barangay}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <label htmlFor="barangay" className="absolute left-3 top-2 text-xs text-primary pointer-events-none">
-                  Barangay <span className="text-destructive">*</span>
-                </label>
-                {validationErrors.barangay && (
-                  <p className="text-xs text-red-500 mt-1">Barangay is required</p>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField 
-              id="cityMunicipality" 
-              label="City/Municipality"
-              value={businessInfo.city_municipality}
-              onChange={(e) => handleFieldChange('city_municipality', e.target.value)}
-              required
-              tooltip="Enter the city or municipality of your business location"
-            />
-            <FormField 
-              id="province" 
-              label="Province"
-              value={businessInfo.province}
-              onChange={(e) => handleFieldChange('province', e.target.value)}
-              required
-              tooltip="Enter the province of your business location"
-            />
-            <FormField 
-              id="zipCode" 
-              label="Zip Code"
-              value={businessInfo.zip_code}
-              onChange={(e) => handleFieldChange('zip_code', e.target.value)}
-              required
-              tooltip="Enter the postal or zip code of your business location"
-              error={validationErrors.zip_code}
-            />
-          </div>
-        </div>
+        <BusinessAddressSection
+          houseBldgNo={businessInfo.house_bldg_no}
+          buildingName={businessInfo.building_name}
+          blockNo={businessInfo.block_no}
+          lotNo={businessInfo.lot_no}
+          street={businessInfo.street}
+          subdivision={businessInfo.subdivision}
+          barangay={businessInfo.barangay}
+          cityMunicipality={businessInfo.city_municipality}
+          province={businessInfo.province}
+          zipCode={businessInfo.zip_code}
+          onFieldChange={handleFieldChange}
+          validationErrors={validationErrors}
+        />
 
-        {/* Contact Information */}
-        <div>
-          <h3 className="font-medium text-base mb-3">Contact Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField 
-              id="telephoneNo" 
-              label="Telephone No."
-              value={businessInfo.telephone_no}
-              onChange={(e) => handleFieldChange('telephone_no', e.target.value)}
-              tooltip="Enter your business landline number"
-            />
-            <FormField 
-              id="mobileNo" 
-              label="Mobile No."
-              value={businessInfo.mobile_no}
-              onChange={(e) => handleFieldChange('mobile_no', e.target.value)}
-              required
-              tooltip="Enter a mobile number where you can be contacted"
-              error={validationErrors.mobile_no}
-            />
-            <FormField 
-              id="emailAddress" 
-              type="email" 
-              label="Email Address"
-              value={businessInfo.email_address}
-              onChange={(e) => handleFieldChange('email_address', e.target.value)}
-              required
-              tooltip="Enter an active email address for communications"
-              error={validationErrors.email_address}
-            />
-          </div>
-        </div>
+        <BusinessContactSection
+          telephoneNo={businessInfo.telephone_no}
+          mobileNo={businessInfo.mobile_no}
+          emailAddress={businessInfo.email_address}
+          onFieldChange={handleFieldChange}
+          validationErrors={validationErrors}
+        />
       </div>
     </FormSectionWrapper>
   );
