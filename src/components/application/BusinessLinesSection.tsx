@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,14 +20,8 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessLinesService } from "@/services/application";
 import { useToast } from "@/components/ui/use-toast";
@@ -206,13 +200,33 @@ const BusinessLinesSection = () => {
     saveBusinessLines();
   };
 
-  const handleProductSelection = (id: number, selectedProducts: string[]) => {
-    // Filter out "Other - Please Specify" from the selected products array
-    const filteredProducts = selectedProducts.filter(product => product !== "Other - Please Specify");
-    updateBusinessLine(id, "productsServices", filteredProducts);
+  const handleProductToggle = (lineId: number, product: string, checked: boolean) => {
+    const line = businessLines.find(l => l.id === lineId);
+    if (!line) return;
+
+    let updatedProducts;
+    if (checked) {
+      updatedProducts = [...line.productsServices, product];
+    } else {
+      updatedProducts = line.productsServices.filter(p => p !== product);
+    }
+    
+    updateBusinessLine(lineId, "productsServices", updatedProducts);
   };
 
-  const allBusinessTypes = getAllBusinessTypes();
+  const removeProductTag = (lineId: number, product: string) => {
+    const line = businessLines.find(l => l.id === lineId);
+    if (!line) return;
+    
+    const updatedProducts = line.productsServices.filter(p => p !== product);
+    updateBusinessLine(lineId, "productsServices", updatedProducts);
+  };
+
+  const getBusinessDisplayName = (businessId: string) => {
+    if (businessId === "other") return "Other - Please Specify";
+    const businessType = getBusinessTypeById(businessId);
+    return businessType?.name || "Select line of business";
+  };
 
   return (
     <Card className="mt-6 shadow-sm border">
@@ -222,24 +236,33 @@ const BusinessLinesSection = () => {
           Select your business lines, products/services, and gross sales information
         </CardDescription>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              <TableHead className="font-medium min-w-[250px]">Line of Business</TableHead>
-              <TableHead className="font-medium whitespace-nowrap min-w-[120px]">
-                PSIC<br />(if available)
-              </TableHead>
-              <TableHead className="font-medium min-w-[300px]">Products / Services</TableHead>
-              <TableHead className="font-medium min-w-[120px]">No. of Units</TableHead>
-              <TableHead className="font-medium whitespace-nowrap min-w-[150px]">Last Year's Gross Sales</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {businessLines.map((line) => (
-              <TableRow key={line.id} className="hover:bg-muted/20 transition-colors">
-                <TableCell className="space-y-2">
+      <CardContent className="p-6">
+        <div className="space-y-8">
+          {businessLines.map((line, index) => (
+            <Card key={line.id} className="border border-gray-200 bg-gray-50/30">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-medium">
+                    Business Line {index + 1}
+                  </CardTitle>
+                  {businessLines.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeBusinessLine(line.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Line of Business Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Line of Business <span className="text-red-500">*</span>
+                  </label>
                   <Select 
                     value={line.lineOfBusiness} 
                     onValueChange={(value) => {
@@ -250,7 +273,9 @@ const BusinessLinesSection = () => {
                     }}
                   >
                     <SelectTrigger className="focus:ring-1 focus:ring-primary">
-                      <SelectValue placeholder="Select line of business" />
+                      <SelectValue placeholder="Select line of business">
+                        {line.lineOfBusiness ? getBusinessDisplayName(line.lineOfBusiness) : "Select line of business"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-white max-h-[300px]">
                       {businessSections.map((section) => (
@@ -277,47 +302,86 @@ const BusinessLinesSection = () => {
                       value={line.lineOfBusinessOther || ""} 
                       onChange={(e) => updateBusinessLine(line.id, "lineOfBusinessOther", e.target.value)}
                       placeholder="Please specify your line of business"
-                      className="focus:ring-1 focus:ring-primary"
+                      className="focus:ring-1 focus:ring-primary mt-2"
                     />
                   )}
-                </TableCell>
-                
-                <TableCell>
-                  <Input 
-                    value={line.psicCode} 
-                    onChange={(e) => updateBusinessLine(line.id, "psicCode", e.target.value)}
-                    placeholder="Enter PSIC code"
-                    className="focus:ring-1 focus:ring-primary"
-                  />
-                </TableCell>
-                
-                <TableCell className="space-y-2">
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* PSIC Code */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      PSIC Code (if available)
+                    </label>
+                    <Input 
+                      value={line.psicCode} 
+                      onChange={(e) => updateBusinessLine(line.id, "psicCode", e.target.value)}
+                      placeholder="Enter PSIC code"
+                      className="focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+
+                  {/* Units */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      No. of Units
+                    </label>
+                    <Input 
+                      value={line.units} 
+                      onChange={(e) => updateBusinessLine(line.id, "units", e.target.value)}
+                      placeholder="Enter number of units"
+                      className="focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Products/Services */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700">
+                    Products / Services <span className="text-red-500">*</span>
+                  </label>
+                  
+                  {/* Selected Products Display */}
+                  {line.productsServices.length > 0 && (
+                    <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      {line.productsServices.map((product) => (
+                        <Badge key={product} variant="secondary" className="flex items-center gap-1">
+                          {product}
+                          <X 
+                            className="h-3 w-3 cursor-pointer hover:text-red-600" 
+                            onClick={() => removeProductTag(line.id, product)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Products Selection */}
                   {line.lineOfBusiness && line.lineOfBusiness !== "other" ? (
-                    <>
-                      <Select 
-                        value={line.productsServices.join(",")} 
-                        onValueChange={(value) => {
-                          const selectedProducts = value ? value.split(",") : [];
-                          handleProductSelection(line.id, selectedProducts);
-                        }}
-                      >
-                        <SelectTrigger className="focus:ring-1 focus:ring-primary">
-                          <SelectValue placeholder="Select products/services" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white max-h-[200px]">
-                          {getProductsForBusinessType(line.lineOfBusiness).map((product) => (
-                            <SelectItem key={product} value={product}>
-                              {product}
-                            </SelectItem>
+                    <div className="space-y-3">
+                      <div className="max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-md bg-white">
+                        <div className="grid grid-cols-1 gap-2">
+                          {getProductsForBusinessType(line.lineOfBusiness)
+                            .filter(product => product !== "Other - Please Specify")
+                            .map((product) => (
+                            <div key={product} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`${line.id}-${product}`}
+                                checked={line.productsServices.includes(product)}
+                                onCheckedChange={(checked) => 
+                                  handleProductToggle(line.id, product, checked as boolean)
+                                }
+                              />
+                              <label 
+                                htmlFor={`${line.id}-${product}`} 
+                                className="text-sm cursor-pointer hover:text-primary"
+                              >
+                                {product}
+                              </label>
+                            </div>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      {line.productsServices.length > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          Selected: {line.productsServices.join(", ")}
                         </div>
-                      )}
+                      </div>
                       
                       <Input 
                         value={line.productsServicesOther || ""} 
@@ -325,57 +389,40 @@ const BusinessLinesSection = () => {
                         placeholder="Add other products/services (optional)"
                         className="focus:ring-1 focus:ring-primary"
                       />
-                    </>
+                    </div>
                   ) : (
                     <Input 
                       value={line.productsServicesOther || ""} 
                       onChange={(e) => updateBusinessLine(line.id, "productsServicesOther", e.target.value)}
-                      placeholder="Enter products/services"
+                      placeholder="Enter your products/services"
                       className="focus:ring-1 focus:ring-primary"
                     />
                   )}
-                </TableCell>
-                
-                <TableCell>
-                  <Input 
-                    value={line.units} 
-                    onChange={(e) => updateBusinessLine(line.id, "units", e.target.value)}
-                    placeholder="Enter units"
-                    className="focus:ring-1 focus:ring-primary"
-                  />
-                </TableCell>
-                
-                <TableCell>
+                </div>
+
+                {/* Gross Sales */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Last Year's Gross Sales
+                  </label>
                   <Input 
                     value={line.grossSales} 
                     onChange={(e) => updateBusinessLine(line.id, "grossSales", e.target.value)}
-                    placeholder="Enter amount"
+                    placeholder="Enter gross sales amount"
                     className="focus:ring-1 focus:ring-primary"
                   />
-                </TableCell>
-                
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeBusinessLine(line.id)}
-                    disabled={businessLines.length === 1}
-                    className="hover:bg-rose-100 hover:text-rose-600 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </CardContent>
       <CardFooter className="bg-muted/20">
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="mt-2 group"
+          className="group"
           onClick={addBusinessLine}
         >
           <PlusCircle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
