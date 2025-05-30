@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { ownerInformationService } from "@/services/application";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import FormSectionWrapper from "./FormSectionWrapper";
 
 const OwnerInformationSection = () => {
@@ -30,6 +31,35 @@ const OwnerInformationSection = () => {
   const [ownerBlockNo, setOwnerBlockNo] = useState("");
   const [ownerLotNo, setOwnerLotNo] = useState("");
   const [ownerSubdivision, setOwnerSubdivision] = useState("");
+
+  // Fetch user profile data for prefilling
+  const fetchUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('firstname, middlename, lastname, extension_name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return;
+      }
+
+      if (profile) {
+        // Only prefill if fields are empty (don't overwrite existing data)
+        if (!surname && profile.lastname) setSurname(profile.lastname);
+        if (!givenName && profile.firstname) setGivenName(profile.firstname);
+        if (!middleName && profile.middlename) setMiddleName(profile.middlename);
+        if (!suffix && profile.extension_name) setSuffix(profile.extension_name);
+      }
+    } catch (error) {
+      console.error("Error in fetchUserProfile:", error);
+    }
+  };
 
   useEffect(() => {
     const loadOwnerInformation = async () => {
@@ -57,9 +87,14 @@ const OwnerInformationSection = () => {
           setOwnerBlockNo(data.owner_block_no || "");
           setOwnerLotNo(data.owner_lot_no || "");
           setOwnerSubdivision(data.owner_subdivision || "");
+        } else {
+          // If no saved data exists, prefill with user profile data
+          await fetchUserProfile();
         }
       } catch (error) {
         console.error("Error loading owner information:", error);
+        // If there's an error loading, still try to prefill with user profile
+        await fetchUserProfile();
       }
     };
     

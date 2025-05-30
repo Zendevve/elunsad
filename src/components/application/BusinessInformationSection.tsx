@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FormSectionWrapper from "./FormSectionWrapper";
@@ -15,7 +16,7 @@ const BusinessInformationSection = () => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [hasTouchedFields, setHasTouchedFields] = useState(false);
   
-  // Define initial state for business information form
+  // Define initial state for business information form with prefilled zip code
   const initialBusinessInfo = {
     application_id: applicationId || '',
     business_name: '',
@@ -36,7 +37,7 @@ const BusinessInformationSection = () => {
     barangay: '',
     city_municipality: 'Lucena',
     province: 'Quezon',
-    zip_code: '',
+    zip_code: '4301', // Prefilled with Lucena City zip code
     telephone_no: '',
     mobile_no: '',
     email_address: ''
