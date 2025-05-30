@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -222,12 +221,6 @@ const BusinessLinesSection = () => {
     updateBusinessLine(lineId, "productsServices", updatedProducts);
   };
 
-  const getBusinessDisplayName = (businessId: string) => {
-    if (businessId === "other") return "Other - Please Specify";
-    const businessType = getBusinessTypeById(businessId);
-    return businessType?.name || "Select line of business";
-  };
-
   return (
     <Card className="mt-6 shadow-sm border">
       <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
@@ -236,11 +229,11 @@ const BusinessLinesSection = () => {
           Select your business lines, products/services, and gross sales information
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-8">
         <div className="space-y-8">
           {businessLines.map((line, index) => (
             <Card key={line.id} className="border border-gray-200 bg-gray-50/30">
-              <CardHeader className="pb-4">
+              <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium">
                     Business Line {index + 1}
@@ -257,9 +250,9 @@ const BusinessLinesSection = () => {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-8">
                 {/* Line of Business Selection */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-700">
                     Line of Business <span className="text-red-500">*</span>
                   </label>
@@ -272,27 +265,25 @@ const BusinessLinesSection = () => {
                       updateBusinessLine(line.id, "productsServicesOther", "");
                     }}
                   >
-                    <SelectTrigger className="focus:ring-1 focus:ring-primary">
-                      <SelectValue placeholder="Select line of business">
-                        {line.lineOfBusiness ? getBusinessDisplayName(line.lineOfBusiness) : "Select line of business"}
-                      </SelectValue>
+                    <SelectTrigger className="focus:ring-1 focus:ring-primary h-12">
+                      <SelectValue placeholder="Select line of business" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white max-h-[300px]">
+                    <SelectContent className="bg-white max-h-[400px] border border-gray-200 shadow-lg z-50">
                       {businessSections.map((section) => (
                         <SelectGroup key={section.id}>
-                          <SelectLabel className="text-sm font-semibold text-primary">
+                          <SelectLabel className="text-sm font-semibold text-primary px-2 py-2">
                             {section.title}
                           </SelectLabel>
                           {section.categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
+                            <SelectItem key={category.id} value={category.id} className="px-2 py-2">
                               {category.name}
                             </SelectItem>
                           ))}
                         </SelectGroup>
                       ))}
                       <SelectGroup>
-                        <SelectLabel className="text-sm font-semibold text-primary">Custom</SelectLabel>
-                        <SelectItem value="other">Other - Please Specify</SelectItem>
+                        <SelectLabel className="text-sm font-semibold text-primary px-2 py-2">Custom</SelectLabel>
+                        <SelectItem value="other" className="px-2 py-2">Other - Please Specify</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -302,14 +293,14 @@ const BusinessLinesSection = () => {
                       value={line.lineOfBusinessOther || ""} 
                       onChange={(e) => updateBusinessLine(line.id, "lineOfBusinessOther", e.target.value)}
                       placeholder="Please specify your line of business"
-                      className="focus:ring-1 focus:ring-primary mt-2"
+                      className="focus:ring-1 focus:ring-primary mt-3"
                     />
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* PSIC Code */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <label className="text-sm font-medium text-gray-700">
                       PSIC Code (if available)
                     </label>
@@ -317,12 +308,12 @@ const BusinessLinesSection = () => {
                       value={line.psicCode} 
                       onChange={(e) => updateBusinessLine(line.id, "psicCode", e.target.value)}
                       placeholder="Enter PSIC code"
-                      className="focus:ring-1 focus:ring-primary"
+                      className="focus:ring-1 focus:ring-primary h-12"
                     />
                   </div>
 
                   {/* Units */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <label className="text-sm font-medium text-gray-700">
                       No. of Units
                     </label>
@@ -330,22 +321,22 @@ const BusinessLinesSection = () => {
                       value={line.units} 
                       onChange={(e) => updateBusinessLine(line.id, "units", e.target.value)}
                       placeholder="Enter number of units"
-                      className="focus:ring-1 focus:ring-primary"
+                      className="focus:ring-1 focus:ring-primary h-12"
                     />
                   </div>
                 </div>
 
                 {/* Products/Services */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <label className="text-sm font-medium text-gray-700">
                     Products / Services <span className="text-red-500">*</span>
                   </label>
                   
                   {/* Selected Products Display */}
                   {line.productsServices.length > 0 && (
-                    <div className="flex flex-wrap gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex flex-wrap gap-2 p-4 bg-blue-50 border border-blue-200 rounded-md">
                       {line.productsServices.map((product) => (
-                        <Badge key={product} variant="secondary" className="flex items-center gap-1">
+                        <Badge key={product} variant="secondary" className="flex items-center gap-1 px-3 py-1">
                           {product}
                           <X 
                             className="h-3 w-3 cursor-pointer hover:text-red-600" 
@@ -358,13 +349,13 @@ const BusinessLinesSection = () => {
 
                   {/* Products Selection */}
                   {line.lineOfBusiness && line.lineOfBusiness !== "other" ? (
-                    <div className="space-y-3">
-                      <div className="max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-md bg-white">
-                        <div className="grid grid-cols-1 gap-2">
+                    <div className="space-y-4">
+                      <div className="max-h-48 overflow-y-auto p-4 border border-gray-200 rounded-md bg-white">
+                        <div className="grid grid-cols-1 gap-3">
                           {getProductsForBusinessType(line.lineOfBusiness)
                             .filter(product => product !== "Other - Please Specify")
                             .map((product) => (
-                            <div key={product} className="flex items-center space-x-2">
+                            <div key={product} className="flex items-center space-x-3">
                               <Checkbox
                                 id={`${line.id}-${product}`}
                                 checked={line.productsServices.includes(product)}
@@ -374,7 +365,7 @@ const BusinessLinesSection = () => {
                               />
                               <label 
                                 htmlFor={`${line.id}-${product}`} 
-                                className="text-sm cursor-pointer hover:text-primary"
+                                className="text-sm cursor-pointer hover:text-primary flex-1"
                               >
                                 {product}
                               </label>
@@ -387,7 +378,7 @@ const BusinessLinesSection = () => {
                         value={line.productsServicesOther || ""} 
                         onChange={(e) => updateBusinessLine(line.id, "productsServicesOther", e.target.value)}
                         placeholder="Add other products/services (optional)"
-                        className="focus:ring-1 focus:ring-primary"
+                        className="focus:ring-1 focus:ring-primary h-12"
                       />
                     </div>
                   ) : (
@@ -395,13 +386,13 @@ const BusinessLinesSection = () => {
                       value={line.productsServicesOther || ""} 
                       onChange={(e) => updateBusinessLine(line.id, "productsServicesOther", e.target.value)}
                       placeholder="Enter your products/services"
-                      className="focus:ring-1 focus:ring-primary"
+                      className="focus:ring-1 focus:ring-primary h-12"
                     />
                   )}
                 </div>
 
                 {/* Gross Sales */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="text-sm font-medium text-gray-700">
                     Last Year's Gross Sales
                   </label>
@@ -409,7 +400,7 @@ const BusinessLinesSection = () => {
                     value={line.grossSales} 
                     onChange={(e) => updateBusinessLine(line.id, "grossSales", e.target.value)}
                     placeholder="Enter gross sales amount"
-                    className="focus:ring-1 focus:ring-primary"
+                    className="focus:ring-1 focus:ring-primary h-12"
                   />
                 </div>
               </CardContent>
@@ -417,7 +408,7 @@ const BusinessLinesSection = () => {
           ))}
         </div>
       </CardContent>
-      <CardFooter className="bg-muted/20">
+      <CardFooter className="bg-muted/20 p-6">
         <Button
           type="button"
           variant="outline"
