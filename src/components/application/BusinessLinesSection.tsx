@@ -176,7 +176,8 @@ const BusinessLinesSection = () => {
   };
 
   const updateBusinessLine = (id: number, field: keyof BusinessLine, value: string | string[]) => {
-    setBusinessLines(businessLines.map(line => 
+    console.log(`Updating business line ${id}, field: ${field}, value:`, value);
+    setBusinessLines(prev => prev.map(line => 
       line.id === id ? { ...line, [field]: value } : line
     ));
     
@@ -184,27 +185,34 @@ const BusinessLinesSection = () => {
     saveBusinessLines();
   };
 
-  const handleBusinessLineSelect = (lineId: number, value: string) => {
-    if (value === "Others (Custom)") {
+  const handleBusinessLineSelect = (lineId: number, selectedValue: string) => {
+    console.log(`Selected business line for ID ${lineId}:`, selectedValue);
+    
+    if (selectedValue === "Others (Custom)") {
       setCustomInputs(prev => ({ ...prev, [lineId]: true }));
       updateBusinessLine(lineId, "lineOfBusiness", "");
       // Clear products when switching to custom
       updateBusinessLine(lineId, "productsServices", []);
     } else {
       setCustomInputs(prev => ({ ...prev, [lineId]: false }));
-      updateBusinessLine(lineId, "lineOfBusiness", value);
+      updateBusinessLine(lineId, "lineOfBusiness", selectedValue);
       // Clear existing products when changing business line
       updateBusinessLine(lineId, "productsServices", []);
     }
+    
+    // Close the popover
     setOpenPopovers(prev => ({ ...prev, [lineId]: false }));
   };
 
   const handleProductsChange = (lineId: number, products: string[]) => {
+    console.log(`Products changed for line ${lineId}:`, products);
     updateBusinessLine(lineId, "productsServices", products);
   };
 
   const getAvailableProducts = (lineOfBusiness: string): string[] => {
-    return businessLineProductsMap[lineOfBusiness] || [];
+    const products = businessLineProductsMap[lineOfBusiness] || [];
+    console.log(`Available products for "${lineOfBusiness}":`, products);
+    return products;
   };
 
   const groupedOptions = businessLineOptions.reduce((acc, option) => {
@@ -258,13 +266,15 @@ const BusinessLinesSection = () => {
                           variant="outline"
                           role="combobox"
                           aria-expanded={openPopovers[line.id] || false}
-                          className="w-full justify-between"
+                          className="w-full justify-between text-left"
                         >
-                          {line.lineOfBusiness || "Select line of business..."}
+                          <span className="truncate">
+                            {line.lineOfBusiness || "Select line of business..."}
+                          </span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[400px] p-0" align="start">
+                      <PopoverContent className="w-[400px] p-0 z-50 bg-white" align="start">
                         <Command>
                           <CommandInput placeholder="Search line of business..." />
                           <CommandList>
@@ -275,7 +285,10 @@ const BusinessLinesSection = () => {
                                   <CommandItem
                                     key={option.name}
                                     value={option.name}
-                                    onSelect={() => handleBusinessLineSelect(line.id, option.name)}
+                                    onSelect={(currentValue) => {
+                                      console.log("Command item selected:", currentValue, "for line:", line.id);
+                                      handleBusinessLineSelect(line.id, option.name);
+                                    }}
                                   >
                                     <Check
                                       className={cn(
@@ -322,7 +335,7 @@ const BusinessLinesSection = () => {
                     selectedProducts={line.productsServices}
                     onSelectionChange={(products) => handleProductsChange(line.id, products)}
                     placeholder="Select products/services..."
-                    disabled={!line.lineOfBusiness}
+                    disabled={!line.lineOfBusiness || line.lineOfBusiness.trim() === ""}
                   />
                 </TableCell>
                 <TableCell>
