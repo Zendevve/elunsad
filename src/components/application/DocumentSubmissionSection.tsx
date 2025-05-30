@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +14,7 @@ const DocumentSubmissionSection: React.FC = () => {
   const { applicationId } = useApplication();
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string>('');
   const [completionStatus, setCompletionStatus] = useState({
     allUploaded: false,
     allApproved: false,
@@ -22,6 +23,7 @@ const DocumentSubmissionSection: React.FC = () => {
     rejectedDocuments: []
   });
   const { toast } = useToast();
+  const uploadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (applicationId) {
@@ -55,6 +57,22 @@ const DocumentSubmissionSection: React.FC = () => {
 
   const handleUploadComplete = () => {
     loadDocuments();
+    setSelectedDocumentType(''); // Clear selection after upload
+  };
+
+  const handleUploadRequest = (documentType: string) => {
+    setSelectedDocumentType(documentType);
+    // Scroll to upload section
+    if (uploadRef.current) {
+      uploadRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+    toast({
+      title: "Document Selected",
+      description: `Ready to upload: ${documentType}`,
+    });
   };
 
   // Make validation function available globally for the Applications page
@@ -133,13 +151,19 @@ const DocumentSubmissionSection: React.FC = () => {
         approvedDocuments={approvedTypes}
         pendingDocuments={pendingTypes}
         rejectedDocuments={rejectedTypes}
+        applicationId={applicationId}
+        onUploadRequest={handleUploadRequest}
       />
 
       {/* Document Upload */}
-      <DocumentUpload
-        applicationId={applicationId}
-        onUploadComplete={handleUploadComplete}
-      />
+      <div ref={uploadRef}>
+        <DocumentUpload
+          applicationId={applicationId}
+          onUploadComplete={handleUploadComplete}
+          preSelectedDocumentType={selectedDocumentType}
+          onDocumentTypeChange={setSelectedDocumentType}
+        />
+      </div>
 
       {/* Document List */}
       <DocumentList documents={documents} isLoading={isLoading} />

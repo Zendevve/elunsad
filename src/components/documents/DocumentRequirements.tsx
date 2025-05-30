@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, XCircle, Clock, AlertCircle, Upload } from 'lucide-react';
 import { REQUIRED_DOCUMENTS } from '@/services/documentService';
 
 interface DocumentRequirementsProps {
@@ -10,13 +11,17 @@ interface DocumentRequirementsProps {
   approvedDocuments: string[];
   pendingDocuments: string[];
   rejectedDocuments: string[];
+  applicationId?: string;
+  onUploadRequest?: (documentType: string) => void;
 }
 
 const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
   uploadedDocuments,
   approvedDocuments,
   pendingDocuments,
-  rejectedDocuments
+  rejectedDocuments,
+  applicationId,
+  onUploadRequest
 }) => {
   const getDocumentStatus = (docType: string) => {
     if (approvedDocuments.includes(docType)) {
@@ -43,6 +48,12 @@ const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
     }
   };
 
+  const handleUploadClick = (documentType: string) => {
+    if (onUploadRequest) {
+      onUploadRequest(documentType);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -65,9 +76,22 @@ const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
                     <p className="text-sm font-medium">{docType}</p>
                   </div>
                 </div>
-                <Badge className={docStatus.badge}>
-                  {getStatusText(docStatus.status)}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className={docStatus.badge}>
+                    {getStatusText(docStatus.status)}
+                  </Badge>
+                  {docStatus.status === 'missing' && onUploadRequest && applicationId && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleUploadClick(docType)}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Upload className="h-3 w-3 mr-1" />
+                      Upload
+                    </Button>
+                  )}
+                </div>
               </div>
             );
           })}

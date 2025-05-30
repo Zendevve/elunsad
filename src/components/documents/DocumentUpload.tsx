@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,14 +13,34 @@ import { supabase } from '@/integrations/supabase/client';
 interface DocumentUploadProps {
   applicationId: string;
   onUploadComplete: () => void;
+  preSelectedDocumentType?: string;
+  onDocumentTypeChange?: (documentType: string) => void;
 }
 
-const DocumentUpload: React.FC<DocumentUploadProps> = ({ applicationId, onUploadComplete }) => {
+const DocumentUpload: React.FC<DocumentUploadProps> = ({ 
+  applicationId, 
+  onUploadComplete, 
+  preSelectedDocumentType = '',
+  onDocumentTypeChange 
+}) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [documentType, setDocumentType] = useState<string>('');
+  const [documentType, setDocumentType] = useState<string>(preSelectedDocumentType);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Update document type when pre-selected type changes
+  useEffect(() => {
+    if (preSelectedDocumentType) {
+      setDocumentType(preSelectedDocumentType);
+      // Auto-focus on file input when document type is pre-selected
+      if (fileInputRef.current) {
+        setTimeout(() => {
+          fileInputRef.current?.focus();
+        }, 100);
+      }
+    }
+  }, [preSelectedDocumentType]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -47,6 +67,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ applicationId, onUpload
       }
 
       setSelectedFile(file);
+    }
+  };
+
+  const handleDocumentTypeChange = (value: string) => {
+    setDocumentType(value);
+    if (onDocumentTypeChange) {
+      onDocumentTypeChange(value);
     }
   };
 
@@ -93,6 +120,9 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ applicationId, onUpload
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      if (onDocumentTypeChange) {
+        onDocumentTypeChange('');
+      }
 
       onUploadComplete();
     } catch (error) {
@@ -114,18 +144,42 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ applicationId, onUpload
     }
   };
 
+  const clearSelection = () => {
+    setDocumentType('');
+    if (onDocumentTypeChange) {
+      onDocumentTypeChange('');
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Upload className="mr-2 h-5 w-5" />
-          Upload Document
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Upload className="mr-2 h-5 w-5" />
+            Upload Document
+          </div>
+          {preSelectedDocumentType && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearSelection}
+              className="text-xs"
+            >
+              Clear Selection
+            </Button>
+          )}
         </CardTitle>
+        {preSelectedDocumentType && (
+          <p className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
+            Ready to upload: {preSelectedDocumentType}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="document-type">Document Type</Label>
-          <Select value={documentType} onValueChange={setDocumentType}>
+          <Select value={documentType} onValueChange={handleDocumentTypeChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select document type" />
             </SelectTrigger>
