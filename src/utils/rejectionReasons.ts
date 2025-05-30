@@ -14,3 +14,11 @@ export const COMMON_REJECTION_REASONS = [
   "Document appears to be altered or tampered with",
   "Other (specify in the text area below)"
 ];
+
+export const formatSelectedReasons = (reasons: string[]): string => {
+  if (reasons.length === 0) return '';
+  if (reasons.length === 1) return reasons[0];
+  
+  // Format multiple reasons as a bulleted list
+  return reasons.map(reason => `• ${reason}`).join('\n');
+};

@@ -4,20 +4,27 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { 
   FileText, Eye, Download, CheckCircle, XCircle, Clock, 
-  ThumbsUp, ThumbsDown, MessageCircle 
+  ThumbsUp, ThumbsDown, MessageCircle, ChevronDown, X 
 } from 'lucide-react';
 import { documentService, DocumentData, REQUIRED_DOCUMENTS } from '@/services/documentService';
 import { useToast } from '@/hooks/use-toast';
-import { COMMON_REJECTION_REASONS } from '@/utils/rejectionReasons';
+import { COMMON_REJECTION_REASONS, formatSelectedReasons } from '@/utils/rejectionReasons';
 
 interface DocumentReviewProps {
   applicationId: string;
@@ -28,7 +35,8 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [reviewingDoc, setReviewingDoc] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
-  const [selectedReason, setSelectedReason] = useState('');
+  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
+  const [isReasonDropdownOpen, setIsReasonDropdownOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,7 +65,7 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
       await documentService.updateDocumentStatus(documentId, status, feedback);
       setReviewingDoc(null);
       setFeedback('');
-      setSelectedReason('');
+      setSelectedReasons([]);
       loadDocuments();
       toast({
         title: "Document Updated",
@@ -73,19 +81,41 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
     }
   };
 
-  const handleReasonSelect = (reason: string) => {
-    setSelectedReason(reason);
-    if (reason === "Other (specify in the text area below)") {
-      setFeedback('');
-    } else {
-      setFeedback(reason);
-    }
+  const handleReasonToggle = (reason: string) => {
+    setSelectedReasons(prev => {
+      const newReasons = prev.includes(reason)
+        ? prev.filter(r => r !== reason)
+        : [...prev, reason];
+      
+      // Update feedback with formatted reasons
+      const otherReasons = newReasons.filter(r => r !== "Other (specify in the text area below)");
+      const hasOther = newReasons.includes("Other (specify in the text area below)");
+      
+      if (otherReasons.length > 0) {
+        const formattedReasons = formatSelectedReasons(otherReasons);
+        if (hasOther) {
+          setFeedback(formattedReasons + '\n\n');
+        } else {
+          setFeedback(formattedReasons);
+        }
+      } else if (hasOther) {
+        setFeedback('');
+      } else {
+        setFeedback('');
+      }
+      
+      return newReasons;
+    });
+  };
+
+  const handleRemoveReason = (reason: string) => {
+    handleReasonToggle(reason);
   };
 
   const handleCancelReview = () => {
     setReviewingDoc(null);
     setFeedback('');
-    setSelectedReason('');
+    setSelectedReasons([]);
   };
 
   const getStatusBadge = (status: string) => {
@@ -206,20 +236,65 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
                             <div className="space-y-3">
                               <div className="space-y-2">
                                 <label className="text-sm font-medium">
-                                  Select rejection reason (optional for approval, required for rejection):
+                                  Select rejection reasons (select multiple if applicable):
                                 </label>
-                                <Select value={selectedReason} onValueChange={handleReasonSelect}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a common rejection reason..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {COMMON_REJECTION_REASONS.map((reason, idx) => (
-                                      <SelectItem key={idx} value={reason}>
-                                        {reason}
-                                      </SelectItem>
+                                
+                                <Popover open={isReasonDropdownOpen} onOpenChange={setIsReasonDropdownOpen}>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      aria-expanded={isReasonDropdownOpen}
+                                      className="w-full justify-between"
+                                    >
+                                      {selectedReasons.length === 0 
+                                        ? "Select rejection reasons..."
+                                        : `${selectedReasons.length} reason${selectedReasons.length > 1 ? 's' : ''} selected`
+                                      }
+                                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-full p-0" align="start">
+                                    <Command>
+                                      <CommandInput placeholder="Search rejection reasons..." />
+                                      <CommandEmpty>No reasons found.</CommandEmpty>
+                                      <CommandList>
+                                        <CommandGroup>
+                                          {COMMON_REJECTION_REASONS.map((reason) => (
+                                            <CommandItem
+                                              key={reason}
+                                              onSelect={() => handleReasonToggle(reason)}
+                                              className="cursor-pointer"
+                                            >
+                                              <Checkbox
+                                                checked={selectedReasons.includes(reason)}
+                                                onChange={() => handleReasonToggle(reason)}
+                                                className="mr-2"
+                                              />
+                                              <span className="text-sm">{reason}</span>
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+
+                                {selectedReasons.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {selectedReasons.map((reason) => (
+                                      <Badge key={reason} variant="secondary" className="text-xs">
+                                        {reason.length > 50 ? `${reason.substring(0, 47)}...` : reason}
+                                        <button
+                                          onClick={() => handleRemoveReason(reason)}
+                                          className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                                        >
+                                          <X className="h-2 w-2" />
+                                        </button>
+                                      </Badge>
                                     ))}
-                                  </SelectContent>
-                                </Select>
+                                  </div>
+                                )}
                               </div>
                               
                               <div className="space-y-2">
@@ -227,12 +302,12 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
                                   Additional feedback or custom reason:
                                 </label>
                                 <Textarea
-                                  placeholder={selectedReason === "Other (specify in the text area below)" 
+                                  placeholder={selectedReasons.includes("Other (specify in the text area below)") 
                                     ? "Please specify the rejection reason..." 
-                                    : "Add additional feedback (optional for approval, modify reason for rejection)"}
+                                    : "Add additional feedback (optional for approval, modify/add reasons for rejection)"}
                                   value={feedback}
                                   onChange={(e) => setFeedback(e.target.value)}
-                                  rows={3}
+                                  rows={4}
                                 />
                               </div>
                               
