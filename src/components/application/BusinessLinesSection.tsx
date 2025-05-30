@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -276,9 +275,7 @@ const BusinessLinesSection = () => {
                     }}
                   >
                     <SelectTrigger className="focus:ring-1 focus:ring-primary h-12">
-                      <SelectValue>
-                        {getBusinessDisplayName(line.lineOfBusiness)}
-                      </SelectValue>
+                      <SelectValue placeholder="Select line of business" />
                     </SelectTrigger>
                     <SelectContent className="bg-white max-h-[400px] border border-gray-200 shadow-lg z-50">
                       {businessSections.map((section) => (
