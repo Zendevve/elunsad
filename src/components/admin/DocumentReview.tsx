@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,19 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { 
   FileText, Eye, Download, CheckCircle, XCircle, Clock, 
   ThumbsUp, ThumbsDown, MessageCircle 
 } from 'lucide-react';
 import { documentService, DocumentData, REQUIRED_DOCUMENTS } from '@/services/documentService';
 import { useToast } from '@/hooks/use-toast';
+import { COMMON_REJECTION_REASONS } from '@/utils/rejectionReasons';
 
 interface DocumentReviewProps {
   applicationId: string;
@@ -21,6 +28,7 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [reviewingDoc, setReviewingDoc] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
+  const [selectedReason, setSelectedReason] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,6 +57,7 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
       await documentService.updateDocumentStatus(documentId, status, feedback);
       setReviewingDoc(null);
       setFeedback('');
+      setSelectedReason('');
       loadDocuments();
       toast({
         title: "Document Updated",
@@ -62,6 +71,21 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleReasonSelect = (reason: string) => {
+    setSelectedReason(reason);
+    if (reason === "Other (specify in the text area below)") {
+      setFeedback('');
+    } else {
+      setFeedback(reason);
+    }
+  };
+
+  const handleCancelReview = () => {
+    setReviewingDoc(null);
+    setFeedback('');
+    setSelectedReason('');
   };
 
   const getStatusBadge = (status: string) => {
@@ -180,12 +204,38 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
                         <div className="space-y-3 p-3 bg-gray-50 rounded">
                           {reviewingDoc === doc.id ? (
                             <div className="space-y-3">
-                              <Textarea
-                                placeholder="Add feedback (optional for approval, required for rejection)"
-                                value={feedback}
-                                onChange={(e) => setFeedback(e.target.value)}
-                                rows={3}
-                              />
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                  Select rejection reason (optional for approval, required for rejection):
+                                </label>
+                                <Select value={selectedReason} onValueChange={handleReasonSelect}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a common rejection reason..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {COMMON_REJECTION_REASONS.map((reason, idx) => (
+                                      <SelectItem key={idx} value={reason}>
+                                        {reason}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                  Additional feedback or custom reason:
+                                </label>
+                                <Textarea
+                                  placeholder={selectedReason === "Other (specify in the text area below)" 
+                                    ? "Please specify the rejection reason..." 
+                                    : "Add additional feedback (optional for approval, modify reason for rejection)"}
+                                  value={feedback}
+                                  onChange={(e) => setFeedback(e.target.value)}
+                                  rows={3}
+                                />
+                              </div>
+                              
                               <div className="flex items-center space-x-2">
                                 <Button
                                   size="sm"
@@ -207,10 +257,7 @@ const DocumentReview: React.FC<DocumentReviewProps> = ({ applicationId }) => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => {
-                                    setReviewingDoc(null);
-                                    setFeedback('');
-                                  }}
+                                  onClick={handleCancelReview}
                                 >
                                   Cancel
                                 </Button>
