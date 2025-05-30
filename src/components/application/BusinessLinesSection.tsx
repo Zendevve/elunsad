@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -221,6 +222,15 @@ const BusinessLinesSection = () => {
     updateBusinessLine(lineId, "productsServices", updatedProducts);
   };
 
+  // Helper function to get display name for selected business line
+  const getBusinessDisplayName = (businessId: string) => {
+    if (!businessId) return "Select line of business";
+    if (businessId === "other") return "Other - Please Specify";
+    
+    const businessType = getBusinessTypeById(businessId);
+    return businessType?.name || businessId;
+  };
+
   return (
     <Card className="mt-6 shadow-sm border">
       <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
@@ -266,7 +276,9 @@ const BusinessLinesSection = () => {
                     }}
                   >
                     <SelectTrigger className="focus:ring-1 focus:ring-primary h-12">
-                      <SelectValue placeholder="Select line of business" />
+                      <SelectValue>
+                        {getBusinessDisplayName(line.lineOfBusiness)}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-white max-h-[400px] border border-gray-200 shadow-lg z-50">
                       {businessSections.map((section) => (
