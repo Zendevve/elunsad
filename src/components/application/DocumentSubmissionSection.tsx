@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Info, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { documentService, DocumentData } from '@/services/documentService';
-import DocumentList from '@/components/documents/DocumentList';
 import DocumentRequirements from '@/components/documents/DocumentRequirements';
 
 const DocumentSubmissionSection: React.FC = () => {
@@ -126,7 +125,7 @@ const DocumentSubmissionSection: React.FC = () => {
         </Alert>
       )}
 
-      {/* Enhanced Document Requirements with Inline Upload */}
+      {/* Enhanced Document Requirements with Inline Upload and Document Display */}
       <DocumentRequirements
         uploadedDocuments={uploadedTypes}
         approvedDocuments={approvedTypes}
@@ -134,10 +133,8 @@ const DocumentSubmissionSection: React.FC = () => {
         rejectedDocuments={rejectedTypes}
         applicationId={applicationId}
         onUploadComplete={handleUploadComplete}
+        documents={documents}
       />
-
-      {/* Document List */}
-      <DocumentList documents={documents} isLoading={isLoading} />
     </div>
   );
 };

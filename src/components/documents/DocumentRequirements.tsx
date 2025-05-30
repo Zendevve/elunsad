@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CheckCircle, XCircle, Clock, AlertCircle, Upload, Loader2, FileText, X } from 'lucide-react';
-import { REQUIRED_DOCUMENTS, documentService } from '@/services/documentService';
+import { CheckCircle, XCircle, Clock, AlertCircle, Upload, Loader2, FileText, X, Download, Eye } from 'lucide-react';
+import { REQUIRED_DOCUMENTS, documentService, DocumentData } from '@/services/documentService';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,6 +16,7 @@ interface DocumentRequirementsProps {
   rejectedDocuments: string[];
   applicationId?: string;
   onUploadComplete?: () => void;
+  documents: DocumentData[];
 }
 
 const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
@@ -24,7 +25,8 @@ const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
   pendingDocuments,
   rejectedDocuments,
   applicationId,
-  onUploadComplete
+  onUploadComplete,
+  documents
 }) => {
   const [uploadingDocs, setUploadingDocs] = useState<Set<string>>(new Set());
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
@@ -54,6 +56,18 @@ const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
       case 'missing': return 'Not Uploaded';
       default: return 'Unknown';
     }
+  };
+
+  const getDocumentForType = (docType: string) => {
+    return documents.find(doc => doc.document_type === docType);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
   };
 
   const handleFileSelect = (docType: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,6 +172,20 @@ const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
     }
   };
 
+  const handleViewDocument = (fileUrl: string) => {
+    window.open(fileUrl, '_blank');
+  };
+
+  const handleDownloadDocument = (fileUrl: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -173,6 +201,7 @@ const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
             const StatusIcon = docStatus.icon;
             const isUploading = uploadingDocs.has(docType);
             const selectedFile = selectedFiles[docType];
+            const uploadedDoc = getDocumentForType(docType);
             
             return (
               <div key={index} className="border rounded-lg p-4 space-y-3">
@@ -188,10 +217,69 @@ const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
                   </Badge>
                 </div>
 
-                {/* File upload section for missing documents */}
-                {docStatus.status === 'missing' && applicationId && (
+                {/* Show uploaded document details */}
+                {uploadedDoc && (
+                  <div className="ml-8 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="h-4 w-4 text-gray-500" />
+                        <div>
+                          <p className="text-sm font-medium">{uploadedDoc.document_name}</p>
+                          <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            {uploadedDoc.file_size && (
+                              <span>{formatFileSize(uploadedDoc.file_size)}</span>
+                            )}
+                            {uploadedDoc.uploaded_at && (
+                              <>
+                                <span>•</span>
+                                <span>Uploaded: {formatDate(uploadedDoc.uploaded_at)}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {uploadedDoc.file_url && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewDocument(uploadedDoc.file_url!)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDownloadDocument(uploadedDoc.file_url!, uploadedDoc.document_name)}
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              Download
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Show admin feedback for rejected documents */}
+                    {uploadedDoc.status === 'rejected' && uploadedDoc.admin_feedback && (
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                        <strong>Admin Feedback:</strong> {uploadedDoc.admin_feedback}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* File upload section for missing documents or rejected documents that need re-upload */}
+                {(docStatus.status === 'missing' || (docStatus.status === 'rejected' && uploadedDoc)) && applicationId && (
                   <div className="ml-8 space-y-3 bg-gray-50 p-3 rounded-md">
                     <div className="space-y-2">
+                      {docStatus.status === 'rejected' && (
+                        <p className="text-sm text-red-600 font-medium">
+                          Please upload a new document to replace the rejected one.
+                        </p>
+                      )}
                       <Input
                         ref={(el) => {
                           if (el) fileInputRefs.current[docType] = el;
@@ -244,7 +332,7 @@ const DocumentRequirements: React.FC<DocumentRequirementsProps> = ({
                         ) : (
                           <>
                             <Upload className="mr-2 h-3 w-3" />
-                            Upload
+                            {docStatus.status === 'rejected' ? 'Re-upload' : 'Upload'}
                           </>
                         )}
                       </Button>
