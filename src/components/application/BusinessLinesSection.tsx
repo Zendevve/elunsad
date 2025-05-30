@@ -4,6 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Trash2 } from "lucide-react";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -22,12 +31,20 @@ import {
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessLinesService } from "@/services/application";
 import { useToast } from "@/components/ui/use-toast";
+import { 
+  businessSections, 
+  getAllBusinessTypes, 
+  getProductsForBusinessType,
+  getBusinessTypeById 
+} from "@/utils/businessCategories";
 
 interface BusinessLine {
   id: number;
   lineOfBusiness: string;
-  psicCode: string; // Philippine Standard Industrial Code
-  productsServices: string;
+  lineOfBusinessOther?: string;
+  psicCode: string;
+  productsServices: string[];
+  productsServicesOther?: string;
   units: string;
   grossSales: string;
 }
@@ -36,7 +53,16 @@ const BusinessLinesSection = () => {
   const { applicationId, isLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
   const [businessLines, setBusinessLines] = useState<BusinessLine[]>([
-    { id: 1, lineOfBusiness: "", psicCode: "", productsServices: "", units: "", grossSales: "" }
+    { 
+      id: 1, 
+      lineOfBusiness: "", 
+      lineOfBusinessOther: "",
+      psicCode: "", 
+      productsServices: [], 
+      productsServicesOther: "",
+      units: "", 
+      grossSales: "" 
+    }
   ]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
@@ -50,14 +76,28 @@ const BusinessLinesSection = () => {
         console.log("Loaded business lines:", data);
         if (data && data.length > 0) {
           // Map database format to component format
-          const formattedData = data.map((line, index) => ({
-            id: index + 1,
-            lineOfBusiness: line.line_of_business || "",
-            psicCode: line.psic_code || "",
-            productsServices: line.products_services || "",
-            units: line.units || "",
-            grossSales: line.gross_sales || ""
-          }));
+          const formattedData = data.map((line, index) => {
+            // Parse products/services if it's a JSON string, otherwise treat as comma-separated
+            let productsArray: string[] = [];
+            if (line.products_services) {
+              try {
+                productsArray = JSON.parse(line.products_services);
+              } catch {
+                productsArray = line.products_services.split(',').map(p => p.trim()).filter(p => p);
+              }
+            }
+
+            return {
+              id: index + 1,
+              lineOfBusiness: line.line_of_business || "",
+              lineOfBusinessOther: "",
+              psicCode: line.psic_code || "",
+              productsServices: productsArray,
+              productsServicesOther: "",
+              units: line.units || "",
+              grossSales: line.gross_sales || ""
+            };
+          });
           setBusinessLines(formattedData);
         }
       } catch (error) {
@@ -83,22 +123,36 @@ const BusinessLinesSection = () => {
         setIsLoading(true);
         
         // Filter out empty business lines
-        const validLines = businessLines.filter(line => 
-          line.lineOfBusiness.trim() !== '' && 
-          line.productsServices.trim() !== ''
-        );
+        const validLines = businessLines.filter(line => {
+          const hasLineOfBusiness = line.lineOfBusiness.trim() !== '' || line.lineOfBusinessOther?.trim() !== '';
+          const hasProducts = line.productsServices.length > 0 || line.productsServicesOther?.trim() !== '';
+          return hasLineOfBusiness && hasProducts;
+        });
         
         if (validLines.length === 0) return;
         
         // Map component format to database format
-        const dataToSave = validLines.map(line => ({
-          application_id: applicationId,
-          line_of_business: line.lineOfBusiness,
-          psic_code: line.psicCode || undefined,
-          products_services: line.productsServices,
-          units: line.units || undefined,
-          gross_sales: line.grossSales || undefined
-        }));
+        const dataToSave = validLines.map(line => {
+          // Combine selected products with custom "other" products
+          let allProducts = [...line.productsServices];
+          if (line.productsServicesOther?.trim()) {
+            allProducts.push(line.productsServicesOther);
+          }
+          
+          // Use custom business line if "other" is selected
+          const businessLineName = line.lineOfBusiness === "other" && line.lineOfBusinessOther 
+            ? line.lineOfBusinessOther 
+            : getBusinessTypeById(line.lineOfBusiness)?.name || line.lineOfBusiness;
+
+          return {
+            application_id: applicationId,
+            line_of_business: businessLineName,
+            psic_code: line.psicCode || undefined,
+            products_services: JSON.stringify(allProducts),
+            units: line.units || undefined,
+            gross_sales: line.grossSales || undefined
+          };
+        });
         
         console.log("Saving business lines:", dataToSave);
         const result = await businessLinesService.saveBusinessLines(dataToSave);
@@ -129,8 +183,10 @@ const BusinessLinesSection = () => {
     setBusinessLines([...businessLines, { 
       id: newId, 
       lineOfBusiness: "", 
+      lineOfBusinessOther: "",
       psicCode: "", 
-      productsServices: "", 
+      productsServices: [], 
+      productsServicesOther: "",
       units: "", 
       grossSales: "" 
     }]);
@@ -139,54 +195,93 @@ const BusinessLinesSection = () => {
   const removeBusinessLine = (id: number) => {
     if (businessLines.length > 1) {
       setBusinessLines(businessLines.filter(line => line.id !== id));
-      
-      // Save after removing a line
       saveBusinessLines();
     }
   };
 
-  const updateBusinessLine = (id: number, field: keyof BusinessLine, value: string) => {
+  const updateBusinessLine = (id: number, field: keyof BusinessLine, value: any) => {
     setBusinessLines(businessLines.map(line => 
       line.id === id ? { ...line, [field]: value } : line
     ));
-    
-    // Auto-save when fields change
     saveBusinessLines();
   };
+
+  const handleProductSelection = (id: number, selectedProducts: string[]) => {
+    // Filter out "Other - Please Specify" from the selected products array
+    const filteredProducts = selectedProducts.filter(product => product !== "Other - Please Specify");
+    updateBusinessLine(id, "productsServices", filteredProducts);
+  };
+
+  const allBusinessTypes = getAllBusinessTypes();
 
   return (
     <Card className="mt-6 shadow-sm border">
       <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
         <CardTitle className="text-lg font-medium">Line of Business</CardTitle>
         <CardDescription>
-          Enter all business lines, products/services, and gross sales
+          Select your business lines, products/services, and gross sales information
         </CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
-              <TableHead className="font-medium">Line of Business</TableHead>
-              <TableHead className="font-medium whitespace-nowrap">
+              <TableHead className="font-medium min-w-[250px]">Line of Business</TableHead>
+              <TableHead className="font-medium whitespace-nowrap min-w-[120px]">
                 PSIC<br />(if available)
               </TableHead>
-              <TableHead className="font-medium">Products / Services</TableHead>
-              <TableHead className="font-medium">No. of Units</TableHead>
-              <TableHead className="font-medium whitespace-nowrap">Last Year's Gross Sales</TableHead>
+              <TableHead className="font-medium min-w-[300px]">Products / Services</TableHead>
+              <TableHead className="font-medium min-w-[120px]">No. of Units</TableHead>
+              <TableHead className="font-medium whitespace-nowrap min-w-[150px]">Last Year's Gross Sales</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {businessLines.map((line) => (
               <TableRow key={line.id} className="hover:bg-muted/20 transition-colors">
-                <TableCell>
-                  <Input 
+                <TableCell className="space-y-2">
+                  <Select 
                     value={line.lineOfBusiness} 
-                    onChange={(e) => updateBusinessLine(line.id, "lineOfBusiness", e.target.value)}
-                    placeholder="Enter line of business"
-                    className="focus:ring-1 focus:ring-primary"
-                  />
+                    onValueChange={(value) => {
+                      updateBusinessLine(line.id, "lineOfBusiness", value);
+                      // Clear products when business line changes
+                      updateBusinessLine(line.id, "productsServices", []);
+                      updateBusinessLine(line.id, "productsServicesOther", "");
+                    }}
+                  >
+                    <SelectTrigger className="focus:ring-1 focus:ring-primary">
+                      <SelectValue placeholder="Select line of business" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white max-h-[300px]">
+                      {businessSections.map((section) => (
+                        <SelectGroup key={section.id}>
+                          <SelectLabel className="text-sm font-semibold text-primary">
+                            {section.title}
+                          </SelectLabel>
+                          {section.categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                      <SelectGroup>
+                        <SelectLabel className="text-sm font-semibold text-primary">Custom</SelectLabel>
+                        <SelectItem value="other">Other - Please Specify</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  
+                  {line.lineOfBusiness === "other" && (
+                    <Input 
+                      value={line.lineOfBusinessOther || ""} 
+                      onChange={(e) => updateBusinessLine(line.id, "lineOfBusinessOther", e.target.value)}
+                      placeholder="Please specify your line of business"
+                      className="focus:ring-1 focus:ring-primary"
+                    />
+                  )}
                 </TableCell>
+                
                 <TableCell>
                   <Input 
                     value={line.psicCode} 
@@ -195,14 +290,52 @@ const BusinessLinesSection = () => {
                     className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
-                <TableCell>
-                  <Input 
-                    value={line.productsServices} 
-                    onChange={(e) => updateBusinessLine(line.id, "productsServices", e.target.value)}
-                    placeholder="Enter products/services"
-                    className="focus:ring-1 focus:ring-primary"
-                  />
+                
+                <TableCell className="space-y-2">
+                  {line.lineOfBusiness && line.lineOfBusiness !== "other" ? (
+                    <>
+                      <Select 
+                        value={line.productsServices.join(",")} 
+                        onValueChange={(value) => {
+                          const selectedProducts = value ? value.split(",") : [];
+                          handleProductSelection(line.id, selectedProducts);
+                        }}
+                      >
+                        <SelectTrigger className="focus:ring-1 focus:ring-primary">
+                          <SelectValue placeholder="Select products/services" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white max-h-[200px]">
+                          {getProductsForBusinessType(line.lineOfBusiness).map((product) => (
+                            <SelectItem key={product} value={product}>
+                              {product}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {line.productsServices.length > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          Selected: {line.productsServices.join(", ")}
+                        </div>
+                      )}
+                      
+                      <Input 
+                        value={line.productsServicesOther || ""} 
+                        onChange={(e) => updateBusinessLine(line.id, "productsServicesOther", e.target.value)}
+                        placeholder="Add other products/services (optional)"
+                        className="focus:ring-1 focus:ring-primary"
+                      />
+                    </>
+                  ) : (
+                    <Input 
+                      value={line.productsServicesOther || ""} 
+                      onChange={(e) => updateBusinessLine(line.id, "productsServicesOther", e.target.value)}
+                      placeholder="Enter products/services"
+                      className="focus:ring-1 focus:ring-primary"
+                    />
+                  )}
                 </TableCell>
+                
                 <TableCell>
                   <Input 
                     value={line.units} 
@@ -211,6 +344,7 @@ const BusinessLinesSection = () => {
                     className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
+                
                 <TableCell>
                   <Input 
                     value={line.grossSales} 
@@ -219,6 +353,7 @@ const BusinessLinesSection = () => {
                     className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
+                
                 <TableCell>
                   <Button
                     variant="ghost"
