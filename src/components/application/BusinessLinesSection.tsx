@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -19,9 +18,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useApplication } from "@/contexts/ApplicationContext";
 import { businessLinesService } from "@/services/application";
 import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
 
 interface BusinessLine {
   id: number;
@@ -32,6 +45,84 @@ interface BusinessLine {
   grossSales: string;
 }
 
+const businessLineOptions = [
+  // RETAIL
+  { category: "RETAIL", name: "General Merchandise / Sari-Sari Store" },
+  { category: "RETAIL", name: "Convenience Store" },
+  { category: "RETAIL", name: "Clothing & Apparel Store / Boutique" },
+  { category: "RETAIL", name: "Electronics & Gadget Store" },
+  { category: "RETAIL", name: "Hardware Store" },
+  { category: "RETAIL", name: "Pharmacy / Drugstore" },
+  { category: "RETAIL", name: "Bookstore & Office Supplies" },
+  { category: "RETAIL", name: "Pet Shop" },
+  { category: "RETAIL", name: "Bakery / Bakeshop (Retail Only)" },
+  { category: "RETAIL", name: "Rice Retailing" },
+  { category: "RETAIL", name: "Meat Shop / Poultry & Meat Dealer" },
+  { category: "RETAIL", name: "Fishmonger / Seafood Dealer" },
+  { category: "RETAIL", name: "Fruit & Vegetable Stall" },
+  { category: "RETAIL", name: "Online Retailer / E-commerce" },
+  
+  // FOOD & BEVERAGE SERVICE
+  { category: "FOOD & BEVERAGE SERVICE", name: "Restaurant / Fine Dining" },
+  { category: "FOOD & BEVERAGE SERVICE", name: "Fast Food / Quick Service Restaurant" },
+  { category: "FOOD & BEVERAGE SERVICE", name: "Cafe / Coffee Shop" },
+  { category: "FOOD & BEVERAGE SERVICE", name: "Carinderia / Eatery" },
+  { category: "FOOD & BEVERAGE SERVICE", name: "Food Kiosk / Food Stall / Food Cart" },
+  { category: "FOOD & BEVERAGE SERVICE", name: "Bar / Pub" },
+  { category: "FOOD & BEVERAGE SERVICE", name: "Catering Services" },
+  { category: "FOOD & BEVERAGE SERVICE", name: "Milk Tea Shop / Beverage Stand" },
+  
+  // PERSONAL SERVICES
+  { category: "PERSONAL SERVICES", name: "Salon / Barber Shop" },
+  { category: "PERSONAL SERVICES", name: "Spa / Wellness Center" },
+  { category: "PERSONAL SERVICES", name: "Laundry Shop / Laundromat" },
+  { category: "PERSONAL SERVICES", name: "Pet Grooming Services" },
+  { category: "PERSONAL SERVICES", name: "Tutorial Center" },
+  { category: "PERSONAL SERVICES", name: "Photography / Videography Services" },
+  
+  // REPAIR & MAINTENANCE SERVICES
+  { category: "REPAIR & MAINTENANCE SERVICES", name: "Automotive Repair Shop" },
+  { category: "REPAIR & MAINTENANCE SERVICES", name: "Motorcycle Repair Shop" },
+  { category: "REPAIR & MAINTENANCE SERVICES", name: "Electronics Repair Shop (Computer, Phone, Appliances)" },
+  { category: "REPAIR & MAINTENANCE SERVICES", name: "Watch Repair / Jewelry Repair" },
+  { category: "REPAIR & MAINTENANCE SERVICES", name: "Plumbing Services" },
+  { category: "REPAIR & MAINTENANCE SERVICES", name: "Electrical Services" },
+  { category: "REPAIR & MAINTENANCE SERVICES", name: "Aircon Cleaning & Repair" },
+  
+  // PROFESSIONAL & BUSINESS SERVICES
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Consultancy Services (Specify field: e.g., Management, IT, Financial, HR, Marketing)" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Accounting / Bookkeeping Services" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Legal Services / Law Office" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Architectural / Engineering Design Services" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Marketing / Advertising Agency" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Web Design / Software Development" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Business Process Outsourcing (BPO) / Call Center" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Real Estate Brokerage / Agency" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Printing Press / Printing Services" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Travel Agency / Tour Operator" },
+  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Manpower Agency / Recruitment Services" },
+  
+  // MANUFACTURING
+  { category: "MANUFACTURING", name: "Garments Manufacturing" },
+  { category: "MANUFACTURING", name: "Food Manufacturing / Processing" },
+  { category: "MANUFACTURING", name: "Furniture Manufacturing" },
+  { category: "MANUFACTURING", name: "Metal Fabrication" },
+  { category: "MANUFACTURING", name: "Handicraft Manufacturing" },
+  
+  // RENTALS / LEASING
+  { category: "RENTALS / LEASING", name: "Real Estate Lessor (Apartments, Commercial Space)" },
+  { category: "RENTALS / LEASING", name: "Equipment Rental (Specify type: e.g., Construction, Sound System, Event)" },
+  { category: "RENTALS / LEASING", name: "Car / Vehicle Rental" },
+  
+  // OTHERS
+  { category: "OTHERS", name: "Internet Cafe / Pisonet" },
+  { category: "OTHERS", name: "Water Refilling Station" },
+  { category: "OTHERS", name: "Junk Shop / Scrap Dealer" },
+  { category: "OTHERS", name: "Event Planning / Coordination" },
+  { category: "OTHERS", name: "Fitness Center / Gym" },
+  { category: "OTHERS", name: "Others (Custom)" },
+];
+
 const BusinessLinesSection = () => {
   const { applicationId, isLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
@@ -39,6 +130,8 @@ const BusinessLinesSection = () => {
     { id: 1, lineOfBusiness: "", psicCode: "", productsServices: "", units: "", grossSales: "" }
   ]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [openPopovers, setOpenPopovers] = useState<{ [key: number]: boolean }>({});
+  const [customInputs, setCustomInputs] = useState<{ [key: number]: boolean }>({});
 
   // Load saved data when component mounts
   useEffect(() => {
@@ -140,6 +233,18 @@ const BusinessLinesSection = () => {
     if (businessLines.length > 1) {
       setBusinessLines(businessLines.filter(line => line.id !== id));
       
+      // Clean up state for removed line
+      setOpenPopovers(prev => {
+        const newState = { ...prev };
+        delete newState[id];
+        return newState;
+      });
+      setCustomInputs(prev => {
+        const newState = { ...prev };
+        delete newState[id];
+        return newState;
+      });
+      
       // Save after removing a line
       saveBusinessLines();
     }
@@ -153,6 +258,25 @@ const BusinessLinesSection = () => {
     // Auto-save when fields change
     saveBusinessLines();
   };
+
+  const handleBusinessLineSelect = (lineId: number, value: string) => {
+    if (value === "Others (Custom)") {
+      setCustomInputs(prev => ({ ...prev, [lineId]: true }));
+      updateBusinessLine(lineId, "lineOfBusiness", "");
+    } else {
+      setCustomInputs(prev => ({ ...prev, [lineId]: false }));
+      updateBusinessLine(lineId, "lineOfBusiness", value);
+    }
+    setOpenPopovers(prev => ({ ...prev, [lineId]: false }));
+  };
+
+  const groupedOptions = businessLineOptions.reduce((acc, option) => {
+    if (!acc[option.category]) {
+      acc[option.category] = [];
+    }
+    acc[option.category].push(option);
+    return acc;
+  }, {} as Record<string, typeof businessLineOptions>);
 
   return (
     <Card className="mt-6 shadow-sm border">
@@ -179,13 +303,59 @@ const BusinessLinesSection = () => {
           <TableBody>
             {businessLines.map((line) => (
               <TableRow key={line.id} className="hover:bg-muted/20 transition-colors">
-                <TableCell>
-                  <Input 
-                    value={line.lineOfBusiness} 
-                    onChange={(e) => updateBusinessLine(line.id, "lineOfBusiness", e.target.value)}
-                    placeholder="Enter line of business"
-                    className="focus:ring-1 focus:ring-primary"
-                  />
+                <TableCell className="min-w-[250px]">
+                  {customInputs[line.id] ? (
+                    <Input 
+                      value={line.lineOfBusiness} 
+                      onChange={(e) => updateBusinessLine(line.id, "lineOfBusiness", e.target.value)}
+                      placeholder="Enter custom line of business"
+                      className="focus:ring-1 focus:ring-primary"
+                    />
+                  ) : (
+                    <Popover 
+                      open={openPopovers[line.id] || false} 
+                      onOpenChange={(open) => setOpenPopovers(prev => ({ ...prev, [line.id]: open }))}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openPopovers[line.id] || false}
+                          className="w-full justify-between"
+                        >
+                          {line.lineOfBusiness || "Select line of business..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[400px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search line of business..." />
+                          <CommandList>
+                            <CommandEmpty>No business line found.</CommandEmpty>
+                            {Object.entries(groupedOptions).map(([category, options]) => (
+                              <CommandGroup key={category} heading={category}>
+                                {options.map((option) => (
+                                  <CommandItem
+                                    key={option.name}
+                                    value={option.name}
+                                    onSelect={() => handleBusinessLineSelect(line.id, option.name)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        line.lineOfBusiness === option.name ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {option.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            ))}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Input 
