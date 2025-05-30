@@ -48,7 +48,7 @@ const BusinessOwnershipSection = ({
         <EnhancedRadioGroup
           options={ownershipOptions}
           value={ownershipType}
-          onValueChange={(value) => onFieldChange('ownership_type', value)}
+          onValueChange={(value) => onFieldChange('ownership_type', value as OwnershipType)}
           orientation="horizontal"
           name="ownershipType"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
