@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,99 +36,23 @@ import { useApplication } from "@/contexts/ApplicationContext";
 import { businessLinesService } from "@/services/application";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { businessLineOptions, businessLineProductsMap } from "./businessLinesData";
+import ProductsServicesMultiSelect from "./ProductsServicesMultiSelect";
 
 interface BusinessLine {
   id: number;
   lineOfBusiness: string;
-  psicCode: string; // Philippine Standard Industrial Code
-  productsServices: string;
+  psicCode: string;
+  productsServices: string[];
   units: string;
   grossSales: string;
 }
-
-const businessLineOptions = [
-  // RETAIL
-  { category: "RETAIL", name: "General Merchandise / Sari-Sari Store" },
-  { category: "RETAIL", name: "Convenience Store" },
-  { category: "RETAIL", name: "Clothing & Apparel Store / Boutique" },
-  { category: "RETAIL", name: "Electronics & Gadget Store" },
-  { category: "RETAIL", name: "Hardware Store" },
-  { category: "RETAIL", name: "Pharmacy / Drugstore" },
-  { category: "RETAIL", name: "Bookstore & Office Supplies" },
-  { category: "RETAIL", name: "Pet Shop" },
-  { category: "RETAIL", name: "Bakery / Bakeshop (Retail Only)" },
-  { category: "RETAIL", name: "Rice Retailing" },
-  { category: "RETAIL", name: "Meat Shop / Poultry & Meat Dealer" },
-  { category: "RETAIL", name: "Fishmonger / Seafood Dealer" },
-  { category: "RETAIL", name: "Fruit & Vegetable Stall" },
-  { category: "RETAIL", name: "Online Retailer / E-commerce" },
-  
-  // FOOD & BEVERAGE SERVICE
-  { category: "FOOD & BEVERAGE SERVICE", name: "Restaurant / Fine Dining" },
-  { category: "FOOD & BEVERAGE SERVICE", name: "Fast Food / Quick Service Restaurant" },
-  { category: "FOOD & BEVERAGE SERVICE", name: "Cafe / Coffee Shop" },
-  { category: "FOOD & BEVERAGE SERVICE", name: "Carinderia / Eatery" },
-  { category: "FOOD & BEVERAGE SERVICE", name: "Food Kiosk / Food Stall / Food Cart" },
-  { category: "FOOD & BEVERAGE SERVICE", name: "Bar / Pub" },
-  { category: "FOOD & BEVERAGE SERVICE", name: "Catering Services" },
-  { category: "FOOD & BEVERAGE SERVICE", name: "Milk Tea Shop / Beverage Stand" },
-  
-  // PERSONAL SERVICES
-  { category: "PERSONAL SERVICES", name: "Salon / Barber Shop" },
-  { category: "PERSONAL SERVICES", name: "Spa / Wellness Center" },
-  { category: "PERSONAL SERVICES", name: "Laundry Shop / Laundromat" },
-  { category: "PERSONAL SERVICES", name: "Pet Grooming Services" },
-  { category: "PERSONAL SERVICES", name: "Tutorial Center" },
-  { category: "PERSONAL SERVICES", name: "Photography / Videography Services" },
-  
-  // REPAIR & MAINTENANCE SERVICES
-  { category: "REPAIR & MAINTENANCE SERVICES", name: "Automotive Repair Shop" },
-  { category: "REPAIR & MAINTENANCE SERVICES", name: "Motorcycle Repair Shop" },
-  { category: "REPAIR & MAINTENANCE SERVICES", name: "Electronics Repair Shop (Computer, Phone, Appliances)" },
-  { category: "REPAIR & MAINTENANCE SERVICES", name: "Watch Repair / Jewelry Repair" },
-  { category: "REPAIR & MAINTENANCE SERVICES", name: "Plumbing Services" },
-  { category: "REPAIR & MAINTENANCE SERVICES", name: "Electrical Services" },
-  { category: "REPAIR & MAINTENANCE SERVICES", name: "Aircon Cleaning & Repair" },
-  
-  // PROFESSIONAL & BUSINESS SERVICES
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Consultancy Services (Specify field: e.g., Management, IT, Financial, HR, Marketing)" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Accounting / Bookkeeping Services" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Legal Services / Law Office" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Architectural / Engineering Design Services" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Marketing / Advertising Agency" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Web Design / Software Development" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Business Process Outsourcing (BPO) / Call Center" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Real Estate Brokerage / Agency" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Printing Press / Printing Services" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Travel Agency / Tour Operator" },
-  { category: "PROFESSIONAL & BUSINESS SERVICES", name: "Manpower Agency / Recruitment Services" },
-  
-  // MANUFACTURING
-  { category: "MANUFACTURING", name: "Garments Manufacturing" },
-  { category: "MANUFACTURING", name: "Food Manufacturing / Processing" },
-  { category: "MANUFACTURING", name: "Furniture Manufacturing" },
-  { category: "MANUFACTURING", name: "Metal Fabrication" },
-  { category: "MANUFACTURING", name: "Handicraft Manufacturing" },
-  
-  // RENTALS / LEASING
-  { category: "RENTALS / LEASING", name: "Real Estate Lessor (Apartments, Commercial Space)" },
-  { category: "RENTALS / LEASING", name: "Equipment Rental (Specify type: e.g., Construction, Sound System, Event)" },
-  { category: "RENTALS / LEASING", name: "Car / Vehicle Rental" },
-  
-  // OTHERS
-  { category: "OTHERS", name: "Internet Cafe / Pisonet" },
-  { category: "OTHERS", name: "Water Refilling Station" },
-  { category: "OTHERS", name: "Junk Shop / Scrap Dealer" },
-  { category: "OTHERS", name: "Event Planning / Coordination" },
-  { category: "OTHERS", name: "Fitness Center / Gym" },
-  { category: "OTHERS", name: "Others (Custom)" },
-];
 
 const BusinessLinesSection = () => {
   const { applicationId, isLoading, setIsLoading } = useApplication();
   const { toast } = useToast();
   const [businessLines, setBusinessLines] = useState<BusinessLine[]>([
-    { id: 1, lineOfBusiness: "", psicCode: "", productsServices: "", units: "", grossSales: "" }
+    { id: 1, lineOfBusiness: "", psicCode: "", productsServices: [], units: "", grossSales: "" }
   ]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [openPopovers, setOpenPopovers] = useState<{ [key: number]: boolean }>({});
@@ -147,7 +72,7 @@ const BusinessLinesSection = () => {
             id: index + 1,
             lineOfBusiness: line.line_of_business || "",
             psicCode: line.psic_code || "",
-            productsServices: line.products_services || "",
+            productsServices: line.products_services ? line.products_services.split(", ").filter(Boolean) : [],
             units: line.units || "",
             grossSales: line.gross_sales || ""
           }));
@@ -178,7 +103,7 @@ const BusinessLinesSection = () => {
         // Filter out empty business lines
         const validLines = businessLines.filter(line => 
           line.lineOfBusiness.trim() !== '' && 
-          line.productsServices.trim() !== ''
+          line.productsServices.length > 0
         );
         
         if (validLines.length === 0) return;
@@ -188,7 +113,7 @@ const BusinessLinesSection = () => {
           application_id: applicationId,
           line_of_business: line.lineOfBusiness,
           psic_code: line.psicCode || undefined,
-          products_services: line.productsServices,
+          products_services: line.productsServices.join(", "),
           units: line.units || undefined,
           gross_sales: line.grossSales || undefined
         }));
@@ -223,7 +148,7 @@ const BusinessLinesSection = () => {
       id: newId, 
       lineOfBusiness: "", 
       psicCode: "", 
-      productsServices: "", 
+      productsServices: [], 
       units: "", 
       grossSales: "" 
     }]);
@@ -250,7 +175,7 @@ const BusinessLinesSection = () => {
     }
   };
 
-  const updateBusinessLine = (id: number, field: keyof BusinessLine, value: string) => {
+  const updateBusinessLine = (id: number, field: keyof BusinessLine, value: string | string[]) => {
     setBusinessLines(businessLines.map(line => 
       line.id === id ? { ...line, [field]: value } : line
     ));
@@ -263,11 +188,23 @@ const BusinessLinesSection = () => {
     if (value === "Others (Custom)") {
       setCustomInputs(prev => ({ ...prev, [lineId]: true }));
       updateBusinessLine(lineId, "lineOfBusiness", "");
+      // Clear products when switching to custom
+      updateBusinessLine(lineId, "productsServices", []);
     } else {
       setCustomInputs(prev => ({ ...prev, [lineId]: false }));
       updateBusinessLine(lineId, "lineOfBusiness", value);
+      // Clear existing products when changing business line
+      updateBusinessLine(lineId, "productsServices", []);
     }
     setOpenPopovers(prev => ({ ...prev, [lineId]: false }));
+  };
+
+  const handleProductsChange = (lineId: number, products: string[]) => {
+    updateBusinessLine(lineId, "productsServices", products);
+  };
+
+  const getAvailableProducts = (lineOfBusiness: string): string[] => {
+    return businessLineProductsMap[lineOfBusiness] || [];
   };
 
   const groupedOptions = businessLineOptions.reduce((acc, option) => {
@@ -351,6 +288,20 @@ const BusinessLinesSection = () => {
                                 ))}
                               </CommandGroup>
                             ))}
+                            <CommandGroup heading="CUSTOM">
+                              <CommandItem
+                                value="Others (Custom)"
+                                onSelect={() => handleBusinessLineSelect(line.id, "Others (Custom)")}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    customInputs[line.id] ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                Others (Custom)
+                              </CommandItem>
+                            </CommandGroup>
                           </CommandList>
                         </Command>
                       </PopoverContent>
@@ -365,12 +316,13 @@ const BusinessLinesSection = () => {
                     className="focus:ring-1 focus:ring-primary"
                   />
                 </TableCell>
-                <TableCell>
-                  <Input 
-                    value={line.productsServices} 
-                    onChange={(e) => updateBusinessLine(line.id, "productsServices", e.target.value)}
-                    placeholder="Enter products/services"
-                    className="focus:ring-1 focus:ring-primary"
+                <TableCell className="min-w-[300px]">
+                  <ProductsServicesMultiSelect
+                    availableProducts={getAvailableProducts(line.lineOfBusiness)}
+                    selectedProducts={line.productsServices}
+                    onSelectionChange={(products) => handleProductsChange(line.id, products)}
+                    placeholder="Select products/services..."
+                    disabled={!line.lineOfBusiness}
                   />
                 </TableCell>
                 <TableCell>
