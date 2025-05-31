@@ -590,7 +590,7 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         </TabsContent>
 
         <TabsContent value="actions">
-          <ApplicationReview applicationId={applicationId} application={application} refetch={refetch} />
+          <ApplicationReview />
         </TabsContent>
       </Tabs>
     </div>
