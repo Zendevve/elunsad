@@ -1,9 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { Check, ChevronsUpDown, X, Plus } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandEmpty,
@@ -18,6 +16,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import CustomProductInput from "./CustomProductInput";
+import SelectedProductsBadges from "./SelectedProductsBadges";
+import ProductsFallbackInput from "./ProductsFallbackInput";
 
 interface ProductsServicesMultiSelectProps {
   availableProducts: string[];
@@ -35,13 +36,11 @@ const ProductsServicesMultiSelect = ({
   disabled = false
 }: ProductsServicesMultiSelectProps) => {
   const [open, setOpen] = useState(false);
-  const [customInput, setCustomInput] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
 
   // Reset custom input when dropdown closes
   useEffect(() => {
     if (!open) {
-      setCustomInput("");
       setShowCustomInput(false);
     }
   }, [open]);
@@ -64,44 +63,28 @@ const ProductsServicesMultiSelect = ({
     onSelectionChange(newSelection);
   };
 
-  const handleCustomInputSubmit = () => {
-    if (customInput.trim() && !selectedProducts.includes(customInput.trim())) {
-      const newSelection = [...selectedProducts, customInput.trim()];
+  const handleAddCustomProduct = (customProduct: string) => {
+    if (!selectedProducts.includes(customProduct)) {
+      const newSelection = [...selectedProducts, customProduct];
       onSelectionChange(newSelection);
-      setCustomInput("");
       setShowCustomInput(false);
     }
   };
 
-  const handleCustomInputKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleCustomInputSubmit();
-    } else if (e.key === 'Escape') {
-      setCustomInput("");
-      setShowCustomInput(false);
-    }
-  };
-
-  // Display text for the trigger button
   const getDisplayText = () => {
     if (selectedProducts.length === 0) return placeholder;
     if (selectedProducts.length === 1) return selectedProducts[0];
     return `${selectedProducts.length} selected`;
   };
 
-  // If no products available, show text input
+  // If no products available, show fallback input
   if (!availableProducts || availableProducts.length === 0) {
     return (
-      <div className="space-y-3">
-        <Input
-          placeholder="Enter products/services"
-          value={selectedProducts.join(", ")}
-          onChange={(e) => onSelectionChange(e.target.value.split(", ").filter(Boolean))}
-          disabled={disabled}
-          className="h-10"
-        />
-      </div>
+      <ProductsFallbackInput
+        selectedProducts={selectedProducts}
+        onSelectionChange={onSelectionChange}
+        disabled={disabled}
+      />
     );
   }
 
@@ -152,63 +135,18 @@ const ProductsServicesMultiSelect = ({
               </CommandGroup>
             </CommandList>
           </Command>
-          {showCustomInput && (
-            <div className="p-3 border-t">
-              <Input
-                placeholder="Enter custom product/service"
-                value={customInput}
-                onChange={(e) => setCustomInput(e.target.value)}
-                onKeyDown={handleCustomInputKeyPress}
-                onBlur={handleCustomInputSubmit}
-                autoFocus
-                className="mb-2"
-              />
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={handleCustomInputSubmit}
-                  disabled={!customInput.trim()}
-                >
-                  Add
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setCustomInput("");
-                    setShowCustomInput(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
+          <CustomProductInput
+            onAdd={handleAddCustomProduct}
+            onCancel={() => setShowCustomInput(false)}
+            isVisible={showCustomInput}
+          />
         </PopoverContent>
       </Popover>
 
-      {/* Selected products display as compact badges */}
-      {selectedProducts.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selectedProducts.map((product) => (
-            <Badge
-              key={product}
-              variant="secondary"
-              className="flex items-center gap-1 text-xs py-1 px-2 max-w-[200px]"
-            >
-              <span className="truncate">{product}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 hover:bg-transparent"
-                onClick={() => handleRemoveProduct(product)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ))}
-        </div>
-      )}
+      <SelectedProductsBadges
+        selectedProducts={selectedProducts}
+        onRemove={handleRemoveProduct}
+      />
     </div>
   );
 };
