@@ -23,14 +23,12 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
   const [adminNotes, setAdminNotes] = useState('');
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
 
-  const { isLoading, error, data: applicationData, refetch } = useQuery(
-    ['applicationDetails', applicationId],
-    () => getApplicationFullDetails(applicationId),
-    {
-      enabled: !!applicationId,
-      retry: false,
-    }
-  );
+  const { isLoading, error, data: applicationData, refetch } = useQuery({
+    queryKey: ['applicationDetails', applicationId],
+    queryFn: () => getApplicationFullDetails(applicationId),
+    enabled: !!applicationId,
+    retry: false,
+  });
 
   useEffect(() => {
     if (applicationData?.application?.admin_notes) {
