@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { getApplicationFullDetails } from "@/components/admin/ApplicationDetailsService";
 import { documentService, DocumentData } from "@/services/documentService";
-import { ArrowLeft, Calendar, FileText, User, Building, Briefcase, CheckSquare, AlertCircle, File, Eye, Download } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, User, Building, Briefcase, AlertCircle, File, Eye, Download } from "lucide-react";
 
 const ApplicationDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -184,7 +184,7 @@ const ApplicationDetail = () => {
     );
   }
 
-  const { application, businessInformation, ownerInformation, businessOperations, businessLines, declaration } = applicationData;
+  const { application, businessInformation, ownerInformation, businessOperations, businessLines } = applicationData;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -223,13 +223,12 @@ const ApplicationDetail = () => {
 
         {/* Tabbed Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="business">Business Info</TabsTrigger>
             <TabsTrigger value="operations">Operations</TabsTrigger>
             <TabsTrigger value="business-lines">Business Lines</TabsTrigger>
-            <TabsTrigger value="declaration">Declaration</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -788,89 +787,6 @@ const ApplicationDetail = () => {
                 <CardContent className="text-center py-8 text-gray-500">
                   <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No business lines information available</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="declaration">
-            {/* Declaration */}
-            {declaration ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CheckSquare className="h-5 w-5 mr-2" />
-                    Declaration Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <span className="font-medium">Agreement Status:</span>
-                        <div className="mt-1">
-                          <Badge variant={declaration.is_agreed ? "default" : "destructive"}>
-                            {declaration.is_agreed ? "Agreed" : "Not Agreed"}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="font-medium">Designation/Position:</span>
-                        <p>{declaration.designation || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Place of Declaration:</span>
-                        <p>{declaration.declaration_place || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Verified By:</span>
-                        <p>{declaration.verified_by || "Pending Verification"}</p>
-                      </div>
-                    </div>
-
-                    {declaration.signature && (
-                      <div>
-                        <span className="font-medium">Digital Signature:</span>
-                        <div className="mt-2 p-4 border rounded-lg bg-gray-50">
-                          <img 
-                            src={declaration.signature} 
-                            alt="Digital Signature" 
-                            className="max-w-xs max-h-32 object-contain"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                          <div className="mt-2">
-                            <a 
-                              href={declaration.signature} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 text-sm"
-                            >
-                              View Full Signature
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-semibold mb-2">Declaration Statement</h4>
-                      <p className="text-sm text-gray-700">
-                        "I hereby declare that the information provided in this application is true and correct to the best of my knowledge.
-                        I understand that any false information or misrepresentation may be grounds for rejection of this application or
-                        revocation of any permit issued."
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-8 text-gray-500">
-                  <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No declaration information available</p>
                 </CardContent>
               </Card>
             )}
