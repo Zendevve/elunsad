@@ -22,26 +22,26 @@ const BusinessLinesSection = () => {
   } = useBusinessLines();
 
   return (
-    <Card className="mt-8 shadow-sm border">
-      <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b p-8">
-        <CardTitle className="text-xl font-medium">Line of Business</CardTitle>
-        <CardDescription className="text-base">
+    <Card className="mt-6 shadow-sm border">
+      <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
+        <CardTitle className="text-lg font-medium">Line of Business</CardTitle>
+        <CardDescription>
           Enter all business lines, products/services, and gross sales
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-8">
+      <CardContent className="overflow-x-auto">
         <BusinessLinesTable
           businessLines={businessLines}
           onUpdate={updateBusinessLine}
           onRemove={removeBusinessLine}
         />
       </CardContent>
-      <CardFooter className="bg-muted/20 p-8">
+      <CardFooter className="bg-muted/20">
         <Button
           type="button"
           variant="outline"
-          size="default"
-          className="group"
+          size="sm"
+          className="mt-2 group"
           onClick={addBusinessLine}
         >
           <PlusCircle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
