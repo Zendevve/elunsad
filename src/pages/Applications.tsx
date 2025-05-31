@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import BusinessInformationSection from "@/components/application/BusinessInforma
 import OwnerInformationSection from "@/components/application/OwnerInformationSection";
 import BusinessOperationSection from "@/components/application/BusinessOperationSection";
 import BusinessLinesSection from "@/components/application/BusinessLinesSection";
-import DeclarationSection from "@/components/application/DeclarationSection";
 import DocumentSubmissionSection from "@/components/application/DocumentSubmissionSection";
 import { useToast } from "@/hooks/use-toast";
 import FormSectionWrapper from "@/components/application/FormSectionWrapper";
@@ -19,8 +19,7 @@ import {
   applicationService,
   businessInformationService, 
   ownerInformationService, 
-  businessLinesService, 
-  declarationService 
+  businessLinesService
 } from "@/services/application";
 import { documentService } from "@/services/documentService";
 import { ApplicationType } from "@/services/application/types";
@@ -29,11 +28,10 @@ import { activityGenerator } from "@/utils/activityGenerator";
 const Applications = () => {
   
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 6; // Updated to include document submission
+  const totalSteps = 5; // Updated from 6 to 5 steps
   const { toast } = useToast();
   const [applicationType, setApplicationType] = useState<ApplicationType>("newApplication");
   const [fadeIn, setFadeIn] = useState(false);
-  const [isAgreed, setIsAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
@@ -248,43 +246,7 @@ const Applications = () => {
           return;
         }
       } else if (currentStep === 5) {
-        if (window.declarationHelpers?.validateAndSave) {
-          console.log("Applications - Validating declaration through helper");
-          const isValid = await window.declarationHelpers.validateAndSave();
-          
-          if (!isValid) {
-            toast({
-              title: "Incomplete Declaration",
-              description: "Please complete the declaration before proceeding.",
-              variant: "destructive",
-            });
-            setIsSaving(false);
-            return;
-          }
-        } else {
-          const declaration = await declarationService.getDeclaration(applicationId || '');
-          if (!declaration || !declaration.signature) {
-            toast({
-              title: "Signature Required",
-              description: "Please sign the declaration before submitting.",
-              variant: "destructive",
-            });
-            setIsSaving(false);
-            return;
-          }
-          
-          if (!isAgreed) {
-            toast({
-              title: "Agreement Required",
-              description: "You must agree to the declaration before submitting.",
-              variant: "destructive",
-            });
-            setIsSaving(false);
-            return;
-          }
-        }
-      } else if (currentStep === 6) {
-        // Document validation
+        // Document validation - this is now the final step before submission
         if (window.documentHelpers?.validateDocuments) {
           const isValid = window.documentHelpers.validateDocuments();
           if (!isValid) {
@@ -327,17 +289,6 @@ const Applications = () => {
             title: "Business Operations Saved",
             description: "Your business operations and lines have been saved successfully.",
           });
-        } else if (currentStep === 5) {
-          toast({
-            title: "Declaration Confirmed",
-            description: "Your declaration has been confirmed successfully.",
-          });
-        }
-        if (currentStep === 6) {
-          toast({
-            title: "Documents Verified",
-            description: "Your documents have been verified successfully.",
-          });
         }
         
         setCurrentStep(currentStep + 1);
@@ -374,28 +325,17 @@ const Applications = () => {
       });
       return false;
     }
-    
-    if (!isAgreed) {
-      toast({
-        title: "Agreement Required",
-        description: "You must agree to the declaration before submitting the application.",
-        variant: "destructive",
-      });
-      return false;
-    }
 
     try {
       const businessInfo = await businessInformationService.getBusinessInformation(applicationId);
       const ownerInfo = await ownerInformationService.getOwnerInformation(applicationId);
       const businessLines = await businessLinesService.getBusinessLines(applicationId);
-      const declaration = await declarationService.getDeclaration(applicationId);
       const documentCompletion = await documentService.checkDocumentCompletion(applicationId);
       
       console.log("Validation data:", { 
         businessInfo, 
         ownerInfo, 
         businessLines, 
-        declaration,
         documentCompletion 
       });
       
@@ -429,16 +369,6 @@ const Applications = () => {
         return false;
       }
       
-      if (!declaration || !declaration.signature) {
-        toast({
-          title: "Signature Required",
-          description: "Please sign the declaration before submitting.",
-          variant: "destructive",
-        });
-        setCurrentStep(5);
-        return false;
-      }
-      
       // Add document validation
       if (!documentCompletion.allUploaded) {
         toast({
@@ -446,7 +376,7 @@ const Applications = () => {
           description: "Please upload all required documents before submitting.",
           variant: "destructive",
         });
-        setCurrentStep(6);
+        setCurrentStep(5);
         return false;
       }
       
@@ -524,10 +454,6 @@ const Applications = () => {
       setIsSubmitting(false);
       setIsLoading(false);
     }
-  };
-
-  const handleAgreementChange = (agreed: boolean) => {
-    setIsAgreed(agreed);
   };
 
   if (isAuthenticated === false) {
@@ -614,10 +540,6 @@ const Applications = () => {
             )}
 
             {currentStep === 5 && (
-              <DeclarationSection onAgreementChange={handleAgreementChange} />
-            )}
-
-            {currentStep === 6 && (
               <DocumentSubmissionSection />
             )}
 
@@ -731,8 +653,7 @@ const Applications = () => {
                         {currentStep === 2 && "Enter your business details"}
                         {currentStep === 3 && "Enter owner information"}
                         {currentStep === 4 && "Provide business operation details"}
-                        {currentStep === 5 && "Review and sign declaration"}
-                        {currentStep === 6 && "Upload required documents"}
+                        {currentStep === 5 && "Upload required documents"}
                       </p>
                     </div>
                   </div>

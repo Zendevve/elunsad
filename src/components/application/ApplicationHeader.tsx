@@ -14,8 +14,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
     { number: 2, title: "Business Details & Registration", description: "Enter business information and registration details" },
     { number: 3, title: "Business Owner Information", description: "Provide owner personal and contact details" },
     { number: 4, title: "Operations & Business Lines", description: "Define business operations and activity lines" },
-    { number: 5, title: "Declaration & Signature", description: "Review terms and provide digital signature" },
-    { number: 6, title: "Document Submission", description: "Upload all required supporting documents" },
+    { number: 5, title: "Document Submission", description: "Upload all required supporting documents" },
   ];
 
   return (
@@ -39,8 +38,8 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             {/* Progress bar background - positioned to connect between step circles */}
             <div className="absolute top-5 h-0.5 bg-gray-200" 
                  style={{ 
-                   left: '8.33%', 
-                   right: '8.33%'
+                   left: '10%', 
+                   right: '10%'
                  }} 
                  aria-hidden="true">
               <div 
@@ -50,9 +49,9 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             </div>
             
             {/* Steps */}
-            <div className="relative flex justify-between px-[8.33%]">
+            <div className="relative flex justify-between px-[10%]">
               {steps.map((step) => (
-                <div key={step.number} className="flex flex-col items-center group max-w-40">
+                <div key={step.number} className="flex flex-col items-center group max-w-48">
                   {/* Step Circle */}
                   <button
                     onClick={() => onStepClick(step.number)}
@@ -109,8 +108,8 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             {/* Progress bar */}
             <div className="absolute top-4 h-0.5 bg-gray-200" 
                  style={{ 
-                   left: '8.33%', 
-                   right: '8.33%'
+                   left: '10%', 
+                   right: '10%'
                  }} 
                  aria-hidden="true">
               <div 
@@ -120,7 +119,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ currentStep, tota
             </div>
             
             {/* Steps */}
-            <div className="relative flex justify-between px-[8.33%]">
+            <div className="relative flex justify-between px-[10%]">
               {steps.map((step) => (
                 <div key={step.number} className="flex flex-col items-center">
                   {/* Step Circle */}
