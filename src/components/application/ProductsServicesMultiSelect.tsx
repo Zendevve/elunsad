@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, ChevronsUpDown, X, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +47,7 @@ const ProductsServicesMultiSelect = ({
   }, [open]);
 
   const handleSelect = (product: string) => {
-    if (product === "Others (Custom)") {
+    if (product === "add-custom") {
       setShowCustomInput(true);
       return;
     }
@@ -83,33 +83,40 @@ const ProductsServicesMultiSelect = ({
     }
   };
 
+  // Display text for the trigger button
+  const getDisplayText = () => {
+    if (selectedProducts.length === 0) return placeholder;
+    if (selectedProducts.length === 1) return selectedProducts[0];
+    return `${selectedProducts.length} selected`;
+  };
+
   // If no products available, show text input
   if (!availableProducts || availableProducts.length === 0) {
     return (
-      <Input
-        placeholder="Enter products/services"
-        value={selectedProducts.join(", ")}
-        onChange={(e) => onSelectionChange(e.target.value.split(", ").filter(Boolean))}
-        disabled={disabled}
-        className="focus:ring-1 focus:ring-primary"
-      />
+      <div className="space-y-3">
+        <Input
+          placeholder="Enter products/services"
+          value={selectedProducts.join(", ")}
+          onChange={(e) => onSelectionChange(e.target.value.split(", ").filter(Boolean))}
+          disabled={disabled}
+          className="h-10"
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full justify-between h-10 text-left"
             disabled={disabled}
           >
-            {selectedProducts.length > 0
-              ? `${selectedProducts.length} selected`
-              : placeholder}
+            <span className="truncate">{getDisplayText()}</span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -134,11 +141,19 @@ const ProductsServicesMultiSelect = ({
                     {product}
                   </CommandItem>
                 ))}
+                <CommandItem
+                  value="add-custom"
+                  onSelect={() => handleSelect("add-custom")}
+                  className="text-primary"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add custom product/service
+                </CommandItem>
               </CommandGroup>
             </CommandList>
           </Command>
           {showCustomInput && (
-            <div className="p-2 border-t">
+            <div className="p-3 border-t">
               <Input
                 placeholder="Enter custom product/service"
                 value={customInput}
@@ -172,16 +187,16 @@ const ProductsServicesMultiSelect = ({
         </PopoverContent>
       </Popover>
 
-      {/* Selected products display */}
+      {/* Selected products display as compact badges */}
       {selectedProducts.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selectedProducts.map((product) => (
             <Badge
               key={product}
               variant="secondary"
-              className="flex items-center gap-1 px-2 py-1"
+              className="flex items-center gap-1 text-xs py-1 px-2 max-w-[200px]"
             >
-              <span className="text-xs">{product}</span>
+              <span className="truncate">{product}</span>
               <Button
                 variant="ghost"
                 size="sm"
