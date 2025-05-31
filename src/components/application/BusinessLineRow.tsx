@@ -46,7 +46,7 @@ const BusinessLineRow = ({
 
   return (
     <TableRow className="hover:bg-muted/20 transition-colors">
-      <TableCell className="min-w-[250px]">
+      <TableCell className="p-6">
         <BusinessLineSelector
           lineId={line.id}
           value={line.lineOfBusiness}
@@ -59,7 +59,7 @@ const BusinessLineRow = ({
           onCustomChange={onCustomChange}
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="p-6">
         <Input 
           value={line.psicCode} 
           onChange={(e) => onUpdate(line.id, "psicCode", e.target.value)}
@@ -67,7 +67,7 @@ const BusinessLineRow = ({
           className="focus:ring-1 focus:ring-primary"
         />
       </TableCell>
-      <TableCell className="min-w-[300px]">
+      <TableCell className="p-6">
         <ProductsServicesMultiSelect
           availableProducts={getAvailableProducts(line.lineOfBusiness)}
           selectedProducts={line.productsServices}
@@ -76,7 +76,7 @@ const BusinessLineRow = ({
           disabled={!line.lineOfBusiness || line.lineOfBusiness.trim() === ""}
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="p-6">
         <Input 
           value={line.units} 
           onChange={(e) => onUpdate(line.id, "units", e.target.value)}
@@ -84,7 +84,7 @@ const BusinessLineRow = ({
           className="focus:ring-1 focus:ring-primary"
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="p-6">
         <Input 
           value={line.grossSales} 
           onChange={(e) => onUpdate(line.id, "grossSales", e.target.value)}
@@ -92,7 +92,7 @@ const BusinessLineRow = ({
           className="focus:ring-1 focus:ring-primary"
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="p-6">
         <Button
           variant="ghost"
           size="icon"

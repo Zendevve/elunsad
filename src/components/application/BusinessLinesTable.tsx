@@ -36,33 +36,38 @@ const BusinessLinesTable = ({
   };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow className="bg-muted/40">
-          <TableHead className="font-medium">Line of Business</TableHead>
-          <TableHead className="font-medium whitespace-nowrap">
-            PSIC<br />(if available)
-          </TableHead>
-          <TableHead className="font-medium">Products / Services</TableHead>
-          <TableHead className="font-medium">No. of Units</TableHead>
-          <TableHead className="font-medium whitespace-nowrap">Last Year's Gross Sales</TableHead>
-          <TableHead className="w-[50px]"></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {businessLines.map((line) => (
-          <BusinessLineRow
-            key={line.id}
-            line={line}
-            onUpdate={onUpdate}
-            onRemove={onRemove}
-            canRemove={businessLines.length > 1}
-            isCustom={customInputs[line.id] || false}
-            onCustomChange={handleCustomChange}
-          />
-        ))}
-      </TableBody>
-    </Table>
+    <div className="w-full space-y-4">
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              <TableHead className="font-medium p-6 w-1/4">Line of Business</TableHead>
+              <TableHead className="font-medium p-6 w-1/6">
+                PSIC Code<br />
+                <span className="text-xs text-muted-foreground">(if available)</span>
+              </TableHead>
+              <TableHead className="font-medium p-6 w-1/3">Products / Services</TableHead>
+              <TableHead className="font-medium p-6 w-1/6">No. of Units</TableHead>
+              <TableHead className="font-medium p-6 w-1/5">Last Year's Gross Sales</TableHead>
+              <TableHead className="w-16 p-6"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {businessLines.map((line) => (
+              <BusinessLineRow
+                key={line.id}
+                line={line}
+                onUpdate={onUpdate}
+                onRemove={onRemove}
+                canRemove={businessLines.length > 1}
+                isCustom={customInputs[line.id] || false}
+                onCustomChange={handleCustomChange}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 };
 
