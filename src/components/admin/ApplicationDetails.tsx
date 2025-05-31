@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft, FileText, User, Building, Briefcase, AlertCircle, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import DocumentReview from './DocumentReview';
-import ApplicationReview from './ApplicationReview';
+import ApplicationActions from './ApplicationActions';
 import { getApplicationFullDetails } from './ApplicationDetailsService';
 
 interface ApplicationDetailsProps {
@@ -590,7 +591,12 @@ const ApplicationDetails: React.FC<ApplicationDetailsProps> = ({ applicationId }
         </TabsContent>
 
         <TabsContent value="actions">
-          <ApplicationReview />
+          <ApplicationActions 
+            applicationId={applicationId}
+            currentStatus={application.application_status}
+            currentNotes={application.admin_notes}
+            onStatusUpdate={refetch}
+          />
         </TabsContent>
       </Tabs>
     </div>
