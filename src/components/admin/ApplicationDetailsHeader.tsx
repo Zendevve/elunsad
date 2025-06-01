@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,7 +60,7 @@ const ApplicationDetailsHeader: React.FC<ApplicationDetailsHeaderProps> = ({
           {applicationStatus.replace("_", " ")}
         </Badge>
         <Button variant="outline" asChild>
-          <Link to="/admin/applications">
+          <Link to="/admin#applications">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Applications
           </Link>
