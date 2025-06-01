@@ -427,13 +427,13 @@ const Register = () => {
                       <div className="space-y-1 leading-none">
                         <FormLabel className="text-sm font-normal">
                           I agree to the{" "}
-                          <a href="#" className="text-primary hover:text-primary/80">
+                          <Link to="/terms-of-service" className="text-primary hover:text-primary/80">
                             Terms of Service
-                          </a>{" "}
+                          </Link>{" "}
                           and{" "}
-                          <a href="#" className="text-primary hover:text-primary/80">
+                          <Link to="/privacy-policy" className="text-primary hover:text-primary/80">
                             Privacy Policy
-                          </a>
+                          </Link>
                         </FormLabel>
                         <FormMessage />
                       </div>
