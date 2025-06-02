@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Rocket, BarChart2, CheckCircle, Database, TrendingUp, MapPin, Bell, Upload, ArrowRight, Quote, Mail, Globe, ChevronDown } from "lucide-react";
@@ -157,7 +158,7 @@ const Index = () => {
                     <CardTitle className="mb-2">{feature.title}</CardTitle>
                     <p className="text-gray-600">{feature.description}</p>
                   </CardContent>
-                </div>
+                </Card>
               ))}
             </div>
           )}
