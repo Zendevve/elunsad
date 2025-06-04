@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Rocket, BarChart2, CheckCircle, Database, TrendingUp, MapPin, Bell, Upload, ArrowRight, Quote, Mail, Globe, ChevronDown } from "lucide-react";
+import { CheckCircle, Database, TrendingUp, MapPin, Bell, Upload, ArrowRight, Quote, Mail, Globe, ChevronDown, Users, Clock, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,24 +12,24 @@ const Index = () => {
   const coreFeatures = [
     {
       icon: Upload,
-      title: "Online Applications & Renewals",
-      description: "Submit and manage permit applications and renewals from anywhere, anytime.",
-      bgColor: "bg-blue-50",
-      iconColor: "text-blue-600"
+      title: "Digital Applications",
+      description: "Submit and manage permit applications online with intelligent form guidance.",
+      bgColor: "bg-slate-50",
+      iconColor: "text-slate-700"
     },
     {
       icon: Database,
-      title: "Document Management",
-      description: "Securely upload, store, and manage all required documentation in one place.",
-      bgColor: "bg-green-50",
-      iconColor: "text-green-600"
+      title: "Document Hub",
+      description: "Centralized document management with automated compliance checking.",
+      bgColor: "bg-slate-50",
+      iconColor: "text-slate-700"
     },
     {
       icon: Bell,
-      title: "Smart Notifications",
-      description: "Automated alerts for deadlines, status changes, and important updates.",
-      bgColor: "bg-yellow-50",
-      iconColor: "text-yellow-600"
+      title: "Smart Alerts",
+      description: "Proactive notifications for deadlines, updates, and requirements.",
+      bgColor: "bg-slate-50",
+      iconColor: "text-slate-700"
     }
   ];
 
@@ -37,126 +37,204 @@ const Index = () => {
     {
       icon: TrendingUp,
       title: "Analytics Dashboard",
-      description: "Gain insights with visual analytics and reporting on application trends.",
-      bgColor: "bg-purple-50",
-      iconColor: "text-purple-600"
+      description: "Data-driven insights for application performance and trends.",
+      bgColor: "bg-slate-50",
+      iconColor: "text-slate-700"
     },
     {
       icon: MapPin,
-      title: "Interactive Maps",
-      description: "Visualize permit locations and areas of high business activity.",
-      bgColor: "bg-red-50",
-      iconColor: "text-red-600"
+      title: "Location Intelligence",
+      description: "Geographic visualization of permit data and business density.",
+      bgColor: "bg-slate-50",
+      iconColor: "text-slate-700"
     },
     {
-      icon: BarChart2,
-      title: "Performance Tracking",
-      description: "Monitor processing times and identify opportunities for improvement.",
-      bgColor: "bg-indigo-50",
-      iconColor: "text-indigo-600"
+      icon: CheckCircle,
+      title: "Compliance Tracking",
+      description: "Automated monitoring of regulatory requirements and deadlines.",
+      bgColor: "bg-slate-50",
+      iconColor: "text-slate-700"
     }
   ];
 
+  const stats = [
+    { number: "15,000+", label: "Permits Processed" },
+    { number: "98%", label: "Approval Rate" },
+    { number: "3 Days", label: "Average Processing" },
+    { number: "24/7", label: "System Availability" }
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header & Navigation - Simplified */}
-      <header className="bg-white shadow-sm py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
+    <div className="min-h-screen bg-white">
+      {/* Minimal Header */}
+      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <img src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" alt="eLUNSAD Logo" className="h-10 w-10" />
-              <h1 className="text-xl font-bold">eLUNSAD</h1>
+              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+                <span className="text-white text-sm font-bold">eL</span>
+              </div>
+              <span className="text-xl font-semibold tracking-tight text-slate-900">eLUNSAD</span>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How It Works</a>
-              <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
+              <a href="#features" className="text-slate-600 hover:text-slate-900 transition-colors text-sm font-medium">Features</a>
+              <a href="#process" className="text-slate-600 hover:text-slate-900 transition-colors text-sm font-medium">Process</a>
+              <a href="#contact" className="text-slate-600 hover:text-slate-900 transition-colors text-sm font-medium">Contact</a>
             </nav>
-            <div>
-              <Link to="/signin">
-                <Button>Sign In / Register</Button>
-              </Link>
-            </div>
+            <Link to="/signin">
+              <Button className="bg-slate-900 hover:bg-slate-800 text-white border-0 h-9 px-6 text-sm font-medium">
+                Get Started
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section - Single Primary CTA */}
-      <section className="bg-gradient-to-r from-blue-50 to-indigo-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="md:w-1/2 mb-10 md:mb-0">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
-                Get Your Business Permit in Minutes, Not Weeks
-              </h1>
-              <p className="text-xl text-gray-600 mb-8">
-                The fastest way to apply, track, and manage your business permits online. Join thousands of businesses already saving time.
-              </p>
-              <div className="flex flex-col space-y-4">
+      {/* Bold Hero Section */}
+      <section className="relative overflow-hidden bg-white pt-20 pb-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-50">
+                  Government Digital Services
+                </Badge>
+                <h1 className="text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-[1.1]">
+                  Business permits
+                  <br />
+                  <span className="text-slate-600">in minutes</span>
+                </h1>
+                <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
+                  The most efficient way to apply, track, and manage your business permits. 
+                  Built for modern businesses who value speed and simplicity.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/signin">
-                  <Button size="lg" className="w-full sm:w-auto text-lg px-8 py-4">
-                    Start Your Application Now <ArrowRight className="ml-2 h-5 w-5" />
+                  <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white h-12 px-8 text-base font-medium">
+                    Start Application
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <p className="text-sm text-gray-500">No setup required • Free to start • Secure & trusted</p>
+                <Button variant="outline" size="lg" className="h-12 px-8 text-base font-medium border-slate-200 text-slate-600 hover:bg-slate-50">
+                  Watch Demo
+                </Button>
+              </div>
+
+              <div className="flex items-center space-x-6 text-sm text-slate-500">
+                <div className="flex items-center space-x-1">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>No setup required</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Free to start</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Secure platform</span>
+                </div>
               </div>
             </div>
-            <div className="md:w-1/2">
-              <div className="bg-white shadow-xl rounded-lg p-6 md:p-8">
-                <img alt="Business Permit Management" className="w-full h-64 object-cover rounded" src="/lovable-uploads/c2fa4958-ca21-4f46-8eff-378b42e6bc34.jpg" />
+
+            <div className="relative">
+              <div className="relative z-10 bg-white border border-slate-200 rounded-2xl p-8 shadow-xl">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-900">Application Status</h3>
+                    <Badge className="bg-green-100 text-green-700 border-0">Approved</Badge>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Business License</span>
+                      <span className="text-slate-900 font-medium">Complete</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Health Permit</span>
+                      <span className="text-slate-900 font-medium">Complete</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Fire Safety</span>
+                      <span className="text-slate-900 font-medium">In Review</span>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-slate-100">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Processing Time</span>
+                      <span className="text-slate-900 font-medium">2 days</span>
+                    </div>
+                  </div>
+                </div>
               </div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-slate-100 to-slate-50 rounded-2xl transform rotate-1"></div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Core Value Proposition */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Everything You Need in One Place</h2>
-            <p className="text-lg text-gray-600">
-              Stop juggling paperwork, emails, and office visits. Our platform handles your entire permit process from start to finish.
+      {/* Stats Section */}
+      <section className="py-20 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">{stat.number}</div>
+                <div className="text-slate-600 text-sm font-medium">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">
+              Everything you need to manage permits
+            </h2>
+            <p className="text-xl text-slate-600 leading-relaxed">
+              A complete platform designed to streamline the entire permit lifecycle 
+              from application to renewal.
             </p>
           </div>
           
-          {/* Core Features - Reduced to 3 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="grid lg:grid-cols-3 gap-8 mb-12">
             {coreFeatures.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="pt-6">
-                  <div className={`${feature.bgColor} p-3 rounded-full inline-flex items-center justify-center mb-4`}>
-                    <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
+              <Card key={index} className="border-0 bg-slate-50 hover:bg-slate-100 transition-colors group">
+                <CardContent className="p-8">
+                  <div className="mb-6">
+                    <feature.icon className="h-8 w-8 text-slate-700 group-hover:text-slate-900 transition-colors" />
                   </div>
-                  <CardTitle className="mb-2">{feature.title}</CardTitle>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <CardTitle className="text-xl mb-4 text-slate-900">{feature.title}</CardTitle>
+                  <p className="text-slate-600 leading-relaxed">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Progressive Disclosure for Advanced Features */}
           <div className="text-center">
             <Button 
               variant="ghost" 
               onClick={() => setShowAllFeatures(!showAllFeatures)}
-              className="text-blue-600 hover:text-blue-700"
+              className="text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             >
-              {showAllFeatures ? 'Show Less' : 'Discover More Features'}
+              {showAllFeatures ? 'Show Less Features' : 'View All Features'}
               <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${showAllFeatures ? 'rotate-180' : ''}`} />
             </Button>
           </div>
 
-          {/* Advanced Features - Hidden by Default */}
           {showAllFeatures && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 animate-fade-in">
+            <div className="grid lg:grid-cols-3 gap-8 mt-12 animate-fade-in">
               {advancedFeatures.map((feature, index) => (
-                <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="pt-6">
-                    <div className={`${feature.bgColor} p-3 rounded-full inline-flex items-center justify-center mb-4`}>
-                      <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
+                <Card key={index} className="border-0 bg-slate-50 hover:bg-slate-100 transition-colors group">
+                  <CardContent className="p-8">
+                    <div className="mb-6">
+                      <feature.icon className="h-8 w-8 text-slate-700 group-hover:text-slate-900 transition-colors" />
                     </div>
-                    <CardTitle className="mb-2">{feature.title}</CardTitle>
-                    <p className="text-gray-600">{feature.description}</p>
+                    <CardTitle className="text-xl mb-4 text-slate-900">{feature.title}</CardTitle>
+                    <p className="text-slate-600 leading-relaxed">{feature.description}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -165,87 +243,84 @@ const Index = () => {
         </div>
       </section>
 
-      {/* How It Works Section - Streamlined */}
-      <section id="how-it-works" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Three Simple Steps</h2>
-            <p className="text-lg text-gray-600">
-              Get your business permit faster than ever before
+      {/* Process Section */}
+      <section id="process" className="py-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">
+              Three simple steps to get started
+            </h2>
+            <p className="text-xl text-slate-600">
+              Our streamlined process gets you from application to approval faster than ever.
             </p>
           </div>
-          <div className="relative">
-            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2 z-0"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-              <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-                <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-xl font-bold text-blue-600">1</span>
+          
+          <div className="grid lg:grid-cols-3 gap-12">
+            {[
+              { step: "01", title: "Apply Online", description: "Complete your application using our guided digital forms with real-time validation." },
+              { step: "02", title: "Track Progress", description: "Monitor your application status with live updates and automated notifications." },
+              { step: "03", title: "Get Approved", description: "Receive your permits digitally and manage renewals with automated reminders." }
+            ].map((item, index) => (
+              <div key={index} className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-900 text-white rounded-2xl text-xl font-bold mb-6">
+                  {item.step}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Apply Online</h3>
-                <p className="text-gray-600">Fill out your application in minutes with our guided form.</p>
+                <h3 className="text-xl font-semibold text-slate-900 mb-4">{item.title}</h3>
+                <p className="text-slate-600 leading-relaxed">{item.description}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-                <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-xl font-bold text-blue-600">2</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Track Progress</h3>
-                <p className="text-gray-600">Monitor your application status in real-time with automatic updates.</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-                <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-xl font-bold text-blue-600">3</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Get Approved</h3>
-                <p className="text-gray-600">Receive your permit and manage renewals automatically.</p>
-              </div>
-            </div>
+            ))}
           </div>
+
           <div className="text-center mt-12">
             <Link to="/signin">
-              <Button size="lg">
-                Start Now - It's Free <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white h-12 px-8">
+                Start Your Application
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Social Proof - Simplified */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Trusted by Business Owners</h2>
-            <p className="text-lg text-gray-600">
-              Join thousands who've streamlined their permit process
-            </p>
+      {/* Testimonials */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">
+              Trusted by business owners everywhere
+            </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-6">
-                <Quote className="h-8 w-8 text-blue-400 mb-4" />
-                <p className="text-gray-600 mb-6">
-                  "What used to take weeks now takes hours. The eLUNSAD platform saved my restaurant business and reduced my stress by 90%."
+          
+          <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
+            <Card className="border-0 bg-slate-50 p-8">
+              <CardContent className="p-0">
+                <Quote className="h-8 w-8 text-slate-400 mb-6" />
+                <p className="text-lg text-slate-700 mb-6 leading-relaxed">
+                  "What used to take weeks now takes days. The eLUNSAD platform 
+                  transformed how we handle permits for our restaurant chain."
                 </p>
                 <div className="flex items-center">
-                  <div className="bg-gray-200 h-10 w-10 rounded-full mr-3"></div>
+                  <div className="w-12 h-12 bg-slate-200 rounded-full mr-4"></div>
                   <div>
-                    <p className="font-semibold">Michael Chen</p>
-                    <p className="text-sm text-gray-500">Restaurant Owner</p>
+                    <p className="font-semibold text-slate-900">Michael Chen</p>
+                    <p className="text-sm text-slate-600">Restaurant Owner</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-6">
-                <Quote className="h-8 w-8 text-blue-400 mb-4" />
-                <p className="text-gray-600 mb-6">
-                  "The automated reminders alone are worth it. I never miss a renewal deadline anymore, and my permits are always current."
+            
+            <Card className="border-0 bg-slate-50 p-8">
+              <CardContent className="p-0">
+                <Quote className="h-8 w-8 text-slate-400 mb-6" />
+                <p className="text-lg text-slate-700 mb-6 leading-relaxed">
+                  "The automated reminders and status tracking eliminated all the 
+                  guesswork. Our permits are always current and compliant."
                 </p>
                 <div className="flex items-center">
-                  <div className="bg-gray-200 h-10 w-10 rounded-full mr-3"></div>
+                  <div className="w-12 h-12 bg-slate-200 rounded-full mr-4"></div>
                   <div>
-                    <p className="font-semibold">Sarah Johnson</p>
-                    <p className="text-sm text-gray-500">Retail Business Owner</p>
+                    <p className="font-semibold text-slate-900">Sarah Johnson</p>
+                    <p className="text-sm text-slate-600">Retail Business Owner</p>
                   </div>
                 </div>
               </CardContent>
@@ -254,59 +329,69 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Final CTA - Single Focus */}
-      <section className="py-20 bg-blue-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of businesses who've simplified their permit process. Start your application today.
+      {/* CTA Section */}
+      <section className="py-24 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            Ready to streamline your permits?
+          </h2>
+          <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
+            Join thousands of businesses who've simplified their permit process with our platform.
           </p>
           <Link to="/signin">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
-              Start Your Application Now
+            <Button size="lg" variant="secondary" className="h-12 px-8 text-base font-medium bg-white text-slate-900 hover:bg-slate-100">
+              Get Started Today
             </Button>
           </Link>
-          <p className="text-sm mt-4 text-blue-100">Free to start • No credit card required • Secure & trusted</p>
+          <p className="text-sm mt-6 text-slate-400">
+            Free to start • No credit card required • Enterprise support available
+          </p>
         </div>
       </section>
 
-      {/* Contact Section - Simplified */}
-      <section id="contact" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Contact Section */}
+      <section id="contact" className="py-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Need Help?</h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Our support team is here to help you succeed.
+            <h2 className="text-3xl font-bold text-slate-900 mb-6">Get Support</h2>
+            <p className="text-xl text-slate-600 mb-8">
+              Our team is here to help you succeed with your permit applications.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8">
-              <div className="flex items-center">
-                <Mail className="h-5 w-5 text-blue-600 mr-2" />
-                <span className="text-gray-600">support@elunsad.gov</span>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-8">
+              <div className="flex items-center text-slate-600">
+                <Mail className="h-5 w-5 mr-3" />
+                <span className="font-medium">support@elunsad.gov</span>
               </div>
-              <div className="flex items-center">
-                <Globe className="h-5 w-5 text-blue-600 mr-2" />
-                <span className="text-gray-600">Monday - Friday: 8:00 AM - 5:00 PM</span>
+              <div className="flex items-center text-slate-600">
+                <Clock className="h-5 w-5 mr-3" />
+                <span className="font-medium">Monday - Friday: 8AM - 5PM</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer - Simplified */}
-      <footer className="bg-gray-800 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-100 py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <img src="/lovable-uploads/bbd34367-e328-4dff-9103-719d6d3c2bd6.png" alt="eLUNSAD Logo" className="h-8 w-8 bg-white rounded p-1" />
-              <h3 className="text-lg font-bold">eLUNSAD</h3>
+              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+                <span className="text-white text-sm font-bold">eL</span>
+              </div>
+              <span className="text-xl font-semibold text-slate-900">eLUNSAD</span>
             </div>
-            <div className="flex space-x-6 text-sm">
-              <Link to="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
-              <Link to="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">Terms of Service</Link>
+            <div className="flex space-x-8 text-sm">
+              <Link to="/privacy-policy" className="text-slate-600 hover:text-slate-900 transition-colors">
+                Privacy Policy
+              </Link>
+              <Link to="/terms-of-service" className="text-slate-600 hover:text-slate-900 transition-colors">
+                Terms of Service
+              </Link>
             </div>
           </div>
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center">
-            <p className="text-gray-400">
+          <div className="border-t border-slate-100 mt-8 pt-8 text-center">
+            <p className="text-slate-500 text-sm">
               &copy; {new Date().getFullYear()} Business Permit Licensing Office. All rights reserved.
             </p>
           </div>
