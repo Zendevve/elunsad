@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle, Shield, BarChart3, FileText, Clock, Bell, Map } from "lucide-react";
@@ -8,7 +7,7 @@ const Index = () => {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Navigation */}
-      <header className="w-full border-b bg-white shadow-sm">
+      <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-700">
