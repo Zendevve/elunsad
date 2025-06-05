@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle, Shield, BarChart3, FileText, Clock, Bell, Map } from "lucide-react";
@@ -68,7 +69,7 @@ const Index = () => {
                   Get Started <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-blue-800/20 hover:border-blue-200">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-700">
                 Learn More
               </Button>
             </div>
@@ -76,7 +77,7 @@ const Index = () => {
 
           <div className="relative mx-auto lg:mr-0">
             <div className="relative rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
-              <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80" alt="Business permit management dashboard" className="w-full h-auto rounded-lg object-cover" />
+              <img src="/lovable-uploads/8a70bd39-81f9-4507-8c49-ccbcfeece1a6.png" alt="Business permit management dashboard" className="w-full h-auto rounded-lg object-cover" />
               <div className="absolute -bottom-6 -left-6 rounded-lg bg-white p-4 shadow-lg border border-gray-100">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
