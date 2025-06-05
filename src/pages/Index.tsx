@@ -2,10 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle, Shield, BarChart3, FileText, Clock, Bell, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 const Index = () => {
-  return (
-    <div className="flex min-h-screen flex-col">
+  return <div className="flex min-h-screen flex-col">
       {/* Navigation */}
       <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
         <div className="container flex h-16 items-center justify-between">
@@ -13,23 +11,17 @@ const Index = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-700">
               <span className="text-lg font-bold text-white">e</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">UNSAD</span>
+            <span className="text-xl font-bold text-gray-900">eLUNSAD</span>
             <span className="hidden md:inline-block text-sm text-gray-500 ml-2">Business Permit Licensing Office</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors">
               Features
             </a>
-            <a
-              href="#how-it-works"
-              className="text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors"
-            >
+            <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors">
               How It Works
             </a>
-            <a
-              href="#testimonials"
-              className="text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors"
-            >
+            <a href="#testimonials" className="text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors">
               Testimonials
             </a>
             <a href="#contact" className="text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors">
@@ -47,11 +39,7 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-b from-blue-50 to-white py-20 lg:py-32">
         <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&h=800&q=80"
-            alt="Government building and business professionals"
-            className="w-full h-full object-cover"
-          />
+          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&h=800&q=80" alt="Government building and business professionals" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-blue-900/20"></div>
         </div>
         <div className="container relative grid gap-12 lg:grid-cols-2 items-center">
@@ -82,11 +70,7 @@ const Index = () => {
 
           <div className="relative mx-auto lg:mr-0">
             <div className="relative rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
-              <img
-                src="https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
-                alt="Business permit management dashboard"
-                className="w-full h-auto rounded-lg object-cover"
-              />
+              <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80" alt="Business permit management dashboard" className="w-full h-auto rounded-lg object-cover" />
               <div className="absolute -bottom-6 -left-6 rounded-lg bg-white p-4 shadow-lg border border-gray-100">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -283,11 +267,7 @@ const Index = () => {
                   1
                 </div>
                 <div className="mb-4 h-48 overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
-                  <img
-                    src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80"
-                    alt="Register and Sign In"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" alt="Register and Sign In" className="w-full h-full object-cover" />
                 </div>
                 <h3 className="mb-2 text-xl font-bold text-gray-900">Register & Sign In</h3>
                 <p className="text-gray-600">
@@ -303,11 +283,7 @@ const Index = () => {
                   2
                 </div>
                 <div className="mb-4 h-48 overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
-                  <img
-                    src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80"
-                    alt="Submit Application"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" alt="Submit Application" className="w-full h-full object-cover" />
                 </div>
                 <h3 className="mb-2 text-xl font-bold text-gray-900">Submit Application</h3>
                 <p className="text-gray-600">
@@ -323,11 +299,7 @@ const Index = () => {
                   3
                 </div>
                 <div className="mb-4 h-48 overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
-                  <img
-                    src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80"
-                    alt="Track and Get Reminded"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200&q=80" alt="Track and Get Reminded" className="w-full h-full object-cover" />
                 </div>
                 <h3 className="mb-2 text-xl font-bold text-gray-900">Track & Monitor</h3>
                 <p className="text-gray-600">
@@ -364,11 +336,7 @@ const Index = () => {
             <div className="rounded-xl bg-white p-8 shadow-md border border-gray-200">
               <div className="flex items-center mb-4">
                 <div className="mr-4 h-12 w-12 overflow-hidden rounded-full bg-gray-100">
-                  <img
-                    src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=50&h=50&q=80"
-                    alt="Sarah Johnson"
-                    className="h-full w-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=50&h=50&q=80" alt="Sarah Johnson" className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">Sarah Johnson</h4>
@@ -376,11 +344,9 @@ const Index = () => {
                 </div>
               </div>
               <div className="mb-4 flex">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                {[...Array(5)].map((_, i) => <svg key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
+                  </svg>)}
               </div>
               <p className="text-gray-600">
                 "The eUNSAD platform has completely transformed how we manage business permits. The automated workflows
@@ -391,11 +357,7 @@ const Index = () => {
             <div className="rounded-xl bg-white p-8 shadow-md border border-gray-200">
               <div className="flex items-center mb-4">
                 <div className="mr-4 h-12 w-12 overflow-hidden rounded-full bg-gray-100">
-                  <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=50&h=50&q=80"
-                    alt="Michael Chen"
-                    className="h-full w-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=50&h=50&q=80" alt="Michael Chen" className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">Michael Chen</h4>
@@ -403,11 +365,9 @@ const Index = () => {
                 </div>
               </div>
               <div className="mb-4 flex">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                {[...Array(5)].map((_, i) => <svg key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
+                  </svg>)}
               </div>
               <p className="text-gray-600">
                 "As a restaurant owner, managing permits used to be my biggest headache. eUNSAD has made it so easy to
@@ -418,11 +378,7 @@ const Index = () => {
             <div className="rounded-xl bg-white p-8 shadow-md border border-gray-200">
               <div className="flex items-center mb-4">
                 <div className="mr-4 h-12 w-12 overflow-hidden rounded-full bg-gray-100">
-                  <img
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=50&h=50&q=80"
-                    alt="David Rodriguez"
-                    className="h-full w-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=50&h=50&q=80" alt="David Rodriguez" className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">David Rodriguez</h4>
@@ -430,11 +386,9 @@ const Index = () => {
                 </div>
               </div>
               <div className="mb-4 flex">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                {[...Array(5)].map((_, i) => <svg key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
+                  </svg>)}
               </div>
               <p className="text-gray-600">
                 "The analytics and reporting features have transformed the way our department operates. We can now make
@@ -483,19 +437,8 @@ const Index = () => {
               <div className="space-y-4">
                 <div className="flex items-center">
                   <div className="mr-4 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div>
@@ -505,19 +448,8 @@ const Index = () => {
                 </div>
                 <div className="flex items-center">
                   <div className="mr-4 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
@@ -527,19 +459,8 @@ const Index = () => {
                 </div>
                 <div className="flex items-center">
                   <div className="mr-4 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
                   <div>
@@ -558,46 +479,26 @@ const Index = () => {
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                       Full Name
                     </label>
-                    <input
-                      type="text"
-                      id="name"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="Your name"
-                    />
+                    <input type="text" id="name" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Your name" />
                   </div>
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                       Email Address
                     </label>
-                    <input
-                      type="email"
-                      id="email"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="Your email"
-                    />
+                    <input type="email" id="email" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Your email" />
                   </div>
                 </div>
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
                     Subject
                   </label>
-                  <input
-                    type="text"
-                    id="subject"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Message subject"
-                  />
+                  <input type="text" id="subject" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Message subject" />
                 </div>
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
                     Message
                   </label>
-                  <textarea
-                    id="message"
-                    rows={4}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="How can we help you?"
-                  ></textarea>
+                  <textarea id="message" rows={4} className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="How can we help you?"></textarea>
                 </div>
                 <Button className="w-full bg-blue-700 hover:bg-blue-800">Send Message</Button>
               </form>
@@ -615,7 +516,7 @@ const Index = () => {
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-700">
                   <span className="text-lg font-bold text-white">e</span>
                 </div>
-                <span className="text-xl font-bold text-white">UNSAD</span>
+                <span className="text-xl font-bold text-white">eLUNSAD</span>
               </div>
               <p className="text-sm text-gray-400 mb-4">
                 Business Permit Licensing Office - Streamlining government processes for a more efficient future.
@@ -623,11 +524,7 @@ const Index = () => {
               <div className="flex space-x-4">
                 <a href="#" className="text-gray-400 hover:text-white">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      fillRule="evenodd"
-                      d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
-                      clipRule="evenodd"
-                    />
+                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
                   </svg>
                 </a>
                 <a href="#" className="text-gray-400 hover:text-white">
@@ -637,11 +534,7 @@ const Index = () => {
                 </a>
                 <a href="#" className="text-gray-400 hover:text-white">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      fillRule="evenodd"
-                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                      clipRule="evenodd"
-                    />
+                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
                   </svg>
                 </a>
               </div>
@@ -744,8 +637,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
