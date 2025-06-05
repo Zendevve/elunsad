@@ -2,14 +2,20 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle, Shield, BarChart3, FileText, Clock, Bell, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 const Index = () => {
-  return <div className="flex min-h-screen flex-col">
+  return (
+    <div className="flex min-h-screen flex-col">
       {/* Navigation */}
       <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-700">
-              <span className="text-lg font-bold text-white">e</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-md">
+              <img 
+                src="/lovable-uploads/b161688a-4f82-4d18-a50d-1aa482c74a8d.png" 
+                alt="eLUNSAD Logo" 
+                className="h-10 w-10 object-contain"
+              />
             </div>
             <span className="text-xl font-bold text-gray-900">eLUNSAD</span>
             <span className="hidden md:inline-block text-sm text-gray-500 ml-2">Business Permit Licensing Office</span>
@@ -513,8 +519,12 @@ const Index = () => {
           <div className="grid gap-8 md:grid-cols-4">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-700">
-                  <span className="text-lg font-bold text-white">e</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                  <img 
+                    src="/lovable-uploads/b161688a-4f82-4d18-a50d-1aa482c74a8d.png" 
+                    alt="eLUNSAD Logo" 
+                    className="h-8 w-8 object-contain"
+                  />
                 </div>
                 <span className="text-xl font-bold text-white">eLUNSAD</span>
               </div>
@@ -637,6 +647,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
