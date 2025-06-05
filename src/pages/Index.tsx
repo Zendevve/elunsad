@@ -1,22 +1,15 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle, Shield, BarChart3, FileText, Clock, Bell, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 const Index = () => {
-  return (
-    <div className="flex min-h-screen flex-col">
+  return <div className="flex min-h-screen flex-col">
       {/* Navigation */}
       <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-md">
-              <img 
-                src="/lovable-uploads/f15f1274-8a45-4de7-acf3-a436e3d7bca9.png" 
-                alt="eLUNSAD Logo" 
-                className="h-10 w-10 object-contain"
-              />
+              <img src="/lovable-uploads/f15f1274-8a45-4de7-acf3-a436e3d7bca9.png" alt="eLUNSAD Logo" className="h-10 w-10 object-contain" />
             </div>
             <span className="text-xl font-bold text-gray-900">eLUNSAD</span>
             <span className="hidden md:inline-block text-sm text-gray-500 ml-2">Business Permit Licensing Office</span>
@@ -69,7 +62,7 @@ const Index = () => {
                   Get Started <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-700">
+              <Button size="lg" variant="outline" className="border-white hover:bg-white text-blue-700">
                 Learn More
               </Button>
             </div>
@@ -521,11 +514,7 @@ const Index = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md">
-                  <img 
-                    src="/lovable-uploads/f15f1274-8a45-4de7-acf3-a436e3d7bca9.png" 
-                    alt="eLUNSAD Logo" 
-                    className="h-8 w-8 object-contain"
-                  />
+                  <img src="/lovable-uploads/f15f1274-8a45-4de7-acf3-a436e3d7bca9.png" alt="eLUNSAD Logo" className="h-8 w-8 object-contain" />
                 </div>
                 <span className="text-xl font-bold text-white">eLUNSAD</span>
               </div>
@@ -648,8 +637,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
