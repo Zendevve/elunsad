@@ -12,7 +12,7 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-md">
               <img 
-                src="/lovable-uploads/b161688a-4f82-4d18-a50d-1aa482c74a8d.png" 
+                src="/lovable-uploads/f15f1274-8a45-4de7-acf3-a436e3d7bca9.png" 
                 alt="eLUNSAD Logo" 
                 className="h-10 w-10 object-contain"
               />
@@ -45,8 +45,8 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-b from-blue-50 to-white py-20 lg:py-32">
         <div className="absolute inset-0">
-          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&h=800&q=80" alt="Government building and business professionals" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-blue-900/20"></div>
+          <img src="/lovable-uploads/0a98a96a-815e-4ef4-aeec-ae2be1bd783b.png" alt="Government building" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-blue-900/60"></div>
         </div>
         <div className="container relative grid gap-12 lg:grid-cols-2 items-center">
           <div className="space-y-8">
@@ -54,11 +54,11 @@ const Index = () => {
               <span className="flex h-2 w-2 rounded-full bg-blue-600 mr-2"></span>
               Official Government Platform
             </div>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 md:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl">
               Modernizing the
-              <span className="block text-blue-700">Business Permit Process</span>
+              <span className="block text-blue-200">Business Permit Process</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl">
+            <p className="text-xl text-blue-50 max-w-2xl">
               A secure, efficient platform for managing business permit applications, renewals, and compliance for both
               businesses and government agencies.
             </p>
@@ -68,7 +68,7 @@ const Index = () => {
                   Get Started <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-blue-800/20 hover:border-blue-200">
                 Learn More
               </Button>
             </div>
@@ -521,7 +521,7 @@ const Index = () => {
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md">
                   <img 
-                    src="/lovable-uploads/b161688a-4f82-4d18-a50d-1aa482c74a8d.png" 
+                    src="/lovable-uploads/f15f1274-8a45-4de7-acf3-a436e3d7bca9.png" 
                     alt="eLUNSAD Logo" 
                     className="h-8 w-8 object-contain"
                   />
